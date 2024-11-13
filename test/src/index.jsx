@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOMClient from 'react-dom/client';
-import 'react-scan';
+import 'react-scan/auto';
 
 export const App = () => {
   const [tasks, setTasks] = useState([]);
+
   return (
     <div>
-      <AddTask
+      <AddTask // render.trigger = keyof(useB)
         onCreate={(value) => {
           if (!value) return;
           setTasks([...tasks, value]);
@@ -41,12 +42,23 @@ export const TaskItem = ({ task, onDelete }) => {
     >
       {task}
       <Button onClick={() => onDelete(task)}>Delete</Button>
+      {/* {Array.from({ length: 10000 }).map((_, i) => (
+        <span>{i}</span>
+      ))} */}
     </li>
   );
 };
 
+export const Text = ({ children }) => {
+  return <span>{children}</span>;
+};
+
 export const Button = ({ onClick, children }) => {
-  return <button onClick={onClick}>{children}</button>;
+  return (
+    <button onClick={onClick}>
+      <Text>{children}</Text>
+    </button>
+  );
 };
 
 export const AddTask = ({ onCreate }) => {
