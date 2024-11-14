@@ -42,6 +42,21 @@ scan({
 });
 ```
 
+Or, if you prefer a more manual approach, use the `withScan` API:
+
+```js
+import { withScan } from 'react-scan';
+
+const ExpensiveComponent = withScan(
+  (props) => {
+    // ...
+  },
+  {
+    log: true,
+  },
+);
+```
+
 And voilà! You're ready to go.
 
 ## Why React Scan?
