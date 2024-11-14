@@ -5,8 +5,8 @@ import './styles.css';
 
 scan({
   enabled: true,
-  log: true,
-  clearLog: true,
+  // log: true,
+  // clearLog: true,
   production: true,
 });
 
@@ -25,6 +25,10 @@ const copyToClipboard = (text) => {
 export const App = () => {
   const [tasks, setTasks] = useState([]);
 
+  React.useMemo(() => {
+    console.log('App rerender');
+  }, []);
+
   return (
     <div className="app-container">
       <div className="main-content">
@@ -32,7 +36,9 @@ export const App = () => {
           <a href="/" className="navbar-brand">
             <img src="/logo.svg" alt="react-scan-logo" width="30" height="30" />
             <h3>
-              <strong style={{ fontFamily: 'Geist Mono, monospace' }}>React Scan</strong>
+              <strong style={{ fontFamily: 'Geist Mono, monospace' }}>
+                React Scan
+              </strong>
             </h3>
           </a>
           <div className="navbar-links">
@@ -86,7 +92,11 @@ export const App = () => {
           </code>
           <button
             className="copy-button"
-            onClick={() => copyToClipboard('<script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>')}
+            onClick={() =>
+              copyToClipboard(
+                '<script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>',
+              )
+            }
           >
             Copy
           </button>
