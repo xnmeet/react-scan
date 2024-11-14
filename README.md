@@ -23,7 +23,7 @@ Get started in 5 seconds, add this script to your app:
 <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
 ```
 
-Or, install it via npm:
+**_Or_**, install it via npm:
 
 ```bash
 npm install react-scan
@@ -76,6 +76,8 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 
 [**→ Start contributing on GitHub**](https://github.com/aidenybai/react-scan/blob/main/.github/CONTRIBUTING.md)
 
+## Roadmap
+
 - [x] Scan only for unnecessary renders ("unstable" props)
 - [x] Scan API (`withScan`, `scan`)
 - [ ] Offscreen canvas on worker thread
@@ -83,6 +85,8 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [ ] Chrome extension
 - [ ] Cleanup config options
 - [ ] Name / explain the actual problem
+- [ ] More sound options API (start log at certain area, stop log, etc.)
+- [ ] Expose primitives / internals for advanced use cases
 - [ ] Add more problem detections other than props
 - [ ] Simple FPS counter
 - [ ] Drag and select areas of the screen to scan
