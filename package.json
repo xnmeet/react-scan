@@ -1,6 +1,6 @@
 {
   "name": "react-scan",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Scan your React app for renders",
   "keywords": [
     "react",
@@ -17,20 +17,15 @@
     "type": "git",
     "url": "git+https://github.com/aidenybai/react-scan.git"
   },
-  "funding": "https://github.com/sponsors/aidenybai",
   "license": "MIT",
   "author": {
     "name": "Aiden Bai",
     "email": "aiden@million.dev",
-    "url": "https://aiden.mov"
+    "url": "https://million.dev"
   },
   "sideEffects": false,
   "type": "commonjs",
   "exports": {
-    "browser": {
-      "types": "./dist/auto.d.ts",
-      "default": "./dist/auto.global.js"
-    },
     "./package.json": "./package.json",
     ".": {
       "production": {
