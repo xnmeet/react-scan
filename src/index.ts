@@ -11,7 +11,7 @@ import {
 import { MONO_FONT } from './constants';
 import { traverseFiber, registerDevtoolsHook, getType } from './fiber';
 import type { Outline, ScanOptions, WithScanOptions } from './types';
-import { isInIframe } from './utils';
+import { isInIframe, isProd } from './utils';
 
 const DEFAULT_OPTIONS: ScanOptions & WithScanOptions = {
   enabled: true,
@@ -53,7 +53,9 @@ export const scan = (
 ) => {
   currentOptions = options ?? currentOptions;
 
-  if (inited || isInIframe() || currentOptions.enabled === false) return;
+  if (inited || isInIframe() || currentOptions.enabled === false || isProd()) {
+    return;
+  }
   inited = true;
 
   // eslint-disable-next-line no-console
@@ -63,7 +65,7 @@ export const scan = (
   );
 
   const ctx = createFullscreenCanvas();
-  const indicator = createStatus();
+  const status = createStatus();
 
   const handleCommitFiberRoot = (_rendererID: number, root: FiberRoot) => {
     const outlines: Outline[] = [];
@@ -116,7 +118,7 @@ export const scan = (
       }
       let text = `×${totalCount}`;
       if (totalSelfTime > 0) text += ` (${totalSelfTime.toFixed(2)}ms)`;
-      indicator.textContent = text;
+      status.textContent = `${text} · react-scan`;
       flushOutlines(ctx);
     }
   };

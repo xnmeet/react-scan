@@ -14,14 +14,12 @@ It's also just JavaScript, so you drop it in anywhere – script tag, npm, you n
 
 ## Install
 
-The simplest way to use it is to add this script to your app:
+Get started in 5 seconds, add this script to your app:
 
 ```html
 <!-- import this BEFORE any scripts -->
 <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
 ```
-
-Or, if you prefer, install via npm:
 
 ```bash
 npm install react-scan
@@ -35,24 +33,24 @@ import React from 'react';
 
 scan({
   enabled: true,
-  log: true, // logs render info to console
+  log: true, // logs render info to console (default: false)
+  clearLog: false, // clears the console per group of renders (default: false)
 });
 ```
+
+And voilà! You're ready to go.
 
 > Looking for a more advanced version? Check out [Million Lint](https://million.dev)!
 
 ## How does it work?
 
-## Future work
+## Future roadmap
 
-- [ ] problem finder
-- [ ] FPS counter
-- [ ] combobox ("total blocking time")
-- [ ] vercel toolbar comment
-- [ ] select open certain components
-- [ ] only show the renders that matter
-- [ ] wrap scan programmatically
-- [ ] scan auto mode
-- [ ] only show when there's main thread blocking
-- [ ] add the stop im changing dude
-- [ ] list of components and props
+- [ ] Chrome extension
+- [ ] Cleanup config options
+- [ ] Name / explain the actual problem
+- [ ] Add more problem detections other than props
+- [ ] Simple FPS counter
+- [ ] Drag and select areas of the screen to scan
+- [ ] Mode to only show on main thread blocking
+- [ ] Add a funny mascot, like the ["Stop I'm Changing" dude](https://www.youtube.com/shorts/FwOZdX7bDKI?app=desktop)

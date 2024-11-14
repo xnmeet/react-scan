@@ -72,6 +72,11 @@ export const isInIframe = () => {
   }
 };
 
+const tempDivElement = React.createElement('div');
+export const isProd = () => {
+  return '_self' in tempDivElement;
+};
+
 export const NO_OP = () => {
   /**/
 };

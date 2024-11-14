@@ -401,6 +401,10 @@ export const createFullscreenCanvas = () => {
   });
 
   onIdle(() => {
+    const prevCanvas = document.getElementById('react-scan-canvas');
+    if (prevCanvas) {
+      prevCanvas.remove();
+    }
     document.documentElement.appendChild(canvas);
   });
 
@@ -409,30 +413,44 @@ export const createFullscreenCanvas = () => {
 
 export const createStatus = () => {
   const status = createElement(
-    `<div id="react-scan-indicator" style="position:fixed;bottom:3px;right:3px;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;color:white;z-index:2147483647;font-family:${MONO_FONT}" aria-hidden="true">hide scanner</div>`,
+    `<div id="react-scan-status" title="Number of unnecessary renders and time elapsed" style="position:fixed;bottom:3px;right:3px;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;color:white;z-index:2147483647;font-family:${MONO_FONT}" aria-hidden="true">hide scanner</div>`,
   ) as HTMLDivElement;
 
-  let isHidden = false;
-  status.addEventListener('click', () => {
+  let isHidden = localStorage.getItem('react-scan-hidden') === 'true';
+
+  const updateVisibility = () => {
     const canvas = document.getElementById('react-scan-canvas');
     if (!canvas) return;
-    isHidden = !isHidden;
     canvas.style.display = isHidden ? 'none' : 'block';
-    status.textContent = `${isHidden ? 'Start' : 'Stop'} scanning`;
+    status.textContent = isHidden ? 'start ►' : 'stop ⏹';
     isPaused = isHidden;
     if (isPaused) {
       activeOutlines = [];
       pendingOutlines = [];
     }
+    localStorage.setItem('react-scan-hidden', isHidden.toString());
+  };
+
+  updateVisibility();
+
+  status.addEventListener('click', () => {
+    isHidden = !isHidden;
+    updateVisibility();
   });
+
   status.addEventListener('mouseenter', () => {
-    status.textContent = `${isHidden ? 'Start' : 'Stop'} scanning`;
+    status.textContent = isHidden ? 'start ►' : 'stop ⏹';
     status.style.backgroundColor = 'rgba(0,0,0,1)';
   });
+
   status.addEventListener('mouseleave', () => {
     status.style.backgroundColor = 'rgba(0,0,0,0.5)';
   });
 
+  const prevElement = document.getElementById('react-scan-status');
+  if (prevElement) {
+    prevElement.remove();
+  }
   document.documentElement.appendChild(status);
 
   return status;
