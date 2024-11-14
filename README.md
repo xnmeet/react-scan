@@ -1,14 +1,16 @@
-# <img src="https://react-scan.million.dev/logo.svg" /> React Scan
+# <img src="https://github.com/aidenybai/react-scan/blob/main/.github/assets/logo.svg" width="30" height="30" /> React Scan
 
 React Scan detects performance issues in your React app.
 
 Previously, tools like [<Profiler />](https://react.dev/reference/react-devtools), [Why Did You Render?](https://github.com/welldone-software/why-did-you-render), and [React Devtools](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html) required lots of manual code change, lacked simple visual cues, and had a high noise-to-signal ratio.
 
-React Scan fixes this by automatically detecting and highlighting the components that are causing performance issues. This filters out the noise and focuses on the signal.
+Instead, React Scan automatically detects and highlights components that cause performance issues. This filters out the noise and shows you exactly what you need to fix.
 
 It's also just JavaScript, so you drop it in anywhere – script tag, npm, you name it!
 
 [**Try it out! →**](https://react-scan.million.dev)
+
+![React Scan in action](https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/demo.gif?token=GHSAT0AAAAAAB4IOFACRC6P6E45TB2FPYFCZZV2AYA)
 
 ## Install
 
