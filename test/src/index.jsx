@@ -24,6 +24,17 @@ const copyToClipboard = (text) => {
 
 export const App = () => {
   const [tasks, setTasks] = useState([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   React.useMemo(() => {
     console.log('App rerender');
@@ -66,21 +77,27 @@ export const App = () => {
           JavaScript, so you drop it in anywhere – script tag, npm, you name it!
         </p>
 
-        <div className="task-section">
-          <p>Try interacting with this input to see it in action:</p>
-          <AddTaskBar
-            onCreate={(value) => {
-              if (!value) return;
-              setTasks([...tasks, value]);
-            }}
-          />
-          <TaskList
-            tasks={tasks}
-            onDelete={(value) =>
-              setTasks(tasks.filter((task) => task !== value))
-            }
-          />
-        </div>
+        {isMobile ? (
+          <div className="demo-section">
+            <img src="/demo.gif" alt="React Scan Demo" className="demo-gif" />
+          </div>
+        ) : (
+          <div className="task-section">
+            <p>Try interacting with this input to see it in action:</p>
+            <AddTaskBar
+              onCreate={(value) => {
+                if (!value) return;
+                setTasks([...tasks, value]);
+              }}
+            />
+            <TaskList
+              tasks={tasks}
+              onDelete={(value) =>
+                setTasks(tasks.filter((task) => task !== value))
+              }
+            />
+          </div>
+        )}
       </div>
 
       <div className="sticky-footer">

@@ -142,3 +142,16 @@ aside {
 .copy-button:active {
   background: #eee;
 }
+
+.demo-section {
+  width: 100%;
+  margin: 2rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.demo-gif {
+  max-width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
