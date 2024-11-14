@@ -1,18 +1,74 @@
 {
   "name": "react-scan",
   "version": "0.0.0",
-  "scripts": {
-    "build": "pnpm build:dev && pnpm build:prod",
-    "build:dev": "tsup src/development.ts --dts --env.NODE_ENV development --format esm",
-    "build:prod": "tsup src/production.ts --env.NODE_ENV production",
-    "publint": "publint"
+  "description": "Scan your React app for renders",
+  "keywords": [
+    "react",
+    "react-scan",
+    "react scan",
+    "render",
+    "performance"
+  ],
+  "license": "MIT",
+  "type": "commonjs",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": {
+        "types": "./dist/index.d.mts",
+        "default": "./dist/index.mjs"
+      },
+      "require": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    },
+    "./auto": {
+      "import": {
+        "types": "./dist/auto.d.mts",
+        "default": "./dist/auto.mjs"
+      },
+      "require": {
+        "types": "./dist/auto.d.ts",
+        "default": "./dist/auto.js"
+      }
+    },
+    "./dist/*": "./dist/*.js",
+    "./dist/*.js": "./dist/*.js",
+    "./dist/*.mjs": "./dist/*.mjs"
   },
-  "dependencies": {
-    "react-reconciler": "^0.29.2",
-    "tsup": "^8.2.4"
+  "main": "dist/index.js",
+  "browser": "dist/auto.global.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "package.json",
+    "README.md",
+    "LICENSE",
+    "auto.d.ts"
+  ],
+  "scripts": {
+    "dev": "NODE_ENV=development tsup --watch",
+    "build": "NODE_ENV=production tsup",
+    "publint": "publint",
+    "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
+    "prettier": "prettier --config .prettierrc.mjs -w src"
   },
   "devDependencies": {
+    "@types/react": "^18.3.12",
     "@types/react-reconciler": "^0.28.8",
-    "publint": "^0.2.10"
+    "@vercel/style-guide": "^6.0.0",
+    "eslint": "^8.57.1",
+    "prettier": "^3.3.3",
+    "publint": "^0.2.12",
+    "react": "*",
+    "react-dom": "*",
+    "react-reconciler": "^0.29.2",
+    "terser": "^5.36.0",
+    "tsup": "^8.2.4"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

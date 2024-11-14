@@ -1,9 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import ReactDOMClient from 'react-dom/client';
 import 'react-scan/auto';
 
 export const App = () => {
   const [tasks, setTasks] = useState([]);
+
+  useMemo(() => {
+    // console.log('tasks', tasks);
+  }, [tasks]);
 
   return (
     <div>
