@@ -1,6 +1,11 @@
 # react-scan
 
+React Scan highlights problematic renders in your React app.
+
 Scan your React app for renders
+
+- [ ] add video demos
+- [ ] add live demos
 
 ## Install
 
@@ -11,14 +16,21 @@ npm install react-scan
 ```
 
 ```js
-import 'react-scan/auto';
+// import this BEFORE react and react-dom
+import { scan } from 'react-scan';
+scan();
 ```
 
 **Install via script tag**
 
 ```html
-<script src="https://unpkg.com/react-scan/auto.global.js" />
+<!-- import this BEFORE any scripts -->
+<script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
 ```
+
+## Live demo
+
+## How does it work?
 
 ## Future work
 

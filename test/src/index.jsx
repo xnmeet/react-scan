@@ -1,17 +1,19 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import ReactDOMClient from 'react-dom/client';
-import 'react-scan/auto';
+import { scan } from 'react-scan';
+
+scan({
+  enabled: true,
+  log: true,
+  clearLog: true,
+});
 
 export const App = () => {
   const [tasks, setTasks] = useState([]);
 
-  useMemo(() => {
-    // console.log('tasks', tasks);
-  }, [tasks]);
-
   return (
     <div>
-      <AddTask // render.trigger = keyof(useB)
+      <AddTask
         onCreate={(value) => {
           if (!value) return;
           setTasks([...tasks, value]);
@@ -46,9 +48,6 @@ export const TaskItem = ({ task, onDelete }) => {
     >
       {task}
       <Button onClick={() => onDelete(task)}>Delete</Button>
-      {/* {Array.from({ length: 10000 }).map((_, i) => (
-        <span>{i}</span>
-      ))} */}
     </li>
   );
 };

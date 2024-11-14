@@ -1,3 +1,23 @@
+import type { FiberRoot } from 'react-reconciler';
+import type { scan } from './index';
+
+declare global {
+  interface Window {
+    __REACT_DEVTOOLS_GLOBAL_HOOK__?: {
+      checkDCE: () => void;
+      supportsFiber: boolean;
+      renderers: Map<number, Renderer>;
+      onScheduleFiberRoot: () => void;
+      onCommitFiberRoot: (rendererID: number, root: FiberRoot) => void;
+      onCommitFiberUnmount: () => void;
+      inject: (renderer: Renderer) => number;
+    };
+    reactScan: typeof scan;
+  }
+}
+
+export type Renderer = any;
+
 export interface Outline {
   rect: DOMRect;
   names: Set<string>;
@@ -9,6 +29,15 @@ export interface Outline {
   forget?: boolean;
   prevChangedProps?: Record<string, any> | null;
   nextChangedProps?: Record<string, any> | null;
+}
+
+export interface OutlinePaintTask {
+  outline: Outline;
+  alpha: number;
+  frame: number;
+  totalFrames: number;
+  resolve: () => void;
+  text: string | null;
 }
 
 export interface OutlineLabel {
@@ -46,7 +75,7 @@ export interface ScanOptions {
   log?: boolean;
 }
 
-export interface UseScanOptions {
+export interface WithScanOptions {
   /**
    * Include children of the component in the scan
    *

@@ -1,3 +1,6 @@
+import * as React from 'react';
+import { getDisplayName } from './fiber';
+
 export const onIdle = (callback: () => void) => {
   if ('scheduler' in globalThis) {
     return globalThis.scheduler.postTask(callback, {
@@ -10,7 +13,7 @@ export const onIdle = (callback: () => void) => {
   return setTimeout(callback, 0);
 };
 
-export const serialize = (value: any) => {
+export const fastSerialize = (value: unknown) => {
   switch (typeof value) {
     case 'function':
       return value.toString();
@@ -24,12 +27,14 @@ export const serialize = (value: any) => {
         return value.length > 0 ? '[…]' : '[]';
       }
       if (
+        React.isValidElement(value) &&
+        '$$typeof' in value &&
         typeof value.$$typeof === 'symbol' &&
         String(value.$$typeof) === 'Symbol(react.element)'
       ) {
         // attempt to extract some name from the component
-        return `<${value.type.displayName || value.type.name || ''}${
-          Object.keys(value.props).length > 0 ? ' …' : ''
+        return `<${getDisplayName(value.type) ?? ''}${
+          Object.keys(value.props || {}).length > 0 ? ' …' : ''
         }>`;
       }
       if (
@@ -57,4 +62,16 @@ export const serialize = (value: any) => {
     default:
       return String(value);
   }
+};
+
+export const isInIframe = () => {
+  try {
+    return window.self !== window.top;
+  } catch (_err) {
+    return true;
+  }
+};
+
+export const NO_OP = () => {
+  /**/
 };

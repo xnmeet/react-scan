@@ -6,16 +6,19 @@ import Inspect from 'vite-plugin-inspect';
 export default defineConfig({
   plugins: [
     react({
-      babel: {
-        plugins: [['babel-plugin-react-compiler', {}]],
-      },
+      // babel: {
+      //   plugins: [['babel-plugin-react-compiler', {}]],
+      // },
     }),
     Inspect(),
   ],
-  resolve: {
-    alias: {
-      'react-scan/auto': path.resolve(__dirname, '../dist/auto.mjs'),
-      'react-scan': path.resolve(__dirname, '../dist/index.mjs'),
-    },
-  },
+  resolve:
+    process.env.NODE_ENV === 'production'
+      ? {}
+      : {
+          alias: {
+            'react-scan/auto': path.resolve(__dirname, '../dist/auto.mjs'),
+            'react-scan': path.resolve(__dirname, '../dist/index.mjs'),
+          },
+        },
 });

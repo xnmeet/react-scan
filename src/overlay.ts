@@ -7,23 +7,18 @@ import {
   getType,
   traverseFiber,
 } from './fiber';
-import type { OutlineLabel, Outline, ChangedProp } from './types';
-import { onIdle, serialize } from './utils';
+import type {
+  OutlineLabel,
+  Outline,
+  ChangedProp,
+  OutlinePaintTask,
+} from './types';
+import { onIdle, fastSerialize } from './utils';
 import { getCurrentOptions } from './auto';
+import { MONO_FONT, PURPLE_RGB } from './constants';
 
-export const MONO_FONT =
-  'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
-export const PURPLE_RGB = '115,97,230';
-export const GREEN_RGB = '33,203,110';
-
-const activeOutlines: {
-  outline: Outline;
-  alpha: number;
-  frame: number;
-  totalFrames: number;
-  resolve: () => void;
-  text: string | null;
-}[] = [];
+let isPaused = false;
+let activeOutlines: OutlinePaintTask[] = [];
 let animationFrameId: number | null = null;
 let pendingOutlines: Outline[] = [];
 
@@ -59,7 +54,7 @@ export const mergeOutlines = (outlines: Outline[]) => {
 };
 
 export const getOutline = (fiber: Fiber | null): Outline | null => {
-  if (!fiber || !didFiberRender(fiber)) return null;
+  if (!fiber || !didFiberRender(fiber) || isPaused) return null;
   const type = getType(fiber.type);
   if (!type) return null;
 
@@ -90,8 +85,8 @@ export const getOutline = (fiber: Fiber | null): Outline | null => {
     };
     changedProps.push(changedProp);
 
-    const prevValueString = serialize(prevValue);
-    const nextValueString = serialize(nextValue);
+    const prevValueString = fastSerialize(prevValue);
+    const nextValueString = fastSerialize(nextValue);
 
     if (
       !unstableTypes.includes(typeof prevValue) ||
@@ -104,6 +99,7 @@ export const getOutline = (fiber: Fiber | null): Outline | null => {
     unstable = true;
     changedProp.unstable = true;
   }
+  if (!changedProps.length) return null;
 
   let domFiber = traverseFiber(fiber, (node) => typeof node.type === 'string');
   if (!domFiber) {
@@ -371,10 +367,16 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
   }
 };
 
-export const createFullscreenCanvas = () => {
+export const createElement = (html: string) => {
   const template = document.createElement('template');
-  template.innerHTML = `<canvas style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:2147483647" aria-hidden="true"/>`;
-  const canvas = template.content.firstChild as HTMLCanvasElement;
+  template.innerHTML = html;
+  return template.content.firstChild;
+};
+
+export const createFullscreenCanvas = () => {
+  const canvas = createElement(
+    `<canvas id="react-scan-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:2147483646" aria-hidden="true"/>`,
+  ) as HTMLCanvasElement;
   const ctx = canvas.getContext('2d');
 
   let resizeScheduled = false;
@@ -403,4 +405,35 @@ export const createFullscreenCanvas = () => {
   });
 
   return ctx;
+};
+
+export const createStatus = () => {
+  const status = createElement(
+    `<div id="react-scan-indicator" style="position:fixed;bottom:3px;right:3px;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;color:white;z-index:2147483647;font-family:${MONO_FONT}" aria-hidden="true">hide scanner</div>`,
+  ) as HTMLDivElement;
+
+  let isHidden = false;
+  status.addEventListener('click', () => {
+    const canvas = document.getElementById('react-scan-canvas');
+    if (!canvas) return;
+    isHidden = !isHidden;
+    canvas.style.display = isHidden ? 'none' : 'block';
+    status.textContent = `${isHidden ? 'Start' : 'Stop'} scanning`;
+    isPaused = isHidden;
+    if (isPaused) {
+      activeOutlines = [];
+      pendingOutlines = [];
+    }
+  });
+  status.addEventListener('mouseenter', () => {
+    status.textContent = `${isHidden ? 'Start' : 'Stop'} scanning`;
+    status.style.backgroundColor = 'rgba(0,0,0,1)';
+  });
+  status.addEventListener('mouseleave', () => {
+    status.style.backgroundColor = 'rgba(0,0,0,0.5)';
+  });
+
+  document.documentElement.appendChild(status);
+
+  return status;
 };

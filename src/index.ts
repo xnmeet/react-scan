@@ -2,43 +2,58 @@ import { type Fiber, type FiberRoot } from 'react-reconciler';
 import { type ComponentType } from 'react';
 import {
   createFullscreenCanvas,
+  createStatus,
   flushOutlines,
   getOutline,
   getPendingOutlines,
-  MONO_FONT,
   setPendingOutlines,
-} from './outline';
+} from './overlay';
+import { MONO_FONT } from './constants';
 import { traverseFiber, registerDevtoolsHook, getType } from './fiber';
-import type { Outline, ScanOptions, UseScanOptions } from './types';
+import type { Outline, ScanOptions, WithScanOptions } from './types';
+import { isInIframe } from './utils';
 
-const DEFAULT_OPTIONS: ScanOptions & UseScanOptions = {
+const DEFAULT_OPTIONS: ScanOptions & WithScanOptions = {
   enabled: true,
   includeChildren: true,
-  log: true,
-  clearLog: true,
+  log: false,
+  clearLog: false,
 };
-let currentOptions: ScanOptions & UseScanOptions = DEFAULT_OPTIONS;
+let currentOptions: ScanOptions & WithScanOptions = DEFAULT_OPTIONS;
 export const getCurrentOptions = () => currentOptions;
-let allowList: Map<ComponentType<any>, UseScanOptions> | null = null;
+let allowList: Map<ComponentType<any>, WithScanOptions> | null = null;
 
 let inited = false;
 
 export const withScan = <T>(
   component: ComponentType<T>,
-  options: ScanOptions & UseScanOptions = DEFAULT_OPTIONS,
+  options: ScanOptions & WithScanOptions = DEFAULT_OPTIONS,
 ) => {
+  options.log ??= true;
   scan(options);
   if (!allowList) allowList = new Map();
   allowList.set(getType(component), options);
   return component;
 };
 
+let onCommitFiberRoot = (_rendererID: number, _root: FiberRoot): void => {
+  /**/
+};
+
+if (typeof window !== 'undefined') {
+  registerDevtoolsHook({
+    onCommitFiberRoot: (rendererID, root) => {
+      onCommitFiberRoot(rendererID, root);
+    },
+  });
+}
+
 export const scan = (
-  options: ScanOptions & UseScanOptions = DEFAULT_OPTIONS,
+  options: ScanOptions & WithScanOptions = DEFAULT_OPTIONS,
 ) => {
   currentOptions = options ?? currentOptions;
 
-  if (inited) return;
+  if (inited || isInIframe() || currentOptions.enabled === false) return;
   inited = true;
 
   // eslint-disable-next-line no-console
@@ -48,9 +63,12 @@ export const scan = (
   );
 
   const ctx = createFullscreenCanvas();
+  const indicator = createStatus();
 
   const handleCommitFiberRoot = (_rendererID: number, root: FiberRoot) => {
     const outlines: Outline[] = [];
+    let totalSelfTime = 0;
+    let totalCount = 0;
 
     const handleFiber = (fiber: Fiber) => {
       const outline = getOutline(fiber);
@@ -91,17 +109,26 @@ export const scan = (
     ]);
 
     if (nextPendingOutlines.length && ctx) {
+      for (let i = 0, len = nextPendingOutlines.length; i < len; i++) {
+        const outline = nextPendingOutlines[i];
+        totalSelfTime += outline.selfTime;
+        totalCount += outline.count;
+      }
+      let text = `×${totalCount}`;
+      if (totalSelfTime > 0) text += ` (${totalSelfTime.toFixed(2)}ms)`;
+      indicator.textContent = text;
       flushOutlines(ctx);
     }
   };
 
+  onCommitFiberRoot = (_rendererID: number, root: FiberRoot) => {
+    try {
+      handleCommitFiberRoot(_rendererID, root);
+    } catch (err) {
+      // console.error(err);
+    }
+  };
   registerDevtoolsHook({
-    onCommitFiberRoot(_rendererID: number, root: FiberRoot) {
-      try {
-        handleCommitFiberRoot(_rendererID, root);
-      } catch (err) {
-        // console.error(err);
-      }
-    },
+    onCommitFiberRoot: onCommitFiberRoot,
   });
 };
