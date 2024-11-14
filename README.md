@@ -23,6 +23,8 @@ Get started in 5 seconds, add this script to your app:
 <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
 ```
 
+Or, install it via npm:
+
 ```bash
 npm install react-scan
 ```
