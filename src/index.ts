@@ -18,6 +18,7 @@ const DEFAULT_OPTIONS: ScanOptions & WithScanOptions = {
   includeChildren: true,
   log: false,
   clearLog: false,
+  production: false,
 };
 let currentOptions: ScanOptions & WithScanOptions = DEFAULT_OPTIONS;
 export const getCurrentOptions = () => currentOptions;
@@ -53,7 +54,10 @@ export const scan = (
 ) => {
   currentOptions = options ?? currentOptions;
 
-  if (inited || isInIframe() || currentOptions.enabled === false || isProd()) {
+  if (!currentOptions.production && isProd()) {
+    return;
+  }
+  if (inited || isInIframe() || currentOptions.enabled === false) {
     return;
   }
   inited = true;

@@ -7,6 +7,7 @@ scan({
   enabled: true,
   log: true,
   clearLog: true,
+  production: true,
 });
 
 export const App = () => {

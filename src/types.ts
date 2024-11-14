@@ -73,6 +73,12 @@ export interface ScanOptions {
    * @default true
    */
   log?: boolean;
+  /**
+   * Also run in production
+   *
+   * @default false
+   */
+  production?: boolean;
 }
 
 export interface WithScanOptions {
