@@ -115,3 +115,30 @@ aside {
   position: sticky;
   bottom: 0;
 }
+
+.code-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.copy-button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #e0e0e0;
+  background: white;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.copy-button:hover {
+  background: #f5f5f5;
+  color: #000;
+}
+
+.copy-button:active {
+  background: #eee;
+}

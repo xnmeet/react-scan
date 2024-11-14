@@ -10,6 +10,18 @@ scan({
   production: true,
 });
 
+const copyToClipboard = (text) => {
+  navigator.clipboard.writeText(text).then(() => {
+    const button = document.querySelector('.copy-button');
+    if (button) {
+      button.textContent = 'Copied!';
+      setTimeout(() => {
+        button.textContent = 'Copy';
+      }, 2000);
+    }
+  });
+};
+
 export const App = () => {
   const [tasks, setTasks] = useState([]);
 
@@ -50,7 +62,7 @@ export const App = () => {
 
         <div className="task-section">
           <p>Try interacting with this input to see it in action:</p>
-          <AddTask
+          <AddTaskBar
             onCreate={(value) => {
               if (!value) return;
               setTasks([...tasks, value]);
@@ -67,12 +79,18 @@ export const App = () => {
 
       <div className="sticky-footer">
         <p>Get started by adding this script to your app:</p>
-        <p>
+        <div className="code-container">
           <code>
             &lt;script
             src=&quot;https://unpkg.com/react-scan/dist/auto.global.js&quot;&gt;&lt;/script&gt;
           </code>
-        </p>
+          <button
+            className="copy-button"
+            onClick={() => copyToClipboard('<script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>')}
+          >
+            Copy
+          </button>
+        </div>
         <p>
           <small>
             <strong>Important:</strong> Add this before any other scripts run!
@@ -128,7 +146,7 @@ export const Button = ({ onClick, children }) => {
   );
 };
 
-export const AddTask = ({ onCreate }) => {
+export const AddTaskBar = ({ onCreate }) => {
   const [value, setValue] = useState('');
   const [id, setId] = useState(0);
   return (
