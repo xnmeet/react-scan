@@ -1,34 +1,43 @@
-# react-scan
+# <img src="https://react-scan.million.dev/logo.svg" /> React Scan
 
-React Scan highlights problematic renders in your React app.
+React Scan detects performance issues in your React app.
 
-Scan your React app for renders
+Previously, tools like [<Profiler />](https://react.dev/reference/react-devtools), [Why Did You Render?](https://github.com/welldone-software/why-did-you-render), and [React Devtools](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html) required lots of manual code change, lacked simple visual cues, and had a high noise-to-signal ratio.
 
-- [ ] add video demos
-- [ ] add live demos
+React Scan fixes this by automatically detecting and highlighting the components that are causing performance issues. This filters out the noise and focuses on the signal.
+
+It's also just JavaScript, so you drop it in anywhere – script tag, npm, you name it!
+
+[**Try it out! →**](https://react-scan.million.dev)
 
 ## Install
 
-**Install via npm**
-
-```bash
-npm install react-scan
-```
-
-```js
-// import this BEFORE react and react-dom
-import { scan } from 'react-scan';
-scan();
-```
-
-**Install via script tag**
+The simplest way to use it is to add this script to your app:
 
 ```html
 <!-- import this BEFORE any scripts -->
 <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
 ```
 
-## Live demo
+Or, if you prefer, install via npm:
+
+```bash
+npm install react-scan
+```
+
+Then, in your app, import this **BEFORE** `react`:
+
+```js
+import { scan } from 'react-scan'; // import this BEFORE react
+import React from 'react';
+
+scan({
+  enabled: true,
+  log: true, // logs render info to console
+});
+```
+
+> Looking for a more advanced version? Check out [Million Lint](https://million.dev)!
 
 ## How does it work?
 

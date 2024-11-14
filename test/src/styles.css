@@ -1,0 +1,117 @@
+.app-container {
+  padding: 5rem 2rem 1rem 2rem;
+  max-width: 700px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+@media (max-width: 640px) {
+  .app-container {
+    padding: 1rem;
+  }
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.navbar-link {
+  color: #666;
+  text-decoration: underline;
+}
+
+.navbar-link:hover {
+  color: #000;
+}
+
+.task-item {
+  display: flex;
+  padding-top: 1rem;
+  gap: 1rem;
+}
+
+.add-task-container {
+  display: flex;
+}
+
+.input {
+  padding: 0.5rem 0.75rem;
+}
+
+* {
+  font-family: 'Geist', sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+}
+
+code,
+pre {
+  font-family: 'Geist Mono', monospace;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-size: 0.9rem;
+  background-color: #f0f0f0;
+  padding: 0.15rem 0.25rem;
+  border-radius: 0.25rem;
+}
+
+aside {
+  border-left: 2px solid #f0f0f0;
+  padding-left: 1rem;
+  font-size: 0.9rem;
+}
+
+.cta-button {
+  display: inline-block;
+  padding: 0.5rem 1.25rem;
+  font-weight: 500;
+  text-decoration: none;
+  color: white;
+  background: linear-gradient(135deg, #8b5cf6, #6366f1);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.cta-button:hover {
+  transform: scale(1.02);
+  filter: brightness(1.1);
+}
+
+.cta-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+}
+
+.main-content {
+  display: block;
+}
+
+.task-section {
+  min-height: 100px;
+}
+
+.sticky-footer {
+  background: white;
+  border-top: 1px solid #f0f0f0;
+  padding-bottom: 1.5rem;
+  margin-top: 7rem;
+  position: sticky;
+  bottom: 0;
+}

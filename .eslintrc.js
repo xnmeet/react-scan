@@ -9,7 +9,7 @@ module.exports = {
     require.resolve('@vercel/style-guide/eslint/browser'),
     require.resolve('@vercel/style-guide/eslint/typescript'),
   ],
-  ignorePatterns: ['**/dist/*'],
+  ignorePatterns: ['**/dist/*', '**/test/*'],
   parserOptions: {
     project,
   },
