@@ -51,9 +51,7 @@ const ExpensiveComponent = withScan(
   (props) => {
     // ...
   },
-  {
-    log: true,
-  },
+  { log: true },
 );
 ```
 
@@ -112,8 +110,8 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 
 React Scan takes inspiration from the following projects:
 
+- [React Devtools](https://react.dev/learn/react-developer-tools) for the initial idea of [highlighting renders](https://medium.com/dev-proto/highlight-react-components-updates-1b2832f2ce48). We chose to diverge from this to provide a [better developer experience](https://x.com/aidenybai/status/1857122670929969551)
 - [Million Lint](https://million.dev) for scanning and linting approaches
-- [React Devtools](https://react.dev/learn/react-developer-tools) for the initial idea of [highlighting renders](https://medium.com/dev-proto/highlight-react-components-updates-1b2832f2ce48)
 - [Why Did You Render?](https://github.com/welldone-software/why-did-you-render) for the concept of hijacking internals to detect unnecessary renders caused by "unstable" props
 
 ## License
