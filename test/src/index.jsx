@@ -20,7 +20,7 @@ export const App = () => {
           <a href="/" className="navbar-brand">
             <img src="/logo.svg" alt="react-scan-logo" width="30" height="30" />
             <h3>
-              <strong>React Scan</strong>
+              <strong style={{ fontFamily: 'Geist Mono, monospace' }}>React Scan</strong>
             </h3>
           </a>
           <div className="navbar-links">
