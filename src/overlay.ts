@@ -99,7 +99,9 @@ export const getOutline = (fiber: Fiber | null): Outline | null => {
     unstable = true;
     changedProp.unstable = true;
   }
-  if (!changedProps.length) return null;
+  // Components re-render anyway, even if their props didn't change unless
+  // they're memoized, which is caught by didFiberRender
+  // if (!changedProps.length) return null;
 
   let domFiber = traverseFiber(fiber, (node) => typeof node.type === 'string');
   if (!domFiber) {
