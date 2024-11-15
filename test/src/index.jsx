@@ -1,6 +1,7 @@
 import { scan } from 'react-scan/dist/index.mjs'; // force production build
 import React, { useState } from 'react';
 import ReactDOMClient from 'react-dom/client';
+import { Analytics } from '@vercel/analytics/react';
 import './styles.css';
 
 scan({
@@ -216,4 +217,9 @@ export const Input = ({ onChange, onEnter, value }) => {
   );
 };
 
-ReactDOMClient.createRoot(document.getElementById('root')).render(<App />);
+ReactDOMClient.createRoot(document.getElementById('root')).render(
+  <>
+    <Analytics />
+    <App />
+  </>,
+);
