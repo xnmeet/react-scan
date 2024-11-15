@@ -93,6 +93,7 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 
 - [x] Scan only for unnecessary renders ("unstable" props)
 - [x] Scan API (`withScan`, `scan`)
+- [ ] Don't show label if no reconciliation occurred ("client renders" in DevTools)
 - [ ] Chrome extension
 - [ ] "PageSpeed insights" for React
 - [ ] Cleanup config options
