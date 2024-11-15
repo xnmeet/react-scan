@@ -1,18 +1,28 @@
 import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import webExtension, { readJsonFile } from 'vite-plugin-web-extension';
 
+function generateManifest() {
+  const manifest = readJsonFile('src/manifest.json');
+  const pkg = readJsonFile('package.json');
+  return {
+    name: pkg.name,
+    description: pkg.description,
+    version: pkg.version,
+    ...manifest,
+  };
+}
+
+// https://vitejs.dev/config/
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      input: {
-        'content': './content.js',
-        'inject': './inject.js'
+  plugins: [
+    react(),
+    webExtension({
+      manifest: generateManifest,
+      webExtConfig: {
+        startUrl: 'https://github.com/aidenybai/react-scan',
+        chromiumBinary: process.env.CHROMIUM_BINARY,
       },
-      output: {
-        entryFileNames: '[name].js',
-        format: 'iife'
-      }
-    },
-    outDir: 'dist',
-    emptyOutDir: true
-  }
+    }),
+  ],
 });
