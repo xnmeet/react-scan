@@ -163,6 +163,7 @@ export const TaskItem = ({ task, onDelete }) => {
 };
 
 export const Text = ({ children }) => {
+  console.count('Text');
   return <span>{children}</span>;
 };
 

@@ -23,7 +23,7 @@ const DEFAULT_OPTIONS: ScanOptions & WithScanOptions = {
 let currentOptions: ScanOptions & WithScanOptions = DEFAULT_OPTIONS;
 export const getCurrentOptions = () => currentOptions;
 let allowList: Map<ComponentType<any>, WithScanOptions> | null = null;
-const seenFibers = new WeakSet<Fiber>();
+const trackedFibers = new WeakMap<Fiber, number | undefined>();
 
 let inited = false;
 
@@ -78,10 +78,21 @@ export const scan = (
     let totalCount = 0;
 
     const handleFiber = (fiber: Fiber) => {
-      if (seenFibers.has(fiber)) return null;
-      seenFibers.add(fiber);
       const outline = getOutline(fiber);
       if (!outline) return null;
+      if (trackedFibers.has(fiber)) {
+        const startTime = trackedFibers.get(fiber);
+        if (
+          startTime &&
+          // eslint-disable-next-line eqeqeq
+          fiber.actualStartTime != null &&
+          startTime > fiber.actualStartTime
+        ) {
+          return null;
+        }
+      }
+      console.log(fiber);
+      trackedFibers.set(fiber, fiber.actualStartTime);
       const shouldScan =
         allowList?.has(fiber.type) ?? allowList?.has(fiber.elementType);
 
