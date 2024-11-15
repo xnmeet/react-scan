@@ -83,7 +83,8 @@ export const scan = (
       if (trackedFibers.has(fiber)) {
         const startTime = trackedFibers.get(fiber);
         if (
-          startTime &&
+          // eslint-disable-next-line eqeqeq
+          startTime != null &&
           // eslint-disable-next-line eqeqeq
           fiber.actualStartTime != null &&
           startTime > fiber.actualStartTime
@@ -91,7 +92,6 @@ export const scan = (
           return null;
         }
       }
-      console.log(fiber);
       trackedFibers.set(fiber, fiber.actualStartTime);
       const shouldScan =
         allowList?.has(fiber.type) ?? allowList?.has(fiber.elementType);
