@@ -93,12 +93,14 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 
 - [x] Scan only for unnecessary renders ("unstable" props)
 - [x] Scan API (`withScan`, `scan`)
+- [ ] Chrome extension
+- [ ] "PageSpeed insights" for React
+- [ ] Cleanup config options
 - [ ] Offscreen canvas on worker thread
 - [ ] React Native support
-- [ ] Chrome extension
-- [ ] Cleanup config options
+- [ ] "global" counter using `sessionStorage`, aggregate count stats instead of immediate replacement
 - [ ] Name / explain the actual problem
-- [ ] More sound options API (start log at certain area, stop log, etc.)
+- [ ] More explicit options override API (start log at certain area, stop log, etc.)
 - [ ] Expose primitives / internals for advanced use cases
 - [ ] Add more problem detections other than props
 - [ ] Simple FPS counter
