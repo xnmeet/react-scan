@@ -14,7 +14,6 @@ import {
   registerDevtoolsHook,
   getType,
   traverseFiber,
-  didFiberRender,
 } from './fiber';
 import type { Outline, ScanOptions, WithScanOptions } from './types';
 import { isInIframe, isProd } from './utils';
@@ -29,7 +28,6 @@ const DEFAULT_OPTIONS: ScanOptions & WithScanOptions = {
 let currentOptions: ScanOptions & WithScanOptions = DEFAULT_OPTIONS;
 export const getCurrentOptions = () => currentOptions;
 let allowList: Map<ComponentType<any>, WithScanOptions> | null = null;
-const trackedFibers = new WeakMap<Fiber, number | undefined>();
 
 let inited = false;
 
@@ -84,23 +82,9 @@ export const scan = (
     let totalCount = 0;
 
     const handleFiber = (fiber: Fiber) => {
-      if (!didFiberRender(fiber)) return null;
-
       const outline = getOutline(fiber);
       if (!outline) return null;
-      if (trackedFibers.has(fiber)) {
-        const startTime = trackedFibers.get(fiber);
-        if (
-          // eslint-disable-next-line eqeqeq
-          startTime != null &&
-          // eslint-disable-next-line eqeqeq
-          fiber.actualStartTime != null &&
-          startTime > fiber.actualStartTime
-        ) {
-          return null;
-        }
-      }
-      trackedFibers.set(fiber, fiber.actualStartTime);
+
       const shouldScan =
         allowList?.has(fiber.type) ?? allowList?.has(fiber.elementType);
 
@@ -120,17 +104,17 @@ export const scan = (
       return outline;
     };
 
-    if (root.memoizedUpdaters) {
-      for (const updaterFiber of root.memoizedUpdaters) {
-        const outline = handleFiber(updaterFiber);
-        if (outline) {
-          outline.trigger = true;
-          traverseFiber(updaterFiber, (fiber) => {
-            handleFiber(fiber);
-          });
-        }
-      }
-    }
+    // if (root.memoizedUpdaters) {
+    //   for (const updaterFiber of root.memoizedUpdaters) {
+    //     const outline = handleFiber(updaterFiber);
+    //     if (outline) {
+    //       outline.trigger = true;
+    //       // traverseFiber(updaterFiber, (fiber) => {
+    //       //   handleFiber(fiber);
+    //       // });
+    //     }
+    //   }
+    // }
 
     traverseFiber(root.current, (fiber) => {
       handleFiber(fiber);
@@ -163,6 +147,6 @@ export const scan = (
     }
   };
   registerDevtoolsHook({
-    onCommitFiberRoot: onCommitFiberRoot,
+    onCommitFiberRoot,
   });
 };

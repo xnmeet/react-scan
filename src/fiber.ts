@@ -9,13 +9,32 @@ import {
   ForwardRefTag,
   MemoComponentTag,
   SimpleMemoComponentTag,
+  HostSingletonTag,
+  HostHoistableTag,
+  HostComponentTag,
 } from './constants';
 
+const seenProps = new WeakMap<any, boolean>();
+
+export const isHostComponent = (fiber: Fiber) =>
+  fiber.tag === HostComponentTag ||
+  // @ts-expect-error: it exists
+  fiber.tag === HostHoistableTag ||
+  // @ts-expect-error: it exists
+  fiber.tag === HostSingletonTag;
+
 export const didFiberRender = (fiber: Fiber) => {
+  let nextProps = fiber.memoizedProps;
+  if (!nextProps) return true;
+  if (seenProps.has(nextProps)) return false;
+  if (nextProps && typeof nextProps === 'object') {
+    seenProps.set(nextProps, true);
+  }
+
+  nextProps ??= {};
+
   const prevProps = fiber.alternate?.memoizedProps || {};
-  const nextProps = fiber.memoizedProps || {};
   const flags = fiber.flags ?? (fiber as any).effectTag ?? 0;
-  const didPerformWork = (flags & PerformedWorkFlag) === PerformedWorkFlag;
 
   switch (fiber.tag) {
     case ClassComponentTag:
@@ -24,7 +43,10 @@ export const didFiberRender = (fiber: Fiber) => {
     case ForwardRefTag:
     case MemoComponentTag:
     case SimpleMemoComponentTag:
-      return didPerformWork;
+      return (
+        (flags & PerformedWorkFlag) === PerformedWorkFlag &&
+        (fiber.subtreeFlags & PerformedWorkFlag) === PerformedWorkFlag
+      );
     default:
       return (
         prevProps !== nextProps ||

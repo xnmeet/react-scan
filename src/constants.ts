@@ -12,6 +12,9 @@ export const ContextConsumerTag = 9;
 export const ForwardRefTag = 11;
 export const MemoComponentTag = 14;
 export const SimpleMemoComponentTag = 15;
+export const HostComponentTag = 5;
+export const HostHoistableTag = 26;
+export const HostSingletonTag = 27;
 
 export const DEFAULT_OPTIONS: ScanOptions & WithScanOptions = {
   enabled: true,

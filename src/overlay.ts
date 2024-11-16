@@ -1,9 +1,11 @@
 import { type Fiber } from 'react-reconciler';
 import * as React from 'react';
 import {
+  didFiberRender,
   getDisplayName,
   getTimings,
   getType,
+  isHostComponent,
   traverseFiberUntil,
 } from './fiber';
 import type {
@@ -55,9 +57,8 @@ export const mergeOutlines = (outlines: Outline[]) => {
 export const getOutline = (fiber: Fiber): Outline | null => {
   if (isPaused) return null;
   const type = getType(fiber.type);
-  // console.log('pre-type', fiber, type);
   if (!type) return null;
-  // console.log('post-type');
+  if (!didFiberRender(fiber)) return null;
 
   const changedProps: ChangedProp[] = [];
   const unstableTypes = ['function', 'object'];
@@ -92,7 +93,9 @@ export const getOutline = (fiber: Fiber): Outline | null => {
     if (
       !unstableTypes.includes(typeof prevValue) ||
       !unstableTypes.includes(typeof nextValue) ||
-      prevValueString !== nextValueString
+      prevValueString !== nextValueString ||
+      !prevProps ||
+      !nextProps
     ) {
       continue;
     }
@@ -104,21 +107,11 @@ export const getOutline = (fiber: Fiber): Outline | null => {
   // they're memoized, which is caught by didFiberRender
   // if (!changedProps.length) return null;
 
-  let domFiber = traverseFiberUntil(
-    fiber,
-    (node) => typeof node.type === 'string',
-    true,
-  );
+  let domFiber = traverseFiberUntil(fiber, isHostComponent);
   if (!domFiber) {
-    domFiber = traverseFiberUntil(
-      fiber,
-      (node) => typeof node.type === 'string',
-      true,
-    );
+    domFiber = traverseFiberUntil(fiber, isHostComponent, true);
   }
-  // console.log('pre-dom');
   if (!domFiber) return null;
-  // console.log('post-dom');
 
   const domNode = domFiber.stateNode;
 
