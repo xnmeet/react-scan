@@ -9,7 +9,13 @@ import {
   setPendingOutlines,
 } from './overlay';
 import { MONO_FONT } from './constants';
-import { traverseFiber, registerDevtoolsHook, getType } from './fiber';
+import {
+  traverseFiberUntil,
+  registerDevtoolsHook,
+  getType,
+  traverseFiber,
+  getFiberRenderInfo,
+} from './fiber';
 import type { Outline, ScanOptions, WithScanOptions } from './types';
 import { isInIframe, isProd } from './utils';
 
@@ -50,6 +56,8 @@ if (typeof window !== 'undefined') {
   });
 }
 
+const SKIP_SUBTREE = 'SKIP_SUBTREE';
+
 export const scan = (
   options: ScanOptions & WithScanOptions = DEFAULT_OPTIONS,
 ) => {
@@ -78,7 +86,15 @@ export const scan = (
     let totalCount = 0;
 
     const handleFiber = (fiber: Fiber) => {
+      // console.log('pre-fiber');
+      const renderInfo = getFiberRenderInfo(fiber);
+      if (!fiber || !renderInfo.didRender) {
+        return renderInfo.type === 'memo' ? SKIP_SUBTREE : null;
+      }
+      // console.log('post-fiber');
+
       const outline = getOutline(fiber);
+      // console.log('outline', outline);
       if (!outline) return null;
       if (trackedFibers.has(fiber)) {
         const startTime = trackedFibers.get(fiber);
@@ -97,7 +113,7 @@ export const scan = (
         allowList?.has(fiber.type) ?? allowList?.has(fiber.elementType);
 
       if (allowList) {
-        const parent = traverseFiber(
+        const parent = traverseFiberUntil(
           fiber,
           (node) => {
             const options =
@@ -113,14 +129,19 @@ export const scan = (
     };
 
     if (root.memoizedUpdaters) {
-      for (const fiber of root.memoizedUpdaters) {
-        const outline = handleFiber(fiber);
-        if (outline) outline.trigger = true;
+      for (const updaterFiber of root.memoizedUpdaters) {
+        const outline = handleFiber(updaterFiber);
+        if (outline && outline !== SKIP_SUBTREE) {
+          outline.trigger = true;
+          traverseFiber(updaterFiber, (fiber) => {
+            if (handleFiber(fiber) === SKIP_SUBTREE) return true;
+          });
+        }
       }
     }
 
     traverseFiber(root.current, (fiber) => {
-      handleFiber(fiber);
+      if (handleFiber(fiber) === SKIP_SUBTREE) return true;
     });
 
     const nextPendingOutlines = setPendingOutlines([
@@ -145,7 +166,8 @@ export const scan = (
     try {
       handleCommitFiberRoot(_rendererID, root);
     } catch (err) {
-      // console.error(err);
+      // eslint-disable-next-line no-console
+      console.error(err);
     }
   };
   registerDevtoolsHook({

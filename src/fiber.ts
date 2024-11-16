@@ -10,46 +10,72 @@ const ForwardRefTag = 11;
 const MemoComponentTag = 14;
 const SimpleMemoComponentTag = 15;
 
-export const didFiberRender = (fiber: Fiber | null): boolean => {
-  if (!fiber) return true; // mount (probably)
+export const getFiberRenderInfo = (
+  fiber: Fiber,
+): {
+  didRender: boolean;
+  type: string | null;
+} => {
   const prevProps = fiber.alternate?.memoizedProps || {};
   const nextProps = fiber.memoizedProps || {};
   const flags = fiber.flags ?? (fiber as any).effectTag ?? 0;
   const didPerformWork = (flags & PerformedWorkFlag) === PerformedWorkFlag;
+
+  let type: string | null = null;
+  let didRender = false;
 
   switch (fiber.tag) {
     case ClassComponentTag:
     case FunctionComponentTag:
     case ContextConsumerTag:
     case ForwardRefTag:
-      return didPerformWork;
+      didRender = didPerformWork;
+      break;
     case MemoComponentTag:
     case SimpleMemoComponentTag:
+      type = 'memo';
       if (typeof fiber.type.compare === 'function') {
-        // memo(Component, (p, n) => ...) / MemoComponent
-        return !fiber.type.compare(prevProps, nextProps);
+        didRender = !fiber.type.compare(prevProps, nextProps);
       }
       // compare == null for normal memo(Component) / SimpleMemoComponent
       if (prevProps && typeof prevProps === 'object') {
         for (const key in { ...prevProps, ...nextProps }) {
           if (!Object.is(prevProps[key], nextProps[key])) {
-            return true;
+            didRender = true;
+            break;
           }
         }
       }
-      return didPerformWork;
+      break;
     default:
       // Host nodes (DOM, root, etc.)
-      if (!fiber.alternate) return true;
-      return (
+      if (!fiber.alternate) {
+        didRender = true;
+        break;
+      }
+      didRender =
         prevProps !== nextProps ||
         fiber.alternate.memoizedState !== fiber.memoizedState ||
-        fiber.alternate.ref !== fiber.ref
-      );
+        fiber.alternate.ref !== fiber.ref;
+      break;
   }
+
+  return { didRender, type };
 };
 
 export const traverseFiber = (
+  fiber: Fiber | null,
+  // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  selector: (node: Fiber) => boolean | void,
+): void => {
+  if (!fiber) return;
+  if (!selector(fiber)) {
+    traverseFiber(fiber.child, selector);
+  }
+  traverseFiber(fiber.sibling, selector);
+};
+
+export const traverseFiberUntil = (
   fiber: Fiber | null,
   // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   selector: (node: Fiber) => boolean | void,
@@ -60,7 +86,7 @@ export const traverseFiber = (
 
   let child = ascending ? fiber.return : fiber.child;
   while (child) {
-    const match = traverseFiber(child, selector, ascending);
+    const match = traverseFiberUntil(child, selector, ascending);
     if (match) return match;
 
     child = ascending ? null : child.sibling;
