@@ -14,7 +14,7 @@ import {
   registerDevtoolsHook,
   getType,
   traverseFiber,
-  getFiberRenderInfo,
+  didFiberRender,
 } from './fiber';
 import type { Outline, ScanOptions, WithScanOptions } from './types';
 import { isInIframe, isProd } from './utils';
@@ -56,8 +56,6 @@ if (typeof window !== 'undefined') {
   });
 }
 
-const SKIP_SUBTREE = 'SKIP_SUBTREE';
-
 export const scan = (
   options: ScanOptions & WithScanOptions = DEFAULT_OPTIONS,
 ) => {
@@ -86,15 +84,9 @@ export const scan = (
     let totalCount = 0;
 
     const handleFiber = (fiber: Fiber) => {
-      // console.log('pre-fiber');
-      const renderInfo = getFiberRenderInfo(fiber);
-      if (!fiber || !renderInfo.didRender) {
-        return renderInfo.type === 'memo' ? SKIP_SUBTREE : null;
-      }
-      // console.log('post-fiber');
+      if (!didFiberRender(fiber)) return null;
 
       const outline = getOutline(fiber);
-      // console.log('outline', outline);
       if (!outline) return null;
       if (trackedFibers.has(fiber)) {
         const startTime = trackedFibers.get(fiber);
@@ -131,17 +123,17 @@ export const scan = (
     if (root.memoizedUpdaters) {
       for (const updaterFiber of root.memoizedUpdaters) {
         const outline = handleFiber(updaterFiber);
-        if (outline && outline !== SKIP_SUBTREE) {
+        if (outline) {
           outline.trigger = true;
           traverseFiber(updaterFiber, (fiber) => {
-            if (handleFiber(fiber) === SKIP_SUBTREE) return true;
+            handleFiber(fiber);
           });
         }
       }
     }
 
     traverseFiber(root.current, (fiber) => {
-      if (handleFiber(fiber) === SKIP_SUBTREE) return true;
+      handleFiber(fiber);
     });
 
     const nextPendingOutlines = setPendingOutlines([

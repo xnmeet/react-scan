@@ -1,66 +1,37 @@
 import type { Fiber, FiberRoot } from 'react-reconciler';
 import { NO_OP } from './utils';
 import type { Renderer } from './types';
+import {
+  PerformedWorkFlag,
+  ClassComponentTag,
+  FunctionComponentTag,
+  ContextConsumerTag,
+  ForwardRefTag,
+  MemoComponentTag,
+  SimpleMemoComponentTag,
+} from './constants';
 
-const PerformedWorkFlag = 0b01;
-const ClassComponentTag = 1;
-const FunctionComponentTag = 0;
-const ContextConsumerTag = 9;
-const ForwardRefTag = 11;
-const MemoComponentTag = 14;
-const SimpleMemoComponentTag = 15;
-
-export const getFiberRenderInfo = (
-  fiber: Fiber,
-): {
-  didRender: boolean;
-  type: string | null;
-} => {
+export const didFiberRender = (fiber: Fiber) => {
   const prevProps = fiber.alternate?.memoizedProps || {};
   const nextProps = fiber.memoizedProps || {};
   const flags = fiber.flags ?? (fiber as any).effectTag ?? 0;
   const didPerformWork = (flags & PerformedWorkFlag) === PerformedWorkFlag;
-
-  let type: string | null = null;
-  let didRender = false;
 
   switch (fiber.tag) {
     case ClassComponentTag:
     case FunctionComponentTag:
     case ContextConsumerTag:
     case ForwardRefTag:
-      didRender = didPerformWork;
-      break;
     case MemoComponentTag:
     case SimpleMemoComponentTag:
-      type = 'memo';
-      if (typeof fiber.type.compare === 'function') {
-        didRender = !fiber.type.compare(prevProps, nextProps);
-      }
-      // compare == null for normal memo(Component) / SimpleMemoComponent
-      if (prevProps && typeof prevProps === 'object') {
-        for (const key in { ...prevProps, ...nextProps }) {
-          if (!Object.is(prevProps[key], nextProps[key])) {
-            didRender = true;
-            break;
-          }
-        }
-      }
-      break;
+      return didPerformWork;
     default:
-      // Host nodes (DOM, root, etc.)
-      if (!fiber.alternate) {
-        didRender = true;
-        break;
-      }
-      didRender =
+      return (
         prevProps !== nextProps ||
-        fiber.alternate.memoizedState !== fiber.memoizedState ||
-        fiber.alternate.ref !== fiber.ref;
-      break;
+        fiber.alternate?.memoizedState !== fiber.memoizedState ||
+        fiber.alternate?.ref !== fiber.ref
+      );
   }
-
-  return { didRender, type };
 };
 
 export const traverseFiber = (
