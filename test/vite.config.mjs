@@ -22,10 +22,7 @@ export default defineConfig({
               __dirname,
               '../dist/index.mjs',
             ),
-            'react-scan': path.resolve(
-              __dirname,
-              '../dist/index.mjs',
-            ),
+            'react-scan': path.resolve(__dirname, '../dist/index.mjs'),
           },
         },
 });

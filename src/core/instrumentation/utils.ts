@@ -1,17 +1,4 @@
 import * as React from 'react';
-import { getDisplayName } from './fiber';
-
-export const onIdle = (callback: () => void) => {
-  if ('scheduler' in globalThis) {
-    return globalThis.scheduler.postTask(callback, {
-      priority: 'background',
-    });
-  }
-  if ('requestIdleCallback' in window) {
-    return requestIdleCallback(callback);
-  }
-  return setTimeout(callback, 0);
-};
 
 export const fastSerialize = (value: unknown) => {
   switch (typeof value) {
@@ -64,19 +51,19 @@ export const fastSerialize = (value: unknown) => {
   }
 };
 
-export const isInIframe = () => {
-  try {
-    return window.self !== window.top;
-  } catch (_err) {
-    return true;
+export const getType = (type: any) => {
+  if (typeof type === 'function') {
+    return type;
   }
+  if (typeof type === 'object' && type) {
+    // memo / forwardRef case
+    return getType(type.type || type.render);
+  }
+  return null;
 };
 
-const tempDivElement = React.createElement('div');
-export const isProd = () => {
-  return '_self' in tempDivElement;
-};
-
-export const NO_OP = () => {
-  /**/
+export const getDisplayName = (type: any): string | null => {
+  type = getType(type);
+  if (!type) return null;
+  return type.displayName || type.name || null;
 };
