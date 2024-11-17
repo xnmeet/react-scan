@@ -16,6 +16,7 @@ declare global {
     __REACT_SCAN__?: {
       ReactScanInternals: typeof ReactScanInternals;
     };
+    reactScan: any;
     __REACT_DEVTOOLS_GLOBAL_HOOK__?: {
       checkDCE: typeof NO_OP;
       supportsFiber: boolean;

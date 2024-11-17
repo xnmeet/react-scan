@@ -1,6 +1,6 @@
 import type { FiberRoot } from 'react-reconciler';
 import * as React from 'react';
-import { instrument } from './instrumentation';
+import { instrument } from './instrumentation/index';
 import {
   type ActiveOutline,
   flushOutlines,
@@ -10,6 +10,7 @@ import {
 import { createCanvas } from './web/index';
 import { logIntro } from './web/log';
 import { createStatus } from './web/toolbar';
+import { playGeigerClickSound } from './web/geiger';
 
 interface Options {
   /**
@@ -31,6 +32,13 @@ interface Options {
    * @default false
    */
   runInProduction?: boolean;
+
+  /**
+   * Enable/disable geiger sound
+   *
+   * @default true
+   */
+  playSound?: boolean;
 
   /**
    * Log renders to the console
@@ -76,6 +84,7 @@ export const ReactScanInternals: Internals = {
     includeChildren: true,
     runInProduction: false,
     log: false,
+    playSound: false,
   },
   scheduledOutlines: [],
   activeOutlines: [],
@@ -97,8 +106,19 @@ export const start = () => {
   inited = true;
   const ctx = createCanvas();
   const status = createStatus();
+  const audioContext =
+    typeof window !== 'undefined'
+      ? new (window.AudioContext ||
+          // @ts-expect-error -- This is a fallback for Safari
+          window.webkitAudioContext)()
+      : null;
+
   if (!ctx) return;
   logIntro();
+
+  globalThis.__REACT_SCAN__ = {
+    ReactScanInternals,
+  };
 
   const { options } = ReactScanInternals;
   instrument({
@@ -109,6 +129,15 @@ export const start = () => {
       const outline = getOutline(fiber, render);
       if (outline) {
         ReactScanInternals.scheduledOutlines.push(outline);
+      }
+
+      if (options.playSound && audioContext) {
+        const renderTimeThreshold = 10;
+        const amplitude = Math.min(
+          1,
+          (render.time - renderTimeThreshold) / (renderTimeThreshold * 2),
+        );
+        playGeigerClickSound(audioContext, amplitude);
       }
 
       requestAnimationFrame(() => {

@@ -1,7 +1,7 @@
 import { type Fiber } from 'react-reconciler';
 import { getNearestHostFiber } from '../instrumentation/fiber';
-import type { Render } from '../instrumentation';
-import { ReactScanInternals } from '..';
+import type { Render } from '../instrumentation/index';
+import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';

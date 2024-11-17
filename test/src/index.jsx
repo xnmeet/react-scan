@@ -8,6 +8,7 @@ scan({
   enabled: true,
   // log: true,
   // clearLog: true,
+  // playSound: true,
   runInProduction: true,
 });
 

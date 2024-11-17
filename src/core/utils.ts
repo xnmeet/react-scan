@@ -1,4 +1,4 @@
-import { type Render } from './instrumentation';
+import type { Render } from './instrumentation/index';
 
 export const NO_OP = () => {
   /**/
