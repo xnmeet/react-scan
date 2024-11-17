@@ -47,8 +47,7 @@ export interface Render {
 const unstableTypes = ['function', 'object'];
 
 export const getPropsRender = (fiber: Fiber): Render | null => {
-  if (!fiber || !didFiberRender(fiber) || ReactScanInternals.isPaused)
-    return null;
+  if (!fiber || !didFiberRender(fiber)) return null;
   const type = getType(fiber.type);
   if (!type) return null;
 
@@ -101,19 +100,18 @@ export const getPropsRender = (fiber: Fiber): Render | null => {
   };
 };
 
-let inited = false;
-
-export const monitor = (
-  onMonitorStart: () => void,
-  onRender: (fiber: Fiber, render: Render) => void,
-  onMonitorFinish: () => void,
-) => {
-  if (inited) return;
-  inited = true;
-
+export const instrument = ({
+  onCommitStart,
+  onRender,
+  onCommitFinish,
+}: {
+  onCommitStart: () => void;
+  onRender: (fiber: Fiber, render: Render) => void;
+  onCommitFinish: () => void;
+}) => {
   const handleCommitFiberRoot = (_rendererID: number, root: FiberRoot) => {
     if (ReactScanInternals.isPaused) return;
-    onMonitorStart();
+    onCommitStart();
 
     const handleFiber = (fiber: Fiber, trigger: boolean) => {
       const render = getPropsRender(fiber);
@@ -136,6 +134,8 @@ export const monitor = (
         );
         if (!parent && !shouldAllow) return null;
       }
+
+      return render;
     };
 
     if (root.memoizedUpdaters) {
@@ -150,7 +150,7 @@ export const monitor = (
       if (render) onRender(fiber, render);
     });
 
-    onMonitorFinish();
+    onCommitFinish();
   };
 
   ReactScanInternals.onCommitFiberRoot = (

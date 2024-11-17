@@ -8,7 +8,7 @@ scan({
   enabled: true,
   // log: true,
   // clearLog: true,
-  production: true,
+  runInProduction: true,
 });
 
 const copyToClipboard = (text) => {

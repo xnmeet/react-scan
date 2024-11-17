@@ -1,7 +1,8 @@
+import './core/instrumentation/placeholder';
 import { scan } from './index';
 
 if (typeof window !== 'undefined') {
-  scan({ production: true });
+  scan({ runInProduction: true });
   window.reactScan = scan;
 }
 

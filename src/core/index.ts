@@ -1,7 +1,15 @@
-import type { Fiber, FiberRoot } from 'react-reconciler';
+import type { FiberRoot } from 'react-reconciler';
 import * as React from 'react';
-import { registerDevtoolsHook } from './monitor/fiber';
-import { type Render, monitor } from './monitor';
+import { instrument } from './instrumentation';
+import {
+  type ActiveOutline,
+  flushOutlines,
+  getOutline,
+  type PendingOutline,
+} from './web/outline';
+import { createCanvas } from './web/index';
+import { logIntro } from './web/log';
+import { createStatus } from './web/toolbar';
 
 interface Options {
   /**
@@ -17,8 +25,22 @@ interface Options {
    */
   includeChildren?: boolean;
 
-  onMonitorStart?: () => void;
-  onMonitorFinish?: () => void;
+  /**
+   * Run in production
+   *
+   * @default false
+   */
+  runInProduction?: boolean;
+
+  /**
+   * Log renders to the console
+   *
+   * @default false
+   */
+  log?: boolean;
+
+  onCommitStart?: () => void;
+  onCommitFinish?: () => void;
   onPause?: () => void;
   onResume?: () => void;
   onPaintStart?: () => void;
@@ -32,32 +54,32 @@ interface Internals {
   isPaused: boolean;
   componentAllowList: WeakMap<React.ComponentType<any>, Options> | null;
   options: Options;
-  renders: Render[];
+  scheduledOutlines: PendingOutline[];
+  activeOutlines: ActiveOutline[];
 }
 
 export const ReactScanInternals: Internals = {
   onCommitFiberRoot: (_rendererID: number, _root: FiberRoot): void => {
     /**/
   },
-  isProd: '_self' in React.createElement('div'),
+  get isProd() {
+    return (
+      '_self' in React.createElement('div') &&
+      !ReactScanInternals.options.runInProduction
+    );
+  },
   isInIframe: window.self !== window.top,
   isPaused: false,
   componentAllowList: null,
   options: {
     enabled: true,
     includeChildren: true,
+    runInProduction: false,
+    log: false,
   },
-  renders: [],
+  scheduledOutlines: [],
+  activeOutlines: [],
 };
-
-if (typeof window !== 'undefined') {
-  window.__REACT_SCAN__ = { ReactScanInternals };
-  registerDevtoolsHook({
-    onCommitFiberRoot: (rendererID, root) => {
-      ReactScanInternals.onCommitFiberRoot(rendererID, root);
-    },
-  });
-}
 
 export const setOptions = (options: Options) => {
   ReactScanInternals.options = {
@@ -68,35 +90,35 @@ export const setOptions = (options: Options) => {
 
 export const getOptions = () => ReactScanInternals.options;
 
-export const log = (fiber: Fiber, render: Render) => {
-  let prevChangedProps: Record<string, any> | null = null;
-  let nextChangedProps: Record<string, any> | null = null;
+let inited = false;
 
-  if (render.changes) {
-    for (let i = 0, len = render.changes.length; i < len; i++) {
-      const { name, prevValue, nextValue, unstable } = render.changes[i];
-      if (!unstable) continue;
-      prevChangedProps ??= {};
-      nextChangedProps ??= {};
-      prevChangedProps[`${name} (prev)`] = prevValue;
-      nextChangedProps[`${name} (next)`] = nextValue;
-    }
-  }
-};
+export const start = () => {
+  if (inited) return;
+  inited = true;
+  const ctx = createCanvas();
+  const status = createStatus();
+  if (!ctx) return;
+  logIntro();
 
-export const handleMonitor = () => {
   const { options } = ReactScanInternals;
-  monitor(
-    () => {
-      options.onMonitorStart?.();
+  instrument({
+    onCommitStart() {
+      options.onCommitStart?.();
     },
-    (fiber, render) => {
-      ReactScanInternals.renders.push(render);
+    onRender(fiber, render) {
+      const outline = getOutline(fiber, render);
+      if (outline) {
+        ReactScanInternals.scheduledOutlines.push(outline);
+      }
+
+      requestAnimationFrame(() => {
+        flushOutlines(ctx, new Map(), status);
+      });
     },
-    () => {
-      options.onMonitorFinish?.();
+    onCommitFinish() {
+      options.onCommitFinish?.();
     },
-  );
+  });
 };
 
 export const withScan = <T>(
@@ -116,7 +138,7 @@ export const withScan = <T>(
     componentAllowList.set(component, { ...options });
   }
 
-  handleMonitor();
+  start();
 
   return component;
 };
@@ -126,5 +148,5 @@ export const scan = (options: Options = {}) => {
   const { isInIframe, isProd } = ReactScanInternals;
   if (isInIframe || isProd || options.enabled === false) return;
 
-  handleMonitor();
+  start();
 };
