@@ -37,6 +37,7 @@ export interface Change {
 }
 
 export interface Render {
+  type: 'props' | 'context';
   name: string | null;
   time: number;
   count: number;
@@ -48,7 +49,6 @@ export interface Render {
 const unstableTypes = ['function', 'object'];
 
 export const getPropsRender = (fiber: Fiber): Render | null => {
-  if (!fiber || !didFiberRender(fiber)) return null;
   const type = getType(fiber.type);
   if (!type) return null;
 
@@ -92,10 +92,76 @@ export const getPropsRender = (fiber: Fiber): Render | null => {
   }
 
   return {
+    type: 'props',
     count: 1,
     trigger: false,
     changes,
-    name: getDisplayName(fiber.type),
+    name: getDisplayName(type),
+    time: getSelfTime(fiber),
+    forget: hasMemoCache(fiber),
+  };
+};
+
+export const getContextRender = (fiber: Fiber): Render | null => {
+  const type = getType(fiber.type);
+  if (!type) return null;
+
+  const nextDependencies = fiber.dependencies;
+  const prevDependencies = fiber.alternate?.dependencies;
+
+  const changes: Change[] = [];
+
+  if (!nextDependencies || !prevDependencies) return null;
+  if (
+    typeof nextDependencies !== 'object' ||
+    !('firstContext' in nextDependencies) ||
+    typeof prevDependencies !== 'object' ||
+    !('firstContext' in prevDependencies)
+  ) {
+    return null;
+  }
+  let nextContext = nextDependencies.firstContext;
+  let prevContext = prevDependencies.firstContext;
+  while (
+    nextContext &&
+    typeof nextContext === 'object' &&
+    'memoizedValue' in nextContext &&
+    prevContext &&
+    typeof prevContext === 'object' &&
+    'memoizedValue' in prevContext
+  ) {
+    const nextValue = nextContext.memoizedValue;
+    const prevValue = prevContext.memoizedValue;
+
+    const change: Change = {
+      name: '$$context',
+      prevValue,
+      nextValue,
+      unstable: false,
+    };
+    changes.push(change);
+
+    const prevValueString = fastSerialize(prevValue);
+    const nextValueString = fastSerialize(nextValue);
+
+    if (
+      unstableTypes.includes(typeof prevValue) &&
+      unstableTypes.includes(typeof nextValue) &&
+      prevValueString === nextValueString
+    ) {
+      change.unstable = true;
+    }
+
+    nextContext = nextContext.next;
+    prevContext = prevContext.next;
+  }
+
+  return {
+    type: 'context',
+    count: 1,
+    trigger: false,
+    changes,
+    name: getDisplayName(type),
     time: getSelfTime(fiber),
     forget: hasMemoCache(fiber),
   };
@@ -115,9 +181,10 @@ export const instrument = ({
     onCommitStart();
 
     const handleFiber = (fiber: Fiber, trigger: boolean) => {
-      const render = getPropsRender(fiber);
-      if (!render) return null;
-      render.trigger = trigger;
+      if (!fiber || !didFiberRender(fiber)) return null;
+      const propsRender = getPropsRender(fiber);
+      const contextRender = getContextRender(fiber);
+      if (!propsRender && !contextRender) return null;
 
       const allowList = ReactScanInternals.componentAllowList;
       const shouldAllow =
@@ -136,19 +203,24 @@ export const instrument = ({
         if (!parent && !shouldAllow) return null;
       }
 
-      return render;
+      if (propsRender) {
+        propsRender.trigger = trigger;
+        onRender(fiber, propsRender);
+      }
+      if (contextRender) {
+        contextRender.trigger = trigger;
+        onRender(fiber, contextRender);
+      }
     };
 
     if (root.memoizedUpdaters) {
       for (const fiber of root.memoizedUpdaters) {
-        const render = handleFiber(fiber, true);
-        if (render) onRender(fiber, render);
+        handleFiber(fiber, true);
       }
     }
 
     traverseFiber(root.current, (fiber) => {
-      const render = handleFiber(fiber, false);
-      if (render) onRender(fiber, render);
+      handleFiber(fiber, false);
     });
 
     onCommitFinish();

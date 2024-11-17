@@ -1,6 +1,6 @@
-import type { FiberRoot } from 'react-reconciler';
+import type { Fiber, FiberRoot } from 'react-reconciler';
 import * as React from 'react';
-import { instrument } from './instrumentation/index';
+import { instrument, type Render } from './instrumentation/index';
 import {
   type ActiveOutline,
   flushOutlines,
@@ -9,7 +9,7 @@ import {
 } from './web/outline';
 import { createCanvas } from './web/index';
 import { logIntro } from './web/log';
-import { createStatus } from './web/toolbar';
+import { createToolbar } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
 
 interface Options {
@@ -47,12 +47,18 @@ interface Options {
    */
   log?: boolean;
 
+  /**
+   * Show toolbar bar
+   *
+   * @default true
+   */
+  showToolbar?: boolean;
+
   onCommitStart?: () => void;
+  onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
-  onPause?: () => void;
-  onResume?: () => void;
-  onPaintStart?: () => void;
-  onPaintFinish?: () => void;
+  onPaintStart?: (outline: PendingOutline) => void;
+  onPaintFinish?: (outline: PendingOutline) => void;
 }
 
 interface Internals {
@@ -85,6 +91,7 @@ export const ReactScanInternals: Internals = {
     runInProduction: false,
     log: false,
     playSound: false,
+    showToolbar: true,
   },
   scheduledOutlines: [],
   activeOutlines: [],
@@ -104,8 +111,9 @@ let inited = false;
 export const start = () => {
   if (inited) return;
   inited = true;
+  const { options } = ReactScanInternals;
   const ctx = createCanvas();
-  const status = createStatus();
+  const toolbar = options.showToolbar ? createToolbar() : null;
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
@@ -120,12 +128,12 @@ export const start = () => {
     ReactScanInternals,
   };
 
-  const { options } = ReactScanInternals;
   instrument({
     onCommitStart() {
       options.onCommitStart?.();
     },
     onRender(fiber, render) {
+      options.onRender?.(fiber, render);
       const outline = getOutline(fiber, render);
       if (outline) {
         ReactScanInternals.scheduledOutlines.push(outline);
@@ -141,7 +149,7 @@ export const start = () => {
       }
 
       requestAnimationFrame(() => {
-        flushOutlines(ctx, new Map(), status);
+        flushOutlines(ctx, new Map(), toolbar);
       });
     },
     onCommitFinish() {

@@ -134,7 +134,7 @@ export const recalcOutlines = throttle(() => {
 export const flushOutlines = (
   ctx: CanvasRenderingContext2D,
   previousOutlines: Map<string, PendingOutline> = new Map(),
-  status: HTMLElement | null = null,
+  toolbar: HTMLElement | null = null,
 ) => {
   if (!ReactScanInternals.scheduledOutlines.length) {
     return;
@@ -153,7 +153,7 @@ export const flushOutlines = (
 
       const newPreviousOutlines = new Map<string, PendingOutline>();
 
-      if (status) {
+      if (toolbar) {
         let totalCount = 0;
         let totalTime = 0;
 
@@ -168,7 +168,7 @@ export const flushOutlines = (
 
         let text = `×${totalCount}`;
         if (totalTime > 0) text += ` (${totalTime.toFixed(2)}ms)`;
-        status.textContent = `${text} · react-scan`;
+        toolbar.textContent = `${text} · react-scan`;
       }
 
       await Promise.all(
@@ -182,7 +182,7 @@ export const flushOutlines = (
         }),
       );
       if (ReactScanInternals.scheduledOutlines.length) {
-        flushOutlines(ctx, newPreviousOutlines, status);
+        flushOutlines(ctx, newPreviousOutlines, toolbar);
       }
     })();
   });
@@ -204,11 +204,9 @@ export const paintOutline = (
     const text: string | null = getLabelText(outline.renders);
 
     const { options } = ReactScanInternals;
+    options.onPaintStart?.(outline);
     if (options.log) {
-      for (let i = 0, len = outline.renders.length; i < len; i++) {
-        const render = outline.renders[i];
-        log(render);
-      }
+      log(outline.renders);
     }
 
     ReactScanInternals.activeOutlines.push({
@@ -216,7 +214,10 @@ export const paintOutline = (
       alpha,
       frame,
       totalFrames,
-      resolve,
+      resolve: () => {
+        resolve();
+        options.onPaintFinish?.(outline);
+      },
       text,
     });
 
