@@ -8,6 +8,7 @@ import {
   getSelfTime,
   hasMemoCache,
   registerDevtoolsHook,
+  traverseContexts,
   traverseFiber,
 } from './fiber';
 
@@ -48,10 +49,8 @@ export interface Render {
 
 const unstableTypes = ['function', 'object'];
 
-export const getPropsRender = (fiber: Fiber): Render | null => {
-  const type = getType(fiber.type);
-  if (!type) return null;
-
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const getPropsRender = (fiber: Fiber, type: Function): Render | null => {
   const changes: Change[] = [];
 
   const prevProps = fiber.alternate?.memoizedProps;
@@ -102,39 +101,19 @@ export const getPropsRender = (fiber: Fiber): Render | null => {
   };
 };
 
-export const getContextRender = (fiber: Fiber): Render | null => {
-  const type = getType(fiber.type);
-  if (!type) return null;
-
-  const nextDependencies = fiber.dependencies;
-  const prevDependencies = fiber.alternate?.dependencies;
-
+export const getContextRender = (
+  fiber: Fiber,
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  type: Function,
+): Render | null => {
   const changes: Change[] = [];
 
-  if (!nextDependencies || !prevDependencies) return null;
-  if (
-    typeof nextDependencies !== 'object' ||
-    !('firstContext' in nextDependencies) ||
-    typeof prevDependencies !== 'object' ||
-    !('firstContext' in prevDependencies)
-  ) {
-    return null;
-  }
-  let nextContext = nextDependencies.firstContext;
-  let prevContext = prevDependencies.firstContext;
-  while (
-    nextContext &&
-    typeof nextContext === 'object' &&
-    'memoizedValue' in nextContext &&
-    prevContext &&
-    typeof prevContext === 'object' &&
-    'memoizedValue' in prevContext
-  ) {
-    const nextValue = nextContext.memoizedValue;
+  const result = traverseContexts(fiber, (prevContext, nextContext) => {
     const prevValue = prevContext.memoizedValue;
+    const nextValue = nextContext.memoizedValue;
 
     const change: Change = {
-      name: '$$context',
+      name: '',
       prevValue,
       nextValue,
       unstable: false,
@@ -151,10 +130,9 @@ export const getContextRender = (fiber: Fiber): Render | null => {
     ) {
       change.unstable = true;
     }
+  });
 
-    nextContext = nextContext.next;
-    prevContext = prevContext.next;
-  }
+  if (!result) return null;
 
   return {
     type: 'context',
@@ -181,9 +159,11 @@ export const instrument = ({
     onCommitStart();
 
     const handleFiber = (fiber: Fiber, trigger: boolean) => {
-      if (!fiber || !didFiberRender(fiber)) return null;
-      const propsRender = getPropsRender(fiber);
-      const contextRender = getContextRender(fiber);
+      const type = getType(fiber.type);
+      if (!type) return null;
+      if (!didFiberRender(fiber)) return null;
+      const propsRender = getPropsRender(fiber, type);
+      const contextRender = getContextRender(fiber, type);
       if (!propsRender && !contextRender) return null;
 
       const allowList = ReactScanInternals.componentAllowList;
@@ -233,7 +213,8 @@ export const instrument = ({
     try {
       handleCommitFiberRoot(rendererID, root);
     } catch (err) {
-      /**/
+      // eslint-disable-next-line no-console
+      console.error('[React Scan] Error instrumenting: ', err);
     }
   };
 

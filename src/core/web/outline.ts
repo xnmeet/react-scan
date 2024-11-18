@@ -5,6 +5,7 @@ import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';
+import { recalcOutlineColor } from './perf-observer';
 
 export interface PendingOutline {
   rect: DOMRect;
@@ -29,7 +30,7 @@ export interface PaintedOutline {
 
 export const MONO_FONT =
   'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
-export const PURPLE_RGB = '115,97,230';
+export const colorRef = { current: '115,97,230' };
 
 export const getOutlineKey = (outline: PendingOutline): string => {
   return `${outline.rect.top}-${outline.rect.left}-${outline.rect.width}-${outline.rect.height}`;
@@ -44,6 +45,8 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
   ) {
     return null;
   }
+
+  // if (!document.documentElement.contains(domNode)) return null;
 
   const rect = domNode.getBoundingClientRect();
   const isVisible =
@@ -135,6 +138,7 @@ export const flushOutlines = (
   ctx: CanvasRenderingContext2D,
   previousOutlines: Map<string, PendingOutline> = new Map(),
   toolbar: HTMLElement | null = null,
+  perfObserver: PerformanceObserver | null = null,
 ) => {
   if (!ReactScanInternals.scheduledOutlines.length) {
     return;
@@ -144,6 +148,10 @@ export const flushOutlines = (
   ReactScanInternals.scheduledOutlines = [];
 
   requestAnimationFrame(() => {
+    if (perfObserver) {
+      recalcOutlineColor(perfObserver.takeRecords());
+    }
+    recalcOutlines();
     void (async () => {
       const secondOutlines = ReactScanInternals.scheduledOutlines;
       ReactScanInternals.scheduledOutlines = [];
@@ -182,7 +190,7 @@ export const flushOutlines = (
         }),
       );
       if (ReactScanInternals.scheduledOutlines.length) {
-        flushOutlines(ctx, newPreviousOutlines, toolbar);
+        flushOutlines(ctx, newPreviousOutlines, toolbar, perfObserver);
       }
     })();
   });
@@ -272,9 +280,9 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
 
   ctx.save();
 
-  ctx.strokeStyle = `rgba(${PURPLE_RGB}, ${maxStrokeAlpha})`;
+  ctx.strokeStyle = `rgba(${colorRef.current}, ${maxStrokeAlpha})`;
   ctx.lineWidth = 1;
-  ctx.fillStyle = `rgba(${PURPLE_RGB}, ${maxFillAlpha})`;
+  ctx.fillStyle = `rgba(${colorRef.current}, ${maxFillAlpha})`;
 
   ctx.stroke(combinedPath);
   ctx.fill(combinedPath);
@@ -295,7 +303,7 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
       const labelX: number = rect.x;
       const labelY: number = rect.y - textHeight - 4;
 
-      ctx.fillStyle = `rgba(${PURPLE_RGB},${alpha})`;
+      ctx.fillStyle = `rgba(${colorRef.current},${alpha})`;
       ctx.fillRect(labelX, labelY, textWidth + 4, textHeight + 4);
 
       ctx.fillStyle = `rgba(255,255,255,${alpha})`;

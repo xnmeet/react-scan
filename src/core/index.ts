@@ -7,10 +7,11 @@ import {
   getOutline,
   type PendingOutline,
 } from './web/outline';
-import { createCanvas } from './web/index';
+import { createOverlay } from './web/index';
 import { logIntro } from './web/log';
 import { createToolbar } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
+import { createPerfObserver } from './web/perf-observer';
 
 interface Options {
   /**
@@ -54,6 +55,14 @@ interface Options {
    */
   showToolbar?: boolean;
 
+  /**
+   * Long task threshold in milliseconds, only show
+   * when main thread is blocked for longer than this
+   *
+   * @default 50
+   */
+  longTaskThreshold?: number;
+
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
@@ -89,9 +98,10 @@ export const ReactScanInternals: Internals = {
     enabled: true,
     includeChildren: true,
     runInProduction: false,
-    log: false,
     playSound: false,
+    log: false,
     showToolbar: true,
+    longTaskThreshold: 50,
   },
   scheduledOutlines: [],
   activeOutlines: [],
@@ -112,8 +122,9 @@ export const start = () => {
   if (inited) return;
   inited = true;
   const { options } = ReactScanInternals;
-  const ctx = createCanvas();
+  const ctx = createOverlay();
   const toolbar = options.showToolbar ? createToolbar() : null;
+  const perfObserver = createPerfObserver();
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
@@ -149,7 +160,7 @@ export const start = () => {
       }
 
       requestAnimationFrame(() => {
-        flushOutlines(ctx, new Map(), toolbar);
+        flushOutlines(ctx, new Map(), toolbar, perfObserver);
       });
     },
     onCommitFinish() {

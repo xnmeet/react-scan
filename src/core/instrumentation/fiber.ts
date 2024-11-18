@@ -50,6 +50,44 @@ export const registerDevtoolsHook = ({
   return devtoolsHook;
 };
 
+export const traverseContexts = (
+  fiber: Fiber,
+  selector: (
+    prevValue: { context: React.Context<unknown>; memoizedValue: unknown },
+    nextValue: { context: React.Context<unknown>; memoizedValue: unknown },
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  ) => boolean | void,
+) => {
+  const nextDependencies = fiber.dependencies;
+  const prevDependencies = fiber.alternate?.dependencies;
+
+  if (!nextDependencies || !prevDependencies) return false;
+  if (
+    typeof nextDependencies !== 'object' ||
+    !('firstContext' in nextDependencies) ||
+    typeof prevDependencies !== 'object' ||
+    !('firstContext' in prevDependencies)
+  ) {
+    return false;
+  }
+  let nextContext = nextDependencies.firstContext;
+  let prevContext = prevDependencies.firstContext;
+  while (
+    nextContext &&
+    typeof nextContext === 'object' &&
+    'memoizedValue' in nextContext &&
+    prevContext &&
+    typeof prevContext === 'object' &&
+    'memoizedValue' in prevContext
+  ) {
+    if (selector(nextContext as any, prevContext as any) === true) return true;
+
+    nextContext = nextContext.next;
+    prevContext = prevContext.next;
+  }
+  return true;
+};
+
 export const isHostComponent = (fiber: Fiber) =>
   fiber.tag === HostComponentTag ||
   // @ts-expect-error: it exists
@@ -57,15 +95,34 @@ export const isHostComponent = (fiber: Fiber) =>
   // @ts-expect-error: it exists
   fiber.tag === HostSingletonTag;
 
-const seenProps = new WeakMap<any, boolean>();
+const seenProps = new WeakSet<any>();
+const seenContextValues = new WeakMap<
+  Fiber,
+  WeakMap<React.Context<unknown>, unknown>
+>();
 
 export const didFiberRender = (fiber: Fiber): boolean => {
   let nextProps = fiber.memoizedProps;
-  if (!nextProps) return true;
-  if (seenProps.has(nextProps)) return false;
+  const hasSeenProps = seenProps.has(nextProps);
+
   if (nextProps && typeof nextProps === 'object') {
-    seenProps.set(nextProps, true);
+    seenProps.add(nextProps);
   }
+
+  let isContextChanged = false;
+  traverseContexts(fiber, (_prevContext, nextContext) => {
+    const contextMap = seenContextValues.get(fiber) ?? new WeakMap();
+    const seenContextValue = contextMap.get(nextContext.context);
+    if (
+      !contextMap.has(nextContext.context) ||
+      !Object.is(seenContextValue, nextContext.memoizedValue)
+    ) {
+      isContextChanged = true;
+    }
+    contextMap.set(nextContext.context, nextContext.memoizedValue);
+    seenContextValues.set(fiber, contextMap);
+  });
+  if (!isContextChanged && hasSeenProps) return false;
 
   nextProps ??= {};
 

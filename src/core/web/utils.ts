@@ -40,8 +40,8 @@ export const isOutlineUnstable = (outline: PendingOutline) => {
   return false;
 };
 
-export const createElement = (html: string) => {
+export const createElement = (htmlString: string): HTMLElement => {
   const template = document.createElement('template');
-  template.innerHTML = html;
-  return template.content.firstChild;
+  template.innerHTML = htmlString.trim();
+  return template.content.firstElementChild as HTMLElement;
 };

@@ -95,19 +95,19 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [x] Scan API (`withScan`, `scan`)
 - [ ] Don't show label if no reconciliation occurred ("client renders" in DevTools)
 - [ ] Investigate `__REACT_DEVTOOLS_TARGET_WINDOW__`
-- [ ] Chrome extension
+- [x] Chrome extension (h/t [@biw](https://github.com/biw))
 - [ ] "PageSpeed insights" for React
-- [ ] Cleanup config options
+- [x] Cleanup config options
 - [ ] Offscreen canvas on worker thread
 - [ ] React Native support
 - [ ] "global" counter using `sessionStorage`, aggregate count stats instead of immediate replacement
 - [ ] Name / explain the actual problem
-- [ ] More explicit options override API (start log at certain area, stop log, etc.)
-- [ ] Expose primitives / internals for advanced use cases
-- [ ] Add more problem detections other than props
+- [x] More explicit options override API (start log at certain area, stop log, etc.)
+- [x] Expose primitives / internals for advanced use cases
+- [x] Add context updates
 - [ ] Simple FPS counter
 - [ ] Drag and select areas of the screen to scan
-- [ ] Mode to only show on main thread blocking
+- [x] Mode to show on main thread blocking
 - [ ] Add a funny mascot, like the ["Stop I'm Changing" dude](https://www.youtube.com/shorts/FwOZdX7bDKI?app=desktop)
 
 ## Acknowledgments

@@ -6,9 +6,10 @@ import './styles.css';
 
 scan({
   enabled: true,
-  log: true,
+  // log: true,
   // clearLog: true,
   // playSound: true,
+  // longTaskThreshold: 50,
   runInProduction: true,
 });
 
