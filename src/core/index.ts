@@ -63,6 +63,13 @@ interface Options {
    */
   longTaskThreshold?: number;
 
+  /**
+   * Clear aggregated fibers after this time in milliseconds
+   *
+   * @default 5000
+   */
+  resetCountTimeout?: number;
+
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
@@ -79,6 +86,21 @@ interface Internals {
   options: Options;
   scheduledOutlines: PendingOutline[];
   activeOutlines: ActiveOutline[];
+  reportData: Record<
+    string,
+    {
+      count: number;
+      time: number;
+    }
+  >;
+  fiberMap: WeakMap<
+    Fiber,
+    {
+      count: number;
+      time: number;
+      lastUpdated: number;
+    }
+  >;
 }
 
 export const ReactScanInternals: Internals = {
@@ -102,10 +124,22 @@ export const ReactScanInternals: Internals = {
     log: false,
     showToolbar: true,
     longTaskThreshold: 50,
+    resetCountTimeout: 5000,
   },
+  reportData: {},
+  fiberMap: new WeakMap<
+    Fiber,
+    {
+      count: number;
+      time: number;
+      lastUpdated: number;
+    }
+  >(),
   scheduledOutlines: [],
   activeOutlines: [],
 };
+
+export const getReport = () => ReactScanInternals.reportData;
 
 export const setOptions = (options: Options) => {
   ReactScanInternals.options = {
@@ -158,6 +192,36 @@ export const start = () => {
         );
         playGeigerClickSound(audioContext, amplitude);
       }
+
+      const fiberData = ReactScanInternals.fiberMap.get(fiber);
+      const now = Date.now();
+      let count = render.count;
+      let time = render.time;
+      if (fiberData) {
+        // clear aggregated fibers after 5 seconds
+        if (now - fiberData.lastUpdated > (options.resetCountTimeout ?? 5000)) {
+          ReactScanInternals.fiberMap.delete(fiber);
+        } else {
+          count += fiberData.count;
+          time += fiberData.time;
+          render.count = count;
+          render.time = time;
+        }
+      }
+
+      if (render.name) {
+        const prev = ReactScanInternals.reportData[render.name];
+        ReactScanInternals.reportData[render.name] = {
+          count: (prev?.count ?? 0) + render.count,
+          time: (prev?.time ?? 0) + render.time,
+        };
+      }
+
+      ReactScanInternals.fiberMap.set(fiber, {
+        count,
+        time,
+        lastUpdated: now,
+      });
 
       requestAnimationFrame(() => {
         flushOutlines(ctx, new Map(), toolbar, perfObserver);

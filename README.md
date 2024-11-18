@@ -133,10 +133,12 @@ scan({
 });
 ```
 
-Or, if you prefer a more manual approach, use the `withScan` API:
+## Examples
+
+If you're digging into performance issues and prefer a more manual approach, use the `withScan` API:
 
 ```js
-import { withScan } from 'react-scan';
+import { withScan, setOptions } from 'react-scan';
 
 const ExpensiveComponent = withScan(
   (props) => {
@@ -144,6 +146,29 @@ const ExpensiveComponent = withScan(
   },
   { log: true },
 );
+```
+
+You can also hook into internal lifecycle methods to for internal data or get a summary of component renders by calling `getReport()`:
+
+```js
+import { setOptions, getReport } from 'react-scan';
+
+setOptions({
+  onCommitStart() {},
+  onRender(fiber, render) {},
+  onCommitFinish() {},
+  onPaintStart(outline) {},
+  onPaintFinish(outline) {},
+});
+
+console.log(getReport());
+//          ^
+//          {
+//            "ExpensiveComponent": {
+//              count: 100,
+//              time: 400
+//            }
+//          }
 ```
 
 And voilà! You're ready to go.
@@ -208,21 +233,22 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 
 - [x] Scan only for unnecessary renders ("unstable" props)
 - [x] Scan API (`withScan`, `scan`)
-- [ ] Don't show label if no reconciliation occurred ("client renders" in DevTools)
-- [ ] Investigate `__REACT_DEVTOOLS_TARGET_WINDOW__`
-- [x] Chrome extension (h/t [@biw](https://github.com/biw))
-- [ ] "PageSpeed insights" for React
 - [x] Cleanup config options
+- [x] Chrome extension (h/t [@biw](https://github.com/biw))
+- [x] Mode to highlight long tasks
+- [x] Add context updates
+- [x] Expose primitives / internals for advanced use cases
+- [x] More explicit options override API (start log at certain area, stop log, etc.)
+- [x] Don't show label if no reconciliation occurred ("client renders" in DevTools)
+- [x] "global" counter using `sessionStorage`, aggregate count stats instead of immediate replacement
+- [x] Give a general report of the app's performance
+- [ ] UI for turning on/off options
+- [ ] "PageSpeed insights" for React
 - [ ] Offscreen canvas on worker thread
 - [ ] React Native support
-- [ ] "global" counter using `sessionStorage`, aggregate count stats instead of immediate replacement
 - [ ] Name / explain the actual problem
-- [x] More explicit options override API (start log at certain area, stop log, etc.)
-- [x] Expose primitives / internals for advanced use cases
-- [x] Add context updates
 - [ ] Simple FPS counter
 - [ ] Drag and select areas of the screen to scan
-- [x] Mode to show on main thread blocking
 - [ ] Add a funny mascot, like the ["Stop I'm Changing" dude](https://www.youtube.com/shorts/FwOZdX7bDKI?app=desktop)
 
 ## Acknowledgments
