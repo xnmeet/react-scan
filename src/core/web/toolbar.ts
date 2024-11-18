@@ -4,7 +4,7 @@ import { MONO_FONT } from './outline';
 
 export const createToolbar = () => {
   const status = createElement(
-    `<div id="react-scan-toolbar" title="Number of unnecessary renders and time elapsed" style="position:fixed;bottom:3px;right:3px;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;color:white;z-index:2147483647;font-family:${MONO_FONT}" aria-hidden="true">hide scanner</div>`,
+    `<div id="react-scan-toolbar" title="Number of unnecessary renders and time elapsed" style="position:fixed;bottom:3px;right:3px;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;color:white;z-index:2147483647;font-family:${MONO_FONT}" aria-hidden="true">react-scan</div>`,
   ) as HTMLDivElement;
 
   let isHidden = localStorage.getItem('react-scan-hidden') === 'true';
