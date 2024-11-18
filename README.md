@@ -57,6 +57,72 @@ const ExpensiveComponent = withScan(
 
 And voilà! You're ready to go.
 
+## Framework-specific Installation
+
+### Next.js (Pages Router)
+
+Add the script tag to your `pages/_document.tsx`:
+
+```jsx
+import { Html, Head, Main, NextScript } from 'next/document'
+
+export default function Document() {
+  return (
+    <Html lang="en">
+      <Head>
++       <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+
+        {/* rest of your scripts go under */}
+      </Head>
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  )
+}
+```
+
+### Next.js (App Router)
+
+Add the script tag to your `app/layout.tsx`:
+
+```jsx
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        {/* rest of your scripts go under */}
+      </head>
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+### Vite / Create React App / Remix
+
+Add the script tag to your `index.html`:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+
+    <!-- rest of your scripts go under -->
+  </head>
+  <body>
+    <!-- ... -->
+  </body>
+</html>
+```
+
 ## Why React Scan?
 
 React can be tricky to optimize.

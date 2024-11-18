@@ -10,6 +10,7 @@
     "react": "19.0.0-rc.1",
     "react-dom": "19.0.0-rc.1",
     "react-scan": "^0.0.3",
+    "sugar-high": "^0.7.5",
     "vite-plugin-inspect": "^0.8.7"
   },
   "devDependencies": {
