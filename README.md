@@ -59,9 +59,11 @@ And voilà! You're ready to go.
 
 ## Framework-specific Installation
 
-| Next.js (Pages Router)<br>`pages/_document.tsx` | Next.js (App Router)<br>`app/layout.tsx` | Vite / Create React App / Remix<br>`index.html` |
-|---|---|---|
-| ```jsx
+| Framework / Filename                             | Installation Code                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Next.js (Pages Router)**<br>`pages/_document.tsx` | 
+
+```jsx
 import { Html, Head, Main, NextScript } from 'next/document'
 
 export default function Document() {
@@ -79,7 +81,12 @@ export default function Document() {
     </Html>
   )
 }
-``` | ```jsx
+```
+
+ |
+| **Next.js (App Router)**<br>`app/layout.tsx`     | 
+
+```jsx
 export default function RootLayout({
   children,
 }: {
@@ -95,7 +102,12 @@ export default function RootLayout({
     </html>
   )
 }
-``` | ```html
+```
+
+ |
+| **Vite / Create React App / Remix**<br>`index.html`   | 
+
+```html
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -107,7 +119,9 @@ export default function RootLayout({
     <!-- ... -->
   </body>
 </html>
-``` |
+```
+
+ |
 
 ## Why React Scan?
 
@@ -115,7 +129,7 @@ React can be tricky to optimize.
 
 The issue is that component props are compared by reference, not value. This is intentional – this way rendering can be cheap to run.
 
-However, this makes it easy to accidentally cause unnecessary renders, making the the app slow. Even in production apps, with hundreds of engineers, can't fully optimize their apps (see [GitHub](https://github.com/aidenybai/react-scan/blob/main/.github/assets/github.mp4), [Twitter](https://github.com/aidenybai/react-scan/blob/main/.github/assets/twitter.mp4), and [Instagram](https://github.com/aidenybai/react-scan/blob/main/.github/assets/instagram.mp4)).
+However, this makes it easy to accidentally cause unnecessary renders, making the app slow. Even production apps, with hundreds of engineers, can't fully optimize their apps (see [GitHub](https://github.com/aidenybai/react-scan/blob/main/.github/assets/github.mp4), [Twitter](https://github.com/aidenybai/react-scan/blob/main/.github/assets/twitter.mp4), and [Instagram](https://github.com/aidenybai/react-scan/blob/main/.github/assets/instagram.mp4)).
 
 This often comes down to props that update in reference, like callbacks or object values. For example, the `onClick` function and `style` object are re-created on every render, causing `ExpensiveComponent` to slow down the app:
 
@@ -129,11 +143,11 @@ React Scan helps you identify these issues by automatically detecting and highli
 
 ## Resources & Contributing Back
 
-Want to try it out? Check the [our demo](https://react-scan.million.dev).
+Want to try it out? Check out [our demo](https://react-scan.million.dev).
 
 Looking to contribute back? Check the [Contributing Guide](https://github.com/aidenybai/react-scan/blob/main/.github/CONTRIBUTING.md) out.
 
-Want to talk to the community? Hop in our [Discord](https://discord.gg/X9yFbcV2rF) and share your ideas and what you've build with React Scan.
+Want to talk to the community? Hop in our [Discord](https://discord.gg/X9yFbcV2rF) and share your ideas and what you've built with React Scan.
 
 Find a bug? Head over to our [issue tracker](https://github.com/aidenybai/react-scan/issues) and we'll do our best to help. We love pull requests, too!
 
