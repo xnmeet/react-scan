@@ -59,16 +59,18 @@ And voilà! You're ready to go.
 
 ## Framework-specific Installation
 
-### Next.js (Pages Router)
-Add the script tag to your `pages/_document.tsx`:
-```diff
+| Next.js (Pages Router)<br>`pages/_document.tsx` | Next.js (App Router)<br>`app/layout.tsx` | Vite / Create React App / Remix<br>`index.html` |
+|---|---|---|
+| ```jsx
 import { Html, Head, Main, NextScript } from 'next/document'
 
 export default function Document() {
   return (
     <Html lang="en">
       <Head>
-+       <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+
+        {/* rest of your scripts go under */}
       </Head>
       <body>
         <Main />
@@ -77,11 +79,7 @@ export default function Document() {
     </Html>
   )
 }
-```
-
-### Next.js (App Router)
-Add the script tag to your `app/layout.tsx`:
-```diff
+``` | ```jsx
 export default function RootLayout({
   children,
 }: {
@@ -90,31 +88,26 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-+       <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        {/* rest of your scripts go under */}
       </head>
       <body>{children}</body>
     </html>
   )
 }
-```
-
-### Vite / Create React App / Remix
-Add the script tag to your `index.html`:
-```diff
+``` | ```html
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-+   <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
-    <title>My App</title>
+    <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+
+    <!-- rest of your scripts go under -->
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <!-- ... -->
   </body>
 </html>
-```
+``` |
 
 ## Why React Scan?
 
