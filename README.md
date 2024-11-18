@@ -61,14 +61,14 @@ And voilà! You're ready to go.
 
 ### Next.js (Pages Router)
 Add the script tag to your `pages/_document.tsx`:
-```tsx
+```diff
 import { Html, Head, Main, NextScript } from 'next/document'
 
 export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
++       <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
       </Head>
       <body>
         <Main />
@@ -81,7 +81,7 @@ export default function Document() {
 
 ### Next.js (App Router)
 Add the script tag to your `app/layout.tsx`:
-```tsx
+```diff
 export default function RootLayout({
   children,
 }: {
@@ -90,7 +90,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
++       <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
       </head>
       <body>{children}</body>
     </html>
@@ -100,13 +100,13 @@ export default function RootLayout({
 
 ### Vite / Create React App / Remix
 Add the script tag to your `index.html`:
-```html
+```diff
 <!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
++   <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
     <title>My App</title>
   </head>
   <body>
