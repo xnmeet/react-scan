@@ -195,7 +195,9 @@ React Scan helps you identify these issues by automatically detecting and highli
 
 **Q: Why this instead of React Devtools?**
 
-React Devtools aims to be a general purpose tool for React. That's great and I think it can be useful. However, I deal with React performance issues every day, and React Devtools just doesn't fix my problems well. So, I built React Scan specifically to find performance issues. If this sounds like you, then React Scan may be a better choice. Also, some general issues about React Devtools' highlight feature:
+React Devtools aims to be a general purpose tool for React. However, I deal with React performance issues every day, and React Devtools doesn't fix my problems well. There's a lot of noise (no obvious distinction between unnecessary and necessary renders), and there's no programmatic API. If it sounds like you have the same problems, then React Scan may be a better choice.
+
+Also, some personal complaints about React Devtools' highlight feature:
 
 - React Devtools "batches" paints, so if a component renders too fast, it will lag behind and only show 1 every second or so
 - When you scroll/resize the boxes don't update position
@@ -242,9 +244,12 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [x] Don't show label if no reconciliation occurred ("client renders" in DevTools)
 - [x] "global" counter using `sessionStorage`, aggregate count stats instead of immediate replacement
 - [x] Give a general report of the app's performance
+- [ ] checkbox filtering API, leaderboard
+- [ ] Offscreen canvas on worker thread
+- [ ] heatmap decay (stacked renders will be more intense)
+- [ ] Investigate components (UI allowlist)
 - [ ] UI for turning on/off options
 - [ ] "PageSpeed insights" for React
-- [ ] Offscreen canvas on worker thread
 - [ ] React Native support
 - [ ] Name / explain the actual problem, docs
 - [ ] Simple FPS counter
