@@ -193,22 +193,6 @@ export const start = () => {
         playGeigerClickSound(audioContext, amplitude);
       }
 
-      const fiberData = ReactScanInternals.fiberMap.get(fiber);
-      const now = Date.now();
-      let count = render.count;
-      let time = render.time;
-      if (fiberData) {
-        // clear aggregated fibers after 5 seconds
-        if (now - fiberData.lastUpdated > (options.resetCountTimeout ?? 5000)) {
-          ReactScanInternals.fiberMap.delete(fiber);
-        } else {
-          count += fiberData.count;
-          time += fiberData.time;
-          render.count = count;
-          render.time = time;
-        }
-      }
-
       if (render.name) {
         const prev = ReactScanInternals.reportData[render.name];
         ReactScanInternals.reportData[render.name] = {
@@ -217,14 +201,33 @@ export const start = () => {
         };
       }
 
-      ReactScanInternals.fiberMap.set(fiber, {
-        count,
-        time,
-        lastUpdated: now,
-      });
-
       requestAnimationFrame(() => {
         flushOutlines(ctx, new Map(), toolbar, perfObserver);
+
+        const fiberData = ReactScanInternals.fiberMap.get(fiber);
+        const now = Date.now();
+        let count = render.count;
+        let time = render.time;
+        if (fiberData) {
+          // clear aggregated fibers after 5 seconds
+          if (
+            now - fiberData.lastUpdated >
+            (options.resetCountTimeout ?? 5000)
+          ) {
+            ReactScanInternals.fiberMap.delete(fiber);
+          } else {
+            count += fiberData.count;
+            time += fiberData.time;
+            render.count = count;
+            render.time = time;
+          }
+        }
+
+        ReactScanInternals.fiberMap.set(fiber, {
+          count,
+          time,
+          lastUpdated: now,
+        });
       });
     },
     onCommitFinish() {

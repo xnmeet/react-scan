@@ -246,9 +246,10 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [ ] "PageSpeed insights" for React
 - [ ] Offscreen canvas on worker thread
 - [ ] React Native support
-- [ ] Name / explain the actual problem
+- [ ] Name / explain the actual problem, docs
 - [ ] Simple FPS counter
 - [ ] Drag and select areas of the screen to scan
+- [ ] Long task progress bar filter
 - [ ] Add a funny mascot, like the ["Stop I'm Changing" dude](https://www.youtube.com/shorts/FwOZdX7bDKI?app=desktop)
 
 ## Acknowledgments
