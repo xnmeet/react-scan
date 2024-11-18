@@ -112,6 +112,8 @@ Add the script tag to your `index.html`:
 </li>
 </ul>
 
+---
+
 **_Or_**, install it via npm:
 
 ```bash
