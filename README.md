@@ -25,10 +25,8 @@ Get started in 5 seconds, add this script to your app:
 
 Examples:
 
-<ul>
-<li>
 <details>
-<summary><b>Next.js (Pages Router)</b></summary>
+<summary><b>Next.js (pages)</b></summary>
 
 <br />
 
@@ -55,11 +53,9 @@ export default function Document() {
 ```
 
 </details>
-</li>
 
-<li>
 <details>
-<summary><b>Next.js (App Router)</b></summary>
+<summary><b>Next.js (app)</b></summary>
 
 <br />
 
@@ -84,9 +80,7 @@ export default function RootLayout({
 ```
 
 </details>
-</li>
 
-<li>
 <details>
 <summary><b>Vite / Create React App</b></summary>
 
@@ -109,8 +103,6 @@ Add the script tag to your `index.html`:
 ```
 
 </details>
-</li>
-</ul>
 
 ---
 
@@ -133,45 +125,225 @@ scan({
 });
 ```
 
-## Examples
+## API Reference
 
-If you're digging into performance issues and prefer a more manual approach, use the `withScan` API:
+<details>
+<summary><code>scan(options)</code></summary>
 
-```js
-import { withScan, setOptions } from 'react-scan';
+<br />
 
-const ExpensiveComponent = withScan(
-  (props) => {
-    // ...
-  },
-  { log: true },
-);
+Automatically scan your app for renders.
+
+```jsx
+scan({
+  /**
+   * Enable/disable scanning
+   */
+  enabled: true,
+  /**
+   * Include children of a component applied with withScan
+   */
+  includeChildren: true,
+
+  /**
+   * Run in production
+   */
+  runInProduction: false,
+
+  /**
+   * Enable/disable geiger sound
+   */
+  playSound: true,
+
+  /**
+   * Log renders to the console
+   */
+  log: false,
+
+  /**
+   * Show toolbar bar
+   */
+  showToolbar: true,
+
+  /**
+   * Long task threshold in milliseconds, only show
+   * when main thread is blocked for longer than this
+   */
+  longTaskThreshold: 50;
+
+  /**
+   * Clear aggregated fibers after this time in milliseconds
+   */
+  resetCountTimeout: 5000;
+
+  onCommitStart?: () => void;
+  onRender?: (fiber, render) => void;
+  onCommitFinish?: () => void;
+  onPaintStart?: (outline) => void;
+  onPaintFinish?: (outline) => void;
+})
 ```
 
-You can also hook into internal lifecycle methods to for internal data or get a summary of component renders by calling `getReport()`:
+</details>
 
-```js
-import { setOptions, getReport } from 'react-scan';
+<details>
+<summary><code>withScan(Component, options)</code></summary>
+
+<br />
+
+Scan a specific component for renders.
+
+```jsx
+function Component(props) {
+  // ...
+}
+
+withScan(Component, {
+  /**
+   * Enable/disable scanning
+   */
+  enabled: true,
+  /**
+   * Include children of a component applied with withScan
+   */
+  includeChildren: true,
+
+  /**
+   * Run in production
+   */
+  runInProduction: false,
+
+  /**
+   * Enable/disable geiger sound
+   */
+  playSound: true,
+
+  /**
+   * Log renders to the console
+   */
+  log: false,
+
+  /**
+   * Show toolbar bar
+   */
+  showToolbar: true,
+
+  /**
+   * Long task threshold in milliseconds, only show
+   * when main thread is blocked for longer than this
+   */
+  longTaskThreshold: 50;
+
+  /**
+   * Clear aggregated fibers after this time in milliseconds
+   */
+  resetCountTimeout: 5000;
+
+  onCommitStart?: () => void;
+  onRender?: (fiber, render) => void;
+  onCommitFinish?: () => void;
+  onPaintStart?: (outline) => void;
+  onPaintFinish?: (outline) => void;
+})
+```
+
+</details>
+
+<details>
+<summary><code>getReport()</code></summary>
+
+<br />
+
+Get a aggregated report of all components and renders.
+
+```jsx
+const report = getReport();
+
+for (const component in report) {
+  const { count, time } = report[component];
+
+  console.log(`${component} rendered ${count} times, took ${time}ms`);
+}
+```
+
+</details>
+
+<details>
+<summary><code>setOptions(options)</code></summary>
+
+```jsx
+function Component(props) {
+  // ...
+}
 
 setOptions({
-  onCommitStart() {},
-  onRender(fiber, render) {},
-  onCommitFinish() {},
-  onPaintStart(outline) {},
-  onPaintFinish(outline) {},
-});
+  /**
+   * Enable/disable scanning
+   */
+  enabled: true,
+  /**
+   * Include children of a component applied with withScan
+   */
+  includeChildren: true,
 
-console.log(getReport());
-//          ^
-//          {
-//            "ExpensiveComponent": {
-//              count: 100,
-//              time: 400
-//            }
-//          }
+  /**
+   * Run in production
+   */
+  runInProduction: false,
+
+  /**
+   * Enable/disable geiger sound
+   */
+  playSound: true,
+
+  /**
+   * Log renders to the console
+   */
+  log: false,
+
+  /**
+   * Show toolbar bar
+   */
+  showToolbar: true,
+
+  /**
+   * Long task threshold in milliseconds, only show
+   * when main thread is blocked for longer than this
+   */
+  longTaskThreshold: 50;
+
+  /**
+   * Clear aggregated fibers after this time in milliseconds
+   */
+  resetCountTimeout: 5000;
+
+  onCommitStart?: () => void;
+  onRender?: (fiber, render) => void;
+  onCommitFinish?: () => void;
+  onPaintStart?: (outline) => void;
+  onPaintFinish?: (outline) => void;
+})
 ```
 
-And voilà! You're ready to go.
+</details>
+
+<details>
+<summary><code>getOptions()</code></summary>
+
+```jsx
+const {
+  enabled,
+  includeChildren,
+  runInProduction,
+  playSound,
+  log,
+  showToolbar,
+  longTaskThreshold,
+  resetCountTimeout,
+} = getOptions();
+```
+
+</details>
 
 ## Why React Scan?
 
@@ -244,12 +416,7 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [x] Don't show label if no reconciliation occurred ("client renders" in DevTools)
 - [x] "global" counter using `sessionStorage`, aggregate count stats instead of immediate replacement
 - [x] Give a general report of the app's performance
-- [ ] checkbox filtering API, leaderboard
-- [ ] Offscreen canvas on worker thread
-- [ ] heatmap decay (stacked renders will be more intense)
-- [ ] Investigate components (UI allowlist)
-- [ ] UI for turning on/off options
-- [ ] "PageSpeed insights" for React
+
 - [ ] React Native support
 - [ ] Name / explain the actual problem, docs
 - [ ] Simple FPS counter
