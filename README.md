@@ -23,6 +23,89 @@ Get started in 5 seconds, add this script to your app:
 <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
 ```
 
+Examples:
+
+<ul>
+<li>
+<details>
+<summary>Next.js (Pages Router)</summary>
+
+Add the script tag to your `pages/_document.tsx`:
+
+```jsx
+import { Html, Head, Main, NextScript } from 'next/document';
+
+export default function Document() {
+  return (
+    <Html lang="en">
+      <Head>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+
+        {/* rest of your scripts go under */}
+      </Head>
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  );
+}
+```
+
+</details>
+</li>
+
+<li>
+<details>
+<summary>Next.js (App Router)</summary>
+
+Add the script tag to your `app/layout.tsx`:
+
+```jsx
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        {/* rest of your scripts go under */}
+      </head>
+      <body>{children}</body>
+    </html>
+  )
+}
+```
+
+</details>
+</li>
+
+<li>
+<details>
+<summary>Vite / Create React App</summary>
+
+Add the script tag to your `index.html`:
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+
+    <!-- rest of your scripts go under -->
+  </head>
+  <body>
+    <!-- ... -->
+  </body>
+</html>
+```
+
+</details>
+</li>
+</ul>
+
 **_Or_**, install it via npm:
 
 ```bash
@@ -56,81 +139,6 @@ const ExpensiveComponent = withScan(
 ```
 
 And voilà! You're ready to go.
-
-## Framework-specific Installation
-
-<details>
-<summary>### Next.js (Pages Router)</summary>
-
-Add the script tag to your `pages/_document.tsx`:
-
-```jsx
-import { Html, Head, Main, NextScript } from 'next/document'
-
-export default function Document() {
-  return (
-    <Html lang="en">
-      <Head>
-+       <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
-
-        {/* rest of your scripts go under */}
-      </Head>
-      <body>
-        <Main />
-        <NextScript />
-      </body>
-    </Html>
-  )
-}
-```
-
-</details>
-
-<details>
-<summary>### Next.js (App Router)</summary>
-
-Add the script tag to your `app/layout.tsx`:
-
-```jsx
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  return (
-    <html lang="en">
-      <head>
-        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
-        {/* rest of your scripts go under */}
-      </head>
-      <body>{children}</body>
-    </html>
-  )
-}
-```
-
-</details>
-
-<details>
-<summary>### Vite / Create React App / Remix</summary>
-
-Add the script tag to your `index.html`:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
-
-    <!-- rest of your scripts go under -->
-  </head>
-  <body>
-    <!-- ... -->
-  </body>
-</html>
-```
-
-</details>
 
 ## Why React Scan?
 
