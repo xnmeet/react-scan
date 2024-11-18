@@ -205,9 +205,8 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        <script
-          src="https://unpkg.com/react-scan/dist/auto.global.js"
-        ></script>
++       <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        {/* rest of your scripts go under */}
       </Head>
       <body>
         <Main />
@@ -249,13 +248,10 @@ export default function Document() {
   return (
     <html lang="en">
       <head>
-        <script
-          src="https://unpkg.com/react-scan/dist/auto.global.js"
-        ></script>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        {/* rest of your scripts go under */}
       </head>
-      <body>
-        <main>{children}</main>
-      </body>
+      <body>{children}</body>
     </html>
   )
 }`),
@@ -281,20 +277,14 @@ export default function Document() {
                     >
                       <code
                         dangerouslySetInnerHTML={{
-                          __html: highlight(`<!doctype html>
+                          __html: highlight(`<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + Lit</title>
-    <link rel="stylesheet" href="./src/index.css" />
     <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+    <!-- rest of your scripts go under -->
   </head>
   <body>
-    <my-element>
-      <h1>Vite + Lit</h1>
-    </my-element>
+    <!-- ... -->
   </body>
 </html>`),
                         }}
