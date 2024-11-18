@@ -166,6 +166,30 @@ React Scan helps you identify these issues by automatically detecting and highli
 
 > Want to automatically fix these issues? Check out [Million Lint](https://million.dev)!
 
+### FAQ
+
+**Q: Why this instead of React Devtools?**
+
+React Devtools aims to be a general purpose tool for React. That's great and I think it can be useful. However, I deal with React performance issues every day, and React Devtools just doesn't fix my problems well. So, I built React Scan specifically to find performance issues. If this sounds like you, then React Scan may be a better choice. Also, some general issues about React Devtools' highlight feature:
+
+- React Devtools "batches" paints, so if a component renders too fast, it will lag behind and only show 1 every second or so
+- When you scroll/resize the boxes don't update position
+- No count of how many renders there are
+- I don't know what the bad/slow renders are without inspecting
+- The menu is hidden away so it's annoying to turn on/off, user experience should be specifically tuned for debugging performance, instead of hidden behind a profiler/component tree
+- No programmatic API
+- It's stuck in a chrome extension, I want to run it anywhere on the web
+- It looks subjectively ugly (lines look fuzzy, feels sluggish)
+- I'm more ambitious with react-scan (see our roadmap)
+
+**Q: React Native wen?**
+
+Soon :)
+
+**Q: Chrome Extension wen?**
+
+Soon :)
+
 ## Resources & Contributing Back
 
 Want to try it out? Check the [our demo](https://react-scan.million.dev).
