@@ -2,6 +2,8 @@ import { scan } from 'react-scan/dist/index.mjs'; // force production build
 import React, { useState, createContext } from 'react';
 import ReactDOMClient from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
+import { highlight } from 'sugar-high';
+
 import './styles.css';
 
 scan({
@@ -29,6 +31,7 @@ const TooltipContext = createContext({ tooltip: '' });
 export const App = () => {
   const [tasks, setTasks] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
+  const [activeTab, setActiveTab] = useState('nextjs-pages');
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -144,6 +147,164 @@ export const App = () => {
               </a>
             </small>
           </p>
+
+          {/** Add an installation section that shows you how to install it in your project
+           * For Next.js pages router, copy the script tag into the <head> inside the _document.tsx file
+           * For Next.js app router, copy the script tag into the <head> inside the layout.tsx file
+           * For Vite, copy the script tag into the <head> inside the index.html file
+           * For Create React App, copy the script tag into the public/index.html file
+           * For Remix, copy the script tag into the app/root.tsx file
+           * For Vite, copy the script tag into the <head> inside the index.html file
+           */}
+          <div className="installation-section">
+            <h3>Installation Guide</h3>
+            <div className="framework-instructions">
+              <div className="tabs">
+                <button
+                  className={`tab-button ${activeTab === 'nextjs-pages' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('nextjs-pages')}
+                >
+                  Next.js (Pages)
+                </button>
+                <button
+                  className={`tab-button ${activeTab === 'nextjs-app' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('nextjs-app')}
+                >
+                  Next.js (App)
+                </button>
+                <button
+                  className={`tab-button ${activeTab === 'vite' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('vite')}
+                >
+                  Vite / Create React App / Remix
+                </button>
+              </div>
+
+              <div className="tab-content">
+                <div
+                  className={`tab-panel ${activeTab === 'nextjs-pages' ? 'active' : ''}`}
+                >
+                  <h4>Next.js (Pages Router)</h4>
+                  <p>
+                    Add script tag to <code>_document.tsx</code> in{' '}
+                    <code>&lt;head&gt;</code>:
+                  </p>
+                  <div className="code-container">
+                    <pre
+                      style={{
+                        width: '100%',
+                        padding: '1rem',
+                      }}
+                    >
+                      <code
+                        dangerouslySetInnerHTML={{
+                          __html: highlight(
+                            `import { Html, Head, Main, NextScript } from 'next/document'
+
+export default function Document() {
+  return (
+    <Html lang="en">
+      <Head>
+        <script
+          src="https://unpkg.com/react-scan/dist/auto.global.js"
+        ></script>
+      </Head>
+      <body>
+        <Main />
+        <NextScript />
+      </body>
+    </Html>
+  )
+}`.trim(),
+                          ),
+                        }}
+                      ></code>
+                    </pre>
+                  </div>
+                </div>
+
+                <div
+                  className={`tab-panel ${activeTab === 'nextjs-app' ? 'active' : ''}`}
+                >
+                  <h4>Next.js (App Router)</h4>
+                  <p>
+                    Add to script tag to <code>layout.tsx</code> in{' '}
+                    <code>&lt;head&gt;</code>:
+                  </p>
+                  <div className="code-container">
+                    <pre
+                      style={{
+                        width: '100%',
+                        padding: '1rem',
+                      }}
+                    >
+                      <code
+                        dangerouslySetInnerHTML={{
+                          __html:
+                            highlight(`export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <head>
+        <script
+          src="https://unpkg.com/react-scan/dist/auto.global.js"
+        ></script>
+      </head>
+      <body>
+        <main>{children}</main>
+      </body>
+    </html>
+  )
+}`),
+                        }}
+                      ></code>
+                    </pre>
+                  </div>
+                </div>
+
+                <div
+                  className={`tab-panel ${activeTab === 'vite' ? 'active' : ''}`}
+                >
+                  <h4>Vite / Create React App / Remix</h4>
+                  <p>
+                    Add to <code>index.html</code> in <code>&lt;head&gt;</code>:
+                  </p>
+                  <div className="code-container">
+                    <pre
+                      style={{
+                        width: '100%',
+                        padding: '1rem',
+                      }}
+                    >
+                      <code
+                        dangerouslySetInnerHTML={{
+                          __html: highlight(`<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + Lit</title>
+    <link rel="stylesheet" href="./src/index.css" />
+    <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+  </head>
+  <body>
+    <my-element>
+      <h1>Vite + Lit</h1>
+    </my-element>
+  </body>
+</html>`),
+                        }}
+                      ></code>
+                    </pre>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </TooltipContext.Provider>
