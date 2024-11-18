@@ -28,7 +28,9 @@ Examples:
 <ul>
 <li>
 <details>
-<summary>Next.js (Pages Router)</summary>
+<summary><b>Next.js (Pages Router)</b></summary>
+
+<br />
 
 Add the script tag to your `pages/_document.tsx`:
 
@@ -57,7 +59,9 @@ export default function Document() {
 
 <li>
 <details>
-<summary>Next.js (App Router)</summary>
+<summary><b>Next.js (App Router)</b></summary>
+
+<br />
 
 Add the script tag to your `app/layout.tsx`:
 
@@ -84,7 +88,9 @@ export default function RootLayout({
 
 <li>
 <details>
-<summary>Vite / Create React App</summary>
+<summary><b>Vite / Create React App</b></summary>
+
+<br />
 
 Add the script tag to your `index.html`:
 
