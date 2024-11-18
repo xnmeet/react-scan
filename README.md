@@ -59,7 +59,8 @@ And voilà! You're ready to go.
 
 ## Framework-specific Installation
 
-### Next.js (Pages Router)
+<details>
+<summary>### Next.js (Pages Router)</summary>
 
 Add the script tag to your `pages/_document.tsx`:
 
@@ -83,7 +84,10 @@ export default function Document() {
 }
 ```
 
-### Next.js (App Router)
+</details>
+
+<details>
+<summary>### Next.js (App Router)</summary>
 
 Add the script tag to your `app/layout.tsx`:
 
@@ -105,7 +109,10 @@ export default function RootLayout({
 }
 ```
 
-### Vite / Create React App / Remix
+</details>
+
+<details>
+<summary>### Vite / Create React App / Remix</summary>
 
 Add the script tag to your `index.html`:
 
@@ -122,6 +129,8 @@ Add the script tag to your `index.html`:
   </body>
 </html>
 ```
+
+</details>
 
 ## Why React Scan?
 

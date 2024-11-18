@@ -112,28 +112,7 @@ export const App = () => {
         </div>
 
         <div className="sticky-footer">
-          <p>Get started by adding this script to your app:</p>
-          <div className="code-container">
-            <code>
-              &lt;script
-              src=&quot;https://unpkg.com/react-scan/dist/auto.global.js&quot;&gt;&lt;/script&gt;
-            </code>
-            <button
-              className="copy-button"
-              onClick={() =>
-                copyToClipboard(
-                  '<script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>',
-                )
-              }
-            >
-              Copy
-            </button>
-          </div>
-          <p>
-            <small>
-              <strong>Important:</strong> Add this before any other scripts run!
-            </small>
-          </p>
+          <br />
           <a
             href="https://github.com/aidenybai/react-scan#readme"
             className="cta-button"
@@ -149,16 +128,31 @@ export const App = () => {
             </small>
           </p>
 
-          {/** Add an installation section that shows you how to install it in your project
-           * For Next.js pages router, copy the script tag into the <head> inside the _document.tsx file
-           * For Next.js app router, copy the script tag into the <head> inside the layout.tsx file
-           * For Vite, copy the script tag into the <head> inside the index.html file
-           * For Create React App, copy the script tag into the public/index.html file
-           * For Remix, copy the script tag into the app/root.tsx file
-           * For Vite, copy the script tag into the <head> inside the index.html file
-           */}
           <div className="installation-section">
-            <h3>Installation Guide</h3>
+            <h3>Install</h3>
+            <p>Get started by adding this script to your app:</p>
+            <div className="code-container">
+              <code>
+                &lt;script
+                src=&quot;https://unpkg.com/react-scan/dist/auto.global.js&quot;&gt;&lt;/script&gt;
+              </code>
+              <button
+                className="copy-button"
+                onClick={() =>
+                  copyToClipboard(
+                    '<script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>',
+                  )
+                }
+              >
+                Copy
+              </button>
+            </div>
+            <p>
+              <small>
+                <strong>Important:</strong> Add this before any other scripts
+                run!
+              </small>
+            </p>
             <div className="framework-instructions">
               <div className="tabs">
                 <button
@@ -177,7 +171,7 @@ export const App = () => {
                   className={`tab-button ${activeTab === 'vite' ? 'active' : ''}`}
                   onClick={() => setActiveTab('vite')}
                 >
-                  Vite / Create React App / Remix
+                  Other
                 </button>
               </div>
 
@@ -265,7 +259,7 @@ export default function Document() {
                 <div
                   className={`tab-panel ${activeTab === 'vite' ? 'active' : ''}`}
                 >
-                  <h4>Vite / Create React App / Remix</h4>
+                  <h4>Other</h4>
                   <p>
                     Add to <code>index.html</code> in <code>&lt;head&gt;</code>:
                   </p>
