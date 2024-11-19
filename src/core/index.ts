@@ -9,7 +9,7 @@ import {
 } from './web/outline';
 import { createOverlay } from './web/index';
 import { logIntro } from './web/log';
-import { createToolbar } from './web/toolbar';
+import { createToolbar, renderCheckbox } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
 
@@ -83,6 +83,7 @@ interface Internals {
   isInIframe: boolean;
   isPaused: boolean;
   componentAllowList: WeakMap<React.ComponentType<any>, Options> | null;
+  componentNameAllowList: Set<string>;
   options: Options;
   scheduledOutlines: PendingOutline[];
   activeOutlines: ActiveOutline[];
@@ -116,6 +117,7 @@ export const ReactScanInternals: Internals = {
   isInIframe: window.self !== window.top,
   isPaused: false,
   componentAllowList: null,
+  componentNameAllowList: new Set<string>(),
   options: {
     enabled: true,
     includeChildren: true,
@@ -181,6 +183,13 @@ export const start = () => {
       options.onRender?.(fiber, render);
       const outline = getOutline(fiber, render);
       if (outline) {
+        if (
+          render.name &&
+          ReactScanInternals.componentNameAllowList.size > 0 &&
+          !ReactScanInternals.componentNameAllowList.has(render.name)
+        ) {
+          // don't render if the render has a name, the allowlist is set, and the name is not in the allowlist
+        }
         ReactScanInternals.scheduledOutlines.push(outline);
       }
 
@@ -199,6 +208,7 @@ export const start = () => {
           count: (prev?.count ?? 0) + render.count,
           time: (prev?.time ?? 0) + render.time,
         };
+        renderCheckbox();
       }
 
       requestAnimationFrame(() => {
