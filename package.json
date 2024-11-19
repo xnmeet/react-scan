@@ -23,7 +23,6 @@
     "email": "aiden@million.dev",
     "url": "https://million.dev"
   },
-  "sideEffects": false,
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",

@@ -5,6 +5,7 @@ import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';
+import { recalcOutlineColor } from './perf-observer';
 // import { recalcOutlineColor } from './perf-observer';
 
 export interface PendingOutline {
@@ -38,19 +39,7 @@ export const getOutlineKey = (outline: PendingOutline): string => {
   return `${outline.rect.top}-${outline.rect.left}-${outline.rect.width}-${outline.rect.height}`;
 };
 
-const getRectCache = new WeakMap<
-  HTMLElement,
-  { rect: DOMRect; timestamp: number }
->();
-
 export const getRect = (domNode: HTMLElement): DOMRect | null => {
-  const cachedRect = getRectCache.get(domNode);
-  if (
-    cachedRect &&
-    performance.now() - cachedRect.timestamp < DEFAULT_THROTTLE_TIME
-  ) {
-    return cachedRect.rect;
-  }
   const style = window.getComputedStyle(domNode);
   if (
     style.display === 'none' ||
@@ -63,16 +52,14 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
   const rect = domNode.getBoundingClientRect();
 
   const isVisible =
-    rect.top >= 0 ||
-    rect.left >= 0 ||
-    rect.bottom <= window.innerHeight ||
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= window.innerHeight &&
     rect.right <= window.innerWidth;
 
   if (!isVisible || !rect.width || !rect.height) {
     return null;
   }
-
-  getRectCache.set(domNode, { rect, timestamp: performance.now() });
 
   return rect;
 };
@@ -168,7 +155,7 @@ export const flushOutlines = (
 
   requestAnimationFrame(() => {
     if (perfObserver) {
-      // recalcOutlineColor(perfObserver.takeRecords());
+      recalcOutlineColor(perfObserver.takeRecords());
     }
     recalcOutlines();
     void (async () => {
