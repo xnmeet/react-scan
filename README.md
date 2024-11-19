@@ -427,6 +427,7 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [ ] Drag and select areas of the screen to scan
 - [ ] Long task progress bar filter
 - [ ] Report should include all renders
+- [ ] ChatGPT / Claude video
 - [ ] [Runtime version guarding](https://github.com/lahmatiy/react-render-tracker/blob/229ad0e9c28853615300724d5dc86c140f250f60/src/publisher/react-integration/utils/getInternalReactConstants.ts#L28)
 - [ ] React as peer dependency (lock version to range)
 - [ ] Add a funny mascot, like the ["Stop I'm Changing" dude](https://www.youtube.com/shorts/FwOZdX7bDKI?app=desktop)

@@ -19,7 +19,7 @@ export const createToolbar = () => {
     status.textContent = isHidden ? 'start ►' : 'stop ⏹';
     ReactScanInternals.isPaused = isHidden;
     if (ReactScanInternals.isPaused) {
-      ReactScanInternals.activeOutlinesMap.clear();
+      ReactScanInternals.activeOutlines = [];
       ReactScanInternals.scheduledOutlines = [];
     }
     if ('localStorage' in globalThis) {

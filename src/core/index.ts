@@ -92,20 +92,12 @@ interface Internals {
   componentAllowList: WeakMap<React.ComponentType<any>, Options> | null;
   options: Options;
   scheduledOutlines: PendingOutline[];
-  activeOutlinesMap: Map<string, ActiveOutline>;
+  activeOutlines: ActiveOutline[];
   reportData: Record<
     string,
     {
       count: number;
       time: number;
-    }
-  >;
-  fiberMap: WeakMap<
-    Fiber,
-    {
-      count: number;
-      time: number;
-      lastUpdated: number;
     }
   >;
 }
@@ -134,16 +126,8 @@ export const ReactScanInternals: Internals = {
     resetCountTimeout: 5000,
   },
   reportData: {},
-  fiberMap: new WeakMap<
-    Fiber,
-    {
-      count: number;
-      time: number;
-      lastUpdated: number;
-    }
-  >(),
   scheduledOutlines: [],
-  activeOutlinesMap: new Map<string, ActiveOutline>(),
+  activeOutlines: [],
 };
 
 export const getReport = () => ReactScanInternals.reportData;

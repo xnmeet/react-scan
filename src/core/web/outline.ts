@@ -5,7 +5,7 @@ import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';
-import { recalcOutlineColor } from './perf-observer';
+// import { recalcOutlineColor } from './perf-observer';
 
 export interface PendingOutline {
   rect: DOMRect;
@@ -31,13 +31,26 @@ export interface PaintedOutline {
 
 export const MONO_FONT =
   'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
+const DEFAULT_THROTTLE_TIME = 8; // 2 frames
 export const colorRef = { current: '115,97,230' };
 
 export const getOutlineKey = (outline: PendingOutline): string => {
   return `${outline.rect.top}-${outline.rect.left}-${outline.rect.width}-${outline.rect.height}`;
 };
 
+const getRectCache = new WeakMap<
+  HTMLElement,
+  { rect: DOMRect; timestamp: number }
+>();
+
 export const getRect = (domNode: HTMLElement): DOMRect | null => {
+  const cachedRect = getRectCache.get(domNode);
+  if (
+    cachedRect &&
+    performance.now() - cachedRect.timestamp < DEFAULT_THROTTLE_TIME
+  ) {
+    return cachedRect.rect;
+  }
   const style = window.getComputedStyle(domNode);
   if (
     style.display === 'none' ||
@@ -47,18 +60,19 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
     return null;
   }
 
-  // if (!document.documentElement.contains(domNode)) return null;
-
   const rect = domNode.getBoundingClientRect();
+
   const isVisible =
     rect.top >= 0 ||
     rect.left >= 0 ||
     rect.bottom <= window.innerHeight ||
     rect.right <= window.innerWidth;
 
-  if (!isVisible) return null;
+  if (!isVisible || !rect.width || !rect.height) {
+    return null;
+  }
 
-  if (!rect.height || !rect.width) return null;
+  getRectCache.set(domNode, { rect, timestamp: performance.now() });
 
   return rect;
 };
@@ -114,7 +128,7 @@ export const mergeOutlines = (outlines: PendingOutline[]) => {
 };
 
 export const recalcOutlines = throttle(() => {
-  const { scheduledOutlines, activeOutlinesMap } = ReactScanInternals;
+  const { scheduledOutlines, activeOutlines } = ReactScanInternals;
 
   for (let i = scheduledOutlines.length - 1; i >= 0; i--) {
     const outline = scheduledOutlines[i];
@@ -126,21 +140,18 @@ export const recalcOutlines = throttle(() => {
     outline.rect = rect;
   }
 
-  const activeOutlines = Array.from(activeOutlinesMap.values());
-
   for (let i = activeOutlines.length - 1; i >= 0; i--) {
     const activeOutline = activeOutlines[i];
     if (!activeOutline) continue;
     const { outline } = activeOutline;
     const rect = getRect(outline.domNode);
     if (!rect) {
-      activeOutlinesMap.delete(getOutlineKey(outline));
-      activeOutline.resolve();
+      activeOutlines.splice(i, 1);
       continue;
     }
     outline.rect = rect;
   }
-}, 16); // 1 frame
+}, DEFAULT_THROTTLE_TIME);
 
 export const flushOutlines = (
   ctx: CanvasRenderingContext2D,
@@ -157,7 +168,7 @@ export const flushOutlines = (
 
   requestAnimationFrame(() => {
     if (perfObserver) {
-      recalcOutlineColor(perfObserver.takeRecords());
+      // recalcOutlineColor(perfObserver.takeRecords());
     }
     recalcOutlines();
     void (async () => {
@@ -212,8 +223,7 @@ export const paintOutline = (
 ) => {
   return new Promise<void>((resolve) => {
     const unstable = isOutlineUnstable(outline);
-    const totalFrames = unstable ? 30 : 10;
-    const frame = 0;
+    const totalFrames = unstable ? 60 : 5;
     const alpha = 0.8;
 
     const { options } = ReactScanInternals;
@@ -222,13 +232,12 @@ export const paintOutline = (
       log(outline.renders);
     }
 
-    const outlineKey = getOutlineKey(outline);
-    const existingActiveOutline =
-      ReactScanInternals.activeOutlinesMap.get(outlineKey);
+    const key = getOutlineKey(outline);
+    const existingActiveOutline = ReactScanInternals.activeOutlines.find(
+      (activeOutline) => getOutlineKey(activeOutline.outline) === key,
+    );
 
-    const renderCount = existingActiveOutline
-      ? existingActiveOutline.outline.renders.length + outline.renders.length
-      : outline.renders.length;
+    const renderCount = outline.renders.length;
     const maxRenders = ReactScanInternals.options.maxRenders;
     const t = Math.min(renderCount / (maxRenders ?? 20), 1);
 
@@ -243,19 +252,17 @@ export const paintOutline = (
 
     if (existingActiveOutline) {
       existingActiveOutline.outline.renders.push(...outline.renders);
-      existingActiveOutline.frame = frame;
+      existingActiveOutline.outline.rect = outline.rect;
+      existingActiveOutline.frame = 0;
       existingActiveOutline.totalFrames = totalFrames;
       existingActiveOutline.alpha = alpha;
       existingActiveOutline.text = getLabelText(
         existingActiveOutline.outline.renders,
       );
       existingActiveOutline.color = color;
-      existingActiveOutline.resolve = () => {
-        resolve();
-        options.onPaintFinish?.(existingActiveOutline.outline);
-      };
     } else {
-      ReactScanInternals.activeOutlinesMap.set(outlineKey, {
+      const frame = 0;
+      ReactScanInternals.activeOutlines.push({
         outline,
         alpha,
         frame,
@@ -270,24 +277,31 @@ export const paintOutline = (
     }
 
     if (!animationFrameId) {
-      fadeOutOutline(ctx);
+      animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
     }
   });
 };
 
 export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
-  const { activeOutlinesMap } = ReactScanInternals;
+  const { activeOutlines } = ReactScanInternals;
 
-  ctx.save();
-  ctx.resetTransform();
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.restore();
 
-  const activeOutlines = Array.from(activeOutlinesMap.values());
+  const combinedPath = new Path2D();
 
-  for (let i = 0, len = activeOutlines.length; i < len; i++) {
+  let maxStrokeAlpha = 0;
+  let maxFillAlpha = 0;
+
+  const pendingLabeledOutlines: PaintedOutline[] = [];
+
+  for (let i = activeOutlines.length - 1; i >= 0; i--) {
     const activeOutline = activeOutlines[i];
-    const { outline, frame, totalFrames, color } = activeOutline;
+    if (!activeOutline) continue;
+    const { outline, frame, totalFrames } = activeOutline;
+    // const newRect = getRect(outline.domNode);
+    // if (newRect) {
+    //   outline.rect = newRect;
+    // }
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
 
@@ -295,25 +309,43 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
 
     activeOutline.alpha = alphaScalar * (1 - frame / totalFrames);
 
-    const strokeAlpha = activeOutline.alpha;
-    const fillAlpha = activeOutline.alpha * 0.1;
+    maxStrokeAlpha = Math.max(maxStrokeAlpha, activeOutline.alpha);
+    maxFillAlpha = Math.max(maxFillAlpha, activeOutline.alpha * 0.1);
 
+    combinedPath.rect(rect.x, rect.y, rect.width, rect.height);
+
+    if (unstable) {
+      pendingLabeledOutlines.push({
+        alpha: activeOutline.alpha,
+        outline,
+        text: activeOutline.text,
+      });
+    }
+
+    activeOutline.frame++;
+
+    if (activeOutline.frame > activeOutline.totalFrames) {
+      activeOutlines.splice(i, 1);
+    }
+  }
+
+  ctx.save();
+
+  ctx.strokeStyle = `rgba(${colorRef.current}, ${maxStrokeAlpha})`;
+  ctx.lineWidth = 1;
+  ctx.fillStyle = `rgba(${colorRef.current}, ${maxFillAlpha})`;
+
+  ctx.stroke(combinedPath);
+  ctx.fill(combinedPath);
+
+  ctx.restore();
+
+  for (let i = 0, len = pendingLabeledOutlines.length; i < len; i++) {
+    const { alpha, outline, text } = pendingLabeledOutlines[i];
+    const { rect } = outline;
     ctx.save();
-    ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${strokeAlpha})`;
-    ctx.lineWidth = 1;
-    ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${fillAlpha})`;
 
-    ctx.beginPath();
-    ctx.rect(rect.x, rect.y, rect.width, rect.height);
-    ctx.stroke();
-    ctx.fill();
-    ctx.closePath();
-    ctx.restore();
-
-    if (unstable && activeOutline.text) {
-      const { text } = activeOutline;
-      ctx.save();
-
+    if (text) {
       ctx.font = `10px ${MONO_FONT}`;
       const textMetrics = ctx.measureText(text);
       const textWidth = textMetrics.width;
@@ -322,26 +354,19 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
       const labelX: number = rect.x;
       const labelY: number = rect.y - textHeight - 4;
 
-      ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${strokeAlpha})`;
+      ctx.fillStyle = `rgba(${colorRef.current},${alpha})`;
       ctx.fillRect(labelX, labelY, textWidth + 4, textHeight + 4);
 
-      ctx.fillStyle = `rgba(255,255,255,${strokeAlpha})`;
+      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
       ctx.fillText(text, labelX + 2, labelY + textHeight);
-
-      ctx.restore();
     }
 
-    activeOutline.frame++;
-
-    if (activeOutline.frame > activeOutline.totalFrames) {
-      activeOutlinesMap.delete(getOutlineKey(outline));
-      activeOutline.resolve();
-    }
+    ctx.restore();
   }
 
-  if (activeOutlinesMap.size === 0) {
-    animationFrameId = null;
-  } else {
+  if (activeOutlines.length) {
     animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
+  } else {
+    animationFrameId = null;
   }
 };

@@ -12,7 +12,7 @@ export const onIdle = (callback: () => void) => {
   return setTimeout(callback, 0);
 };
 
-export const throttle = <T extends (...args: any[]) => void>(
+export const throttle = <T extends (...args: any[]) => any>(
   callback: T,
   delay: number,
 ) => {
@@ -21,7 +21,7 @@ export const throttle = <T extends (...args: any[]) => void>(
     const now = Date.now();
     if (now - lastCall >= delay) {
       lastCall = now;
-      callback(...args);
+      return callback(...args);
     }
   };
 };

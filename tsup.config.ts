@@ -6,11 +6,11 @@ export default defineConfig({
   splitting: false,
   sourcemap: false,
   format: ['cjs', 'esm', 'iife'],
-  target: 'es6',
+  target: 'esnext',
   platform: 'browser',
   treeshake: true,
   dts: true,
-  minify: 'terser',
+  minify: false,
   env: {
     NODE_ENV: process.env.NODE_ENV ?? 'development',
   },
