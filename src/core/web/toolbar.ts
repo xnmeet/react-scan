@@ -9,7 +9,7 @@ export const createToolbar = () => {
 
   // Create a scrollable and resizable div containing checkboxes
   const checkboxContainer = createElement(
-    `<div id="react-scan-checkbox-list" style="position:fixed;bottom:3px;left:3px;min-width:140px;height:150px;background:#fff;padding:2px 4px;border:1px solid #ccc;border-radius:4px;z-index:2147483647;font-family:${MONO_FONT};overflow-y:auto;resize:horizontal;">
+    `<div id="react-scan-checkbox-list" style="position:fixed;bottom:3px;left:3px;min-width:140px;height:150px;background:#fff;padding:2px 4px;border:1px solid #ccc;border-radius:4px;z-index:2147483647;font-family:${MONO_FONT};overflow-y:auto;resize:horizontal;display:none;">
     </div>`,
   ) as HTMLDivElement;
 
@@ -20,11 +20,19 @@ export const createToolbar = () => {
     'localStorage' in globalThis &&
     localStorage.getItem('react-scan-hidden') === 'true';
 
+  let isCheckboxContainerHidden = true;
+
+  const toggleButton = createElement(
+    `<button style="margin-left:8px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;cursor:pointer;padding:3px 6px;border-radius:4px;font-size:16px;transition:all 0.2s;" title="Toggle component list">☰</button>`
+  ) as HTMLButtonElement;
+
+  
   const updateVisibility = () => {
     const overlay = document.getElementById('react-scan-overlay');
     if (!overlay) return;
     overlay.style.display = isHidden ? 'none' : 'block';
     status.textContent = isHidden ? 'start ►' : 'stop ⏹';
+    status.appendChild(toggleButton);
     ReactScanInternals.isPaused = isHidden;
     if (ReactScanInternals.isPaused) {
       ReactScanInternals.activeOutlines = [];
@@ -37,18 +45,30 @@ export const createToolbar = () => {
 
   updateVisibility();
 
-  status.addEventListener('click', () => {
+  status.addEventListener('click', (e) => {
+    if (e.target === toggleButton) return;
     isHidden = !isHidden;
     updateVisibility();
   });
 
+  toggleButton.addEventListener('click', () => {
+    isCheckboxContainerHidden = !isCheckboxContainerHidden;
+    checkboxContainer.style.display = isCheckboxContainerHidden ? 'none' : 'block';
+    renderCheckbox();
+  });
+
   status.addEventListener('mouseenter', () => {
-    status.textContent = isHidden ? 'start ►' : 'stop ⏹';
+    if (status.textContent !== '☰') {
+      status.textContent = isHidden ? 'start ►' : 'stop ⏹';
+      status.appendChild(toggleButton);
+    }
     status.style.backgroundColor = 'rgba(0,0,0,1)';
+    toggleButton.style.backgroundColor = 'rgba(255,255,255,0.3)';
   });
 
   status.addEventListener('mouseleave', () => {
     status.style.backgroundColor = 'rgba(0,0,0,0.5)';
+    toggleButton.style.backgroundColor = 'rgba(255,255,255,0.2)';
   });
 
   const prevElement = document.getElementById('react-scan-toolbar');
