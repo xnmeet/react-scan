@@ -77,6 +77,13 @@ interface Options {
    */
   maxRenders?: number;
 
+  /**
+   * Report data to getReport()
+   *
+   * @default false
+   */
+  report?: boolean;
+
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
@@ -98,6 +105,7 @@ interface Internals {
     {
       count: number;
       time: number;
+      renders: Render[];
     }
   >;
 }
@@ -123,7 +131,7 @@ export const ReactScanInternals: Internals = {
     log: false,
     showToolbar: true,
     longTaskThreshold: 50,
-    resetCountTimeout: 5000,
+    report: false,
   },
   reportData: {},
   scheduledOutlines: [],
@@ -185,9 +193,11 @@ export const start = () => {
 
       if (render.name) {
         const prev = ReactScanInternals.reportData[render.name];
+        prev.renders.push(render);
         ReactScanInternals.reportData[render.name] = {
           count: (prev?.count ?? 0) + render.count,
           time: (prev?.time ?? 0) + render.time,
+          renders: prev.renders,
         };
       }
 

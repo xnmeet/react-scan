@@ -168,19 +168,19 @@ scan({
    * Long task threshold in milliseconds, only show
    * when main thread is blocked for longer than this
    */
-  longTaskThreshold: 50;
+  longTaskThreshold: 50,
 
   /**
-   * Clear aggregated fibers after this time in milliseconds
+   * Report data to getReport()
    */
-  resetCountTimeout: 5000;
+  report: false,
 
-  onCommitStart?: () => void;
-  onRender?: (fiber, render) => void;
-  onCommitFinish?: () => void;
-  onPaintStart?: (outline) => void;
-  onPaintFinish?: (outline) => void;
-})
+  onCommitStart: () => {},
+  onRender: (fiber, render) => {},
+  onCommitFinish: () => {},
+  onPaintStart: (outline) => {},
+  onPaintFinish: (outline) => {},
+});
 ```
 
 </details>
@@ -231,19 +231,19 @@ withScan(Component, {
    * Long task threshold in milliseconds, only show
    * when main thread is blocked for longer than this
    */
-  longTaskThreshold: 50;
+  longTaskThreshold: 50,
 
   /**
-   * Clear aggregated fibers after this time in milliseconds
+   * Report data to getReport()
    */
-  resetCountTimeout: 5000;
+  report: false,
 
-  onCommitStart?: () => void;
-  onRender?: (fiber, render) => void;
-  onCommitFinish?: () => void;
-  onPaintStart?: (outline) => void;
-  onPaintFinish?: (outline) => void;
-})
+  onCommitStart: () => {},
+  onRender: (fiber, render) => {},
+  onCommitFinish: () => {},
+  onPaintStart: (outline) => {},
+  onPaintFinish: (outline) => {},
+});
 ```
 
 </details>
@@ -256,6 +256,8 @@ withScan(Component, {
 Get a aggregated report of all components and renders.
 
 ```jsx
+scan({ report: true });
+
 const report = getReport();
 
 for (const component in report) {
@@ -309,19 +311,19 @@ setOptions({
    * Long task threshold in milliseconds, only show
    * when main thread is blocked for longer than this
    */
-  longTaskThreshold: 50;
+  longTaskThreshold: 50,
 
   /**
-   * Clear aggregated fibers after this time in milliseconds
+   * Report data to getReport()
    */
-  resetCountTimeout: 5000;
+  report: false,
 
-  onCommitStart?: () => void;
-  onRender?: (fiber, render) => void;
-  onCommitFinish?: () => void;
-  onPaintStart?: (outline) => void;
-  onPaintFinish?: (outline) => void;
-})
+  onCommitStart: () => {},
+  onRender: (fiber, render) => {},
+  onCommitFinish: () => {},
+  onPaintStart: (outline) => {},
+  onPaintFinish: (outline) => {},
+});
 ```
 
 </details>
@@ -417,7 +419,7 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [x] Give a general report of the app's performance
 - [ ] checkbox filtering API, leaderboard
 - [ ] Offscreen canvas on worker thread
-- [ ] heatmap decay (stacked renders will be more intense)
+- [x] heatmap decay (stacked renders will be more intense)
 - [ ] Investigate components (UI allowlist)
 - [ ] UI for turning on/off options
 - [ ] “PageSpeed insights” for React
@@ -426,8 +428,7 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [ ] Simple FPS counter
 - [ ] Drag and select areas of the screen to scan
 - [ ] Long task progress bar filter
-- [ ] Report should include all renders
-- [ ] ChatGPT / Claude video
+- [x] Report should include all renders
 - [ ] [Runtime version guarding](https://github.com/lahmatiy/react-render-tracker/blob/229ad0e9c28853615300724d5dc86c140f250f60/src/publisher/react-integration/utils/getInternalReactConstants.ts#L28)
 - [ ] React as peer dependency (lock version to range)
 - [ ] Add a funny mascot, like the ["Stop I'm Changing" dude](https://www.youtube.com/shorts/FwOZdX7bDKI?app=desktop)
