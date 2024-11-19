@@ -192,12 +192,14 @@ export const start = () => {
       }
 
       if (render.name) {
-        const prev = ReactScanInternals.reportData[render.name];
-        prev.renders.push(render);
+        const report = ReactScanInternals.reportData[render.name];
+        if (report) {
+          report.renders.push(render);
+        }
         ReactScanInternals.reportData[render.name] = {
-          count: (prev?.count ?? 0) + render.count,
-          time: (prev?.time ?? 0) + render.time,
-          renders: prev.renders,
+          count: (report?.count ?? 0) + render.count,
+          time: (report?.time ?? 0) + render.time,
+          renders: report?.renders || [],
         };
       }
 
