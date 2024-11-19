@@ -13,7 +13,12 @@ export const createOverlay = () => {
     const dpi = window.devicePixelRatio;
     canvas.width = dpi * window.innerWidth;
     canvas.height = dpi * window.innerHeight;
-    ctx?.scale(dpi, dpi);
+
+    if (ctx) {
+      ctx.resetTransform();
+      ctx.scale(dpi, dpi);
+    }
+
     resizeScheduled = false;
   };
 

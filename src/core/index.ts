@@ -70,6 +70,13 @@ interface Options {
    */
   resetCountTimeout?: number;
 
+  /**
+   * Maximum number of renders for red indicator
+   *
+   * @default 20
+   */
+  maxRenders?: number;
+
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;

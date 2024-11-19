@@ -128,7 +128,6 @@ export const didFiberRender = (fiber: Fiber): boolean => {
 
   const prevProps = fiber.alternate?.memoizedProps || {};
   const flags = fiber.flags ?? (fiber as any).effectTag ?? 0;
-  const subtreeFlags = fiber.subtreeFlags ?? 0;
 
   switch (fiber.tag) {
     case ClassComponentTag:
@@ -137,10 +136,7 @@ export const didFiberRender = (fiber: Fiber): boolean => {
     case ForwardRefTag:
     case MemoComponentTag:
     case SimpleMemoComponentTag:
-      return (
-        (flags & PerformedWorkFlag) === PerformedWorkFlag &&
-        (subtreeFlags & PerformedWorkFlag) === PerformedWorkFlag
-      );
+      return (flags & PerformedWorkFlag) === PerformedWorkFlag;
     default:
       // Host nodes (DOM, root, etc.)
       if (!fiber.alternate) return true;

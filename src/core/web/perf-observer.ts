@@ -5,15 +5,14 @@ import { colorRef } from './outline';
 export const createPerfObserver = () => {
   const observer = new PerformanceObserver(NO_OP);
 
-  observer.observe({ entryTypes: ['measure'] });
+  observer.observe({ entryTypes: ['longtask'] });
 
   return observer;
 };
 
 export const recalcOutlineColor = (entries: PerformanceEntryList) => {
   const { longTaskThreshold } = ReactScanInternals.options;
-  const minDuration = longTaskThreshold ?? 1;
-  const maxDuration = 1000;
+  const minDuration = longTaskThreshold ?? 50;
 
   let maxDurationFound = 0;
 
@@ -24,24 +23,6 @@ export const recalcOutlineColor = (entries: PerformanceEntryList) => {
     }
   }
 
-  if (maxDurationFound > minDuration) {
-    const t = Math.min(
-      Math.max(
-        (maxDurationFound - minDuration) / (maxDuration - minDuration),
-        0,
-      ),
-      1,
-    );
-
-    const startColor = { r: 115, g: 97, b: 230 }; // Base color
-    const endColor = { r: 185, g: 49, b: 115 }; // Color for longest tasks
-
-    const r = Math.round(startColor.r + t * (endColor.r - startColor.r));
-    const g = Math.round(startColor.g + t * (endColor.g - startColor.g));
-    const b = Math.round(startColor.b + t * (endColor.b - startColor.b));
-
-    colorRef.current = `${r},${g},${b}`;
-  } else {
-    colorRef.current = '115,97,230'; // Default color when there are no significant entries
-  }
+  colorRef.current =
+    maxDurationFound > minDuration ? '185,49,115' : '115,97,230';
 };

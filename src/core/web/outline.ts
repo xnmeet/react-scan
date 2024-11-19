@@ -20,6 +20,7 @@ export interface ActiveOutline {
   totalFrames: number;
   resolve: () => void;
   text: string | null;
+  color: { r: number; g: number; b: number };
 }
 
 export interface PaintedOutline {
@@ -114,6 +115,7 @@ export const mergeOutlines = (outlines: PendingOutline[]) => {
 
 export const recalcOutlines = throttle(() => {
   const { scheduledOutlines, activeOutlinesMap } = ReactScanInternals;
+
   for (let i = scheduledOutlines.length - 1; i >= 0; i--) {
     const outline = scheduledOutlines[i];
     const rect = getRect(outline.domNode);
@@ -126,13 +128,14 @@ export const recalcOutlines = throttle(() => {
 
   const activeOutlines = Array.from(activeOutlinesMap.values());
 
-  for (let i = 0, len = activeOutlines.length; i < len; i++) {
+  for (let i = activeOutlines.length - 1; i >= 0; i--) {
     const activeOutline = activeOutlines[i];
+    if (!activeOutline) continue;
     const { outline } = activeOutline;
     const rect = getRect(outline.domNode);
     if (!rect) {
-      activeOutlines.splice(i, 1);
       activeOutlinesMap.delete(getOutlineKey(outline));
+      activeOutline.resolve();
       continue;
     }
     outline.rect = rect;
@@ -209,12 +212,9 @@ export const paintOutline = (
 ) => {
   return new Promise<void>((resolve) => {
     const unstable = isOutlineUnstable(outline);
-
     const totalFrames = unstable ? 30 : 10;
     const frame = 0;
     const alpha = 0.8;
-
-    const text: string | null = getLabelText(outline.renders);
 
     const { options } = ReactScanInternals;
     options.onPaintStart?.(outline);
@@ -226,6 +226,21 @@ export const paintOutline = (
     const existingActiveOutline =
       ReactScanInternals.activeOutlinesMap.get(outlineKey);
 
+    const renderCount = existingActiveOutline
+      ? existingActiveOutline.outline.renders.length + outline.renders.length
+      : outline.renders.length;
+    const maxRenders = ReactScanInternals.options.maxRenders;
+    const t = Math.min(renderCount / (maxRenders ?? 20), 1);
+
+    const startColor = { r: 115, g: 97, b: 230 };
+    const endColor = { r: 185, g: 49, b: 115 };
+
+    const r = Math.round(startColor.r + t * (endColor.r - startColor.r));
+    const g = Math.round(startColor.g + t * (endColor.g - startColor.g));
+    const b = Math.round(startColor.b + t * (endColor.b - startColor.b));
+
+    const color = { r, g, b };
+
     if (existingActiveOutline) {
       existingActiveOutline.outline.renders.push(...outline.renders);
       existingActiveOutline.frame = frame;
@@ -234,6 +249,7 @@ export const paintOutline = (
       existingActiveOutline.text = getLabelText(
         existingActiveOutline.outline.renders,
       );
+      existingActiveOutline.color = color;
       existingActiveOutline.resolve = () => {
         resolve();
         options.onPaintFinish?.(existingActiveOutline.outline);
@@ -248,7 +264,8 @@ export const paintOutline = (
           resolve();
           options.onPaintFinish?.(outline);
         },
-        text,
+        text: getLabelText(outline.renders),
+        color,
       });
     }
 
@@ -261,20 +278,16 @@ export const paintOutline = (
 export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
   const { activeOutlinesMap } = ReactScanInternals;
 
+  ctx.save();
+  ctx.resetTransform();
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-  const combinedPath = new Path2D();
-
-  let maxStrokeAlpha = 0;
-  let maxFillAlpha = 0;
-
-  const pendingLabeledOutlines: PaintedOutline[] = [];
+  ctx.restore();
 
   const activeOutlines = Array.from(activeOutlinesMap.values());
 
   for (let i = 0, len = activeOutlines.length; i < len; i++) {
     const activeOutline = activeOutlines[i];
-    const { outline, frame, totalFrames } = activeOutline;
+    const { outline, frame, totalFrames, color } = activeOutline;
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
 
@@ -282,17 +295,40 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
 
     activeOutline.alpha = alphaScalar * (1 - frame / totalFrames);
 
-    maxStrokeAlpha = Math.max(maxStrokeAlpha, activeOutline.alpha);
-    maxFillAlpha = Math.max(maxFillAlpha, activeOutline.alpha * 0.1);
+    const strokeAlpha = activeOutline.alpha;
+    const fillAlpha = activeOutline.alpha * 0.1;
 
-    combinedPath.rect(rect.x, rect.y, rect.width, rect.height);
+    ctx.save();
+    ctx.strokeStyle = `rgba(${color.r},${color.g},${color.b},${strokeAlpha})`;
+    ctx.lineWidth = 1;
+    ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${fillAlpha})`;
 
-    if (unstable) {
-      pendingLabeledOutlines.push({
-        alpha: activeOutline.alpha,
-        outline,
-        text: activeOutline.text,
-      });
+    ctx.beginPath();
+    ctx.rect(rect.x, rect.y, rect.width, rect.height);
+    ctx.stroke();
+    ctx.fill();
+    ctx.closePath();
+    ctx.restore();
+
+    if (unstable && activeOutline.text) {
+      const { text } = activeOutline;
+      ctx.save();
+
+      ctx.font = `10px ${MONO_FONT}`;
+      const textMetrics = ctx.measureText(text);
+      const textWidth = textMetrics.width;
+      const textHeight = 10;
+
+      const labelX: number = rect.x;
+      const labelY: number = rect.y - textHeight - 4;
+
+      ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${strokeAlpha})`;
+      ctx.fillRect(labelX, labelY, textWidth + 4, textHeight + 4);
+
+      ctx.fillStyle = `rgba(255,255,255,${strokeAlpha})`;
+      ctx.fillText(text, labelX + 2, labelY + textHeight);
+
+      ctx.restore();
     }
 
     activeOutline.frame++;
@@ -303,44 +339,9 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
     }
   }
 
-  ctx.save();
-
-  ctx.strokeStyle = `rgba(${colorRef.current}, ${maxStrokeAlpha})`;
-  ctx.lineWidth = 1;
-  ctx.fillStyle = `rgba(${colorRef.current}, ${maxFillAlpha})`;
-
-  ctx.stroke(combinedPath);
-  ctx.fill(combinedPath);
-
-  ctx.restore();
-
-  for (let i = 0, len = pendingLabeledOutlines.length; i < len; i++) {
-    const { alpha, outline, text } = pendingLabeledOutlines[i];
-    const { rect } = outline;
-    ctx.save();
-
-    if (text) {
-      ctx.font = `10px ${MONO_FONT}`;
-      const textMetrics = ctx.measureText(text);
-      const textWidth = textMetrics.width;
-      const textHeight = 10;
-
-      const labelX: number = rect.x;
-      const labelY: number = rect.y - textHeight - 4;
-
-      ctx.fillStyle = `rgba(${colorRef.current},${alpha})`;
-      ctx.fillRect(labelX, labelY, textWidth + 4, textHeight + 4);
-
-      ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-      ctx.fillText(text, labelX + 2, labelY + textHeight);
-    }
-
-    ctx.restore();
-  }
-
-  if (activeOutlines.length) {
-    animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
-  } else {
+  if (activeOutlinesMap.size === 0) {
     animationFrameId = null;
+  } else {
+    animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
   }
 };
