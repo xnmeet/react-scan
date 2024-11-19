@@ -3,7 +3,7 @@ import { getNearestHostFiber } from '../instrumentation/fiber';
 import type { Render } from '../instrumentation/index';
 import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
-import { isOutlineUnstable, throttle } from './utils';
+import { isOutlineUnstable, onIdle, throttle } from './utils';
 import { log } from './log';
 import { recalcOutlineColor } from './perf-observer';
 // import { recalcOutlineColor } from './perf-observer';
@@ -32,14 +32,21 @@ export interface PaintedOutline {
 
 export const MONO_FONT =
   'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
-const DEFAULT_THROTTLE_TIME = 8; // 2 frames
+const DEFAULT_THROTTLE_TIME = 16; // 1 frame
 export const colorRef = { current: '115,97,230' };
 
 export const getOutlineKey = (outline: PendingOutline): string => {
   return `${outline.rect.top}-${outline.rect.left}-${outline.rect.width}-${outline.rect.height}`;
 };
 
+const rectCache = new Map<HTMLElement, { rect: DOMRect; timestamp: number }>();
+
 export const getRect = (domNode: HTMLElement): DOMRect | null => {
+  const cached = rectCache.get(domNode);
+  if (cached && cached.timestamp > performance.now() - DEFAULT_THROTTLE_TIME) {
+    return cached.rect;
+  }
+
   const style = window.getComputedStyle(domNode);
   if (
     style.display === 'none' ||
@@ -60,6 +67,8 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
   if (!isVisible || !rect.width || !rect.height) {
     return null;
   }
+
+  rectCache.set(domNode, { rect, timestamp: performance.now() });
 
   return rect;
 };
@@ -285,10 +294,13 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
     const activeOutline = activeOutlines[i];
     if (!activeOutline) continue;
     const { outline, frame, totalFrames } = activeOutline;
-    // const newRect = getRect(outline.domNode);
-    // if (newRect) {
-    //   outline.rect = newRect;
-    // }
+    requestAnimationFrame(() => {
+      if (!outline) return;
+      const newRect = getRect(outline.domNode);
+      if (newRect) {
+        outline.rect = newRect;
+      }
+    });
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
 
