@@ -31,7 +31,7 @@ export const createToolbar = () => {
     const overlay = document.getElementById('react-scan-overlay');
     if (!overlay) return;
     overlay.style.display = isHidden ? 'none' : 'block';
-    status.textContent = isHidden ? 'start ►' : 'stop ⏹';
+    status.textContent = isHidden ? 'start' : 'stop';
     status.appendChild(toggleButton);
     ReactScanInternals.isPaused = isHidden;
     if (ReactScanInternals.isPaused) {
@@ -59,7 +59,7 @@ export const createToolbar = () => {
 
   status.addEventListener('mouseenter', () => {
     if (status.textContent !== '☰') {
-      status.textContent = isHidden ? 'start ►' : 'stop ⏹';
+      status.textContent = isHidden ? 'start' : 'stop';
       status.appendChild(toggleButton);
     }
     status.style.backgroundColor = 'rgba(0,0,0,1)';
