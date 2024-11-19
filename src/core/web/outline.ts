@@ -113,7 +113,7 @@ export const mergeOutlines = (outlines: PendingOutline[]) => {
 };
 
 export const recalcOutlines = throttle(() => {
-  const { scheduledOutlines, activeOutlines } = ReactScanInternals;
+  const { scheduledOutlines, activeOutlinesMap } = ReactScanInternals;
   for (let i = scheduledOutlines.length - 1; i >= 0; i--) {
     const outline = scheduledOutlines[i];
     const rect = getRect(outline.domNode);
@@ -123,11 +123,16 @@ export const recalcOutlines = throttle(() => {
     }
     outline.rect = rect;
   }
-  for (let i = activeOutlines.length - 1; i >= 0; i--) {
-    const { outline } = activeOutlines[i];
+
+  const activeOutlines = Array.from(activeOutlinesMap.values());
+
+  for (let i = 0, len = activeOutlines.length; i < len; i++) {
+    const activeOutline = activeOutlines[i];
+    const { outline } = activeOutline;
     const rect = getRect(outline.domNode);
     if (!rect) {
       activeOutlines.splice(i, 1);
+      activeOutlinesMap.delete(getOutlineKey(outline));
       continue;
     }
     outline.rect = rect;
@@ -217,17 +222,35 @@ export const paintOutline = (
       log(outline.renders);
     }
 
-    ReactScanInternals.activeOutlines.push({
-      outline,
-      alpha,
-      frame,
-      totalFrames,
-      resolve: () => {
+    const outlineKey = getOutlineKey(outline);
+    const existingActiveOutline =
+      ReactScanInternals.activeOutlinesMap.get(outlineKey);
+
+    if (existingActiveOutline) {
+      existingActiveOutline.outline.renders.push(...outline.renders);
+      existingActiveOutline.frame = frame;
+      existingActiveOutline.totalFrames = totalFrames;
+      existingActiveOutline.alpha = alpha;
+      existingActiveOutline.text = getLabelText(
+        existingActiveOutline.outline.renders,
+      );
+      existingActiveOutline.resolve = () => {
         resolve();
-        options.onPaintFinish?.(outline);
-      },
-      text,
-    });
+        options.onPaintFinish?.(existingActiveOutline.outline);
+      };
+    } else {
+      ReactScanInternals.activeOutlinesMap.set(outlineKey, {
+        outline,
+        alpha,
+        frame,
+        totalFrames,
+        resolve: () => {
+          resolve();
+          options.onPaintFinish?.(outline);
+        },
+        text,
+      });
+    }
 
     if (!animationFrameId) {
       fadeOutOutline(ctx);
@@ -236,7 +259,7 @@ export const paintOutline = (
 };
 
 export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
-  const { activeOutlines } = ReactScanInternals;
+  const { activeOutlinesMap } = ReactScanInternals;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -247,34 +270,36 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
 
   const pendingLabeledOutlines: PaintedOutline[] = [];
 
-  for (let i = ReactScanInternals.activeOutlines.length - 1; i >= 0; i--) {
-    const animation = ReactScanInternals.activeOutlines[i];
-    const { outline, frame, totalFrames } = animation;
+  const activeOutlines = Array.from(activeOutlinesMap.values());
+
+  for (let i = 0, len = activeOutlines.length; i < len; i++) {
+    const activeOutline = activeOutlines[i];
+    const { outline, frame, totalFrames } = activeOutline;
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
 
     const alphaScalar = unstable ? 0.8 : 0.2;
 
-    animation.alpha = alphaScalar * (1 - frame / totalFrames);
+    activeOutline.alpha = alphaScalar * (1 - frame / totalFrames);
 
-    maxStrokeAlpha = Math.max(maxStrokeAlpha, animation.alpha);
-    maxFillAlpha = Math.max(maxFillAlpha, animation.alpha * 0.1);
+    maxStrokeAlpha = Math.max(maxStrokeAlpha, activeOutline.alpha);
+    maxFillAlpha = Math.max(maxFillAlpha, activeOutline.alpha * 0.1);
 
     combinedPath.rect(rect.x, rect.y, rect.width, rect.height);
 
     if (unstable) {
       pendingLabeledOutlines.push({
-        alpha: animation.alpha,
+        alpha: activeOutline.alpha,
         outline,
-        text: animation.text,
+        text: activeOutline.text,
       });
     }
 
-    animation.frame++;
+    activeOutline.frame++;
 
-    if (animation.frame > animation.totalFrames) {
-      activeOutlines.splice(i, 1);
-      animation.resolve();
+    if (activeOutline.frame > activeOutline.totalFrames) {
+      activeOutlinesMap.delete(getOutlineKey(outline));
+      activeOutline.resolve();
     }
   }
 

@@ -121,7 +121,6 @@ import React from 'react';
 scan({
   enabled: true,
   log: true, // logs render info to console (default: false)
-  clearLog: false, // clears the console per group of renders (default: false)
 });
 ```
 
@@ -416,7 +415,12 @@ We expect all contributors to abide by the terms of our [Code of Conduct](https:
 - [x] Don't show label if no reconciliation occurred ("client renders" in DevTools)
 - [x] "global" counter using `sessionStorage`, aggregate count stats instead of immediate replacement
 - [x] Give a general report of the app's performance
-
+- [ ] checkbox filtering API, leaderboard
+- [ ] Offscreen canvas on worker thread
+- [ ] heatmap decay (stacked renders will be more intense)
+- [ ] Investigate components (UI allowlist)
+- [ ] UI for turning on/off options
+- [ ] “PageSpeed insights” for React
 - [ ] React Native support
 - [ ] Name / explain the actual problem, docs
 - [ ] Simple FPS counter

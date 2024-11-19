@@ -85,7 +85,7 @@ interface Internals {
   componentAllowList: WeakMap<React.ComponentType<any>, Options> | null;
   options: Options;
   scheduledOutlines: PendingOutline[];
-  activeOutlines: ActiveOutline[];
+  activeOutlinesMap: Map<string, ActiveOutline>;
   reportData: Record<
     string,
     {
@@ -136,7 +136,7 @@ export const ReactScanInternals: Internals = {
     }
   >(),
   scheduledOutlines: [],
-  activeOutlines: [],
+  activeOutlinesMap: new Map<string, ActiveOutline>(),
 };
 
 export const getReport = () => ReactScanInternals.reportData;
@@ -204,30 +204,30 @@ export const start = () => {
       requestAnimationFrame(() => {
         flushOutlines(ctx, new Map(), toolbar, perfObserver);
 
-        const fiberData = ReactScanInternals.fiberMap.get(fiber);
-        const now = Date.now();
-        let count = render.count;
-        let time = render.time;
-        if (fiberData) {
-          // clear aggregated fibers after 5 seconds
-          if (
-            now - fiberData.lastUpdated >
-            (options.resetCountTimeout ?? 5000)
-          ) {
-            ReactScanInternals.fiberMap.delete(fiber);
-          } else {
-            count += fiberData.count;
-            time += fiberData.time;
-            render.count = count;
-            render.time = time;
-          }
-        }
+        // const fiberData = ReactScanInternals.fiberMap.get(fiber);
+        // const now = Date.now();
+        // let count = render.count;
+        // let time = render.time;
+        // if (fiberData) {
+        //   // clear aggregated fibers after 5 seconds
+        //   if (
+        //     now - fiberData.lastUpdated >
+        //     (options.resetCountTimeout ?? 5000)
+        //   ) {
+        //     ReactScanInternals.fiberMap.delete(fiber);
+        //   } else {
+        //     count += fiberData.count;
+        //     time += fiberData.time;
+        //     render.count = count;
+        //     render.time = time;
+        //   }
+        // }
 
-        ReactScanInternals.fiberMap.set(fiber, {
-          count,
-          time,
-          lastUpdated: now,
-        });
+        // ReactScanInternals.fiberMap.set(fiber, {
+        //   count,
+        //   time,
+        //   lastUpdated: now,
+        // });
       });
     },
     onCommitFinish() {
