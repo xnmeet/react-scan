@@ -1,6 +1,6 @@
 {
   "name": "react-scan",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "Scan your React app for renders",
   "keywords": [
     "react",
@@ -23,7 +23,6 @@
     "email": "aiden@million.dev",
     "url": "https://million.dev"
   },
-  "sideEffects": false,
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",

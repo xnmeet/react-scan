@@ -159,13 +159,13 @@ export const App = () => {
                   className={`tab-button ${activeTab === 'nextjs-pages' ? 'active' : ''}`}
                   onClick={() => setActiveTab('nextjs-pages')}
                 >
-                  Next.js (Pages)
+                  Next.js (pages)
                 </button>
                 <button
                   className={`tab-button ${activeTab === 'nextjs-app' ? 'active' : ''}`}
                   onClick={() => setActiveTab('nextjs-app')}
                 >
-                  Next.js (App)
+                  Next.js (app)
                 </button>
                 <button
                   className={`tab-button ${activeTab === 'vite' ? 'active' : ''}`}
@@ -200,7 +200,7 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-+       <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js" async></script>
         {/* rest of your scripts go under */}
       </Head>
       <body>
@@ -243,7 +243,7 @@ export default function Document() {
   return (
     <html lang="en">
       <head>
-        <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
+        <script src="https://unpkg.com/react-scan/dist/auto.global.js" async></script>
         {/* rest of your scripts go under */}
       </head>
       <body>{children}</body>

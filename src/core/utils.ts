@@ -37,6 +37,7 @@ export const getLabelText = (renders: Render[]) => {
     ([, a], [, b]) => b.count - a.count,
   );
 
+  const parts: string[] = [];
   for (const [name, { count, trigger, forget }] of sortedComponents) {
     let text = name;
     if (count > 1) {
@@ -48,8 +49,10 @@ export const getLabelText = (renders: Render[]) => {
     if (forget) {
       text = `${text} ✨`;
     }
-    labelText += text;
+    parts.push(text);
   }
+
+  labelText = parts.join(' ');
 
   if (!labelText.length) return null;
   if (labelText.length > 20) {

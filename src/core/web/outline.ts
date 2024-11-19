@@ -6,6 +6,7 @@ import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';
 import { recalcOutlineColor } from './perf-observer';
+// import { recalcOutlineColor } from './perf-observer';
 
 export interface PendingOutline {
   rect: DOMRect;
@@ -20,6 +21,7 @@ export interface ActiveOutline {
   totalFrames: number;
   resolve: () => void;
   text: string | null;
+  color: { r: number; g: number; b: number };
 }
 
 export interface PaintedOutline {
@@ -30,6 +32,7 @@ export interface PaintedOutline {
 
 export const MONO_FONT =
   'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
+const DEFAULT_THROTTLE_TIME = 8; // 2 frames
 export const colorRef = { current: '115,97,230' };
 
 export const getOutlineKey = (outline: PendingOutline): string => {
@@ -46,18 +49,17 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
     return null;
   }
 
-  // if (!document.documentElement.contains(domNode)) return null;
-
   const rect = domNode.getBoundingClientRect();
+
   const isVisible =
-    rect.top >= 0 ||
-    rect.left >= 0 ||
-    rect.bottom <= window.innerHeight ||
+    rect.top >= 0 &&
+    rect.left >= 0 &&
+    rect.bottom <= window.innerHeight &&
     rect.right <= window.innerWidth;
 
-  if (!isVisible) return null;
-
-  if (!rect.height || !rect.width) return null;
+  if (!isVisible || !rect.width || !rect.height) {
+    return null;
+  }
 
   return rect;
 };
@@ -114,6 +116,7 @@ export const mergeOutlines = (outlines: PendingOutline[]) => {
 
 export const recalcOutlines = throttle(() => {
   const { scheduledOutlines, activeOutlines } = ReactScanInternals;
+
   for (let i = scheduledOutlines.length - 1; i >= 0; i--) {
     const outline = scheduledOutlines[i];
     const rect = getRect(outline.domNode);
@@ -123,8 +126,11 @@ export const recalcOutlines = throttle(() => {
     }
     outline.rect = rect;
   }
+
   for (let i = activeOutlines.length - 1; i >= 0; i--) {
-    const { outline } = activeOutlines[i];
+    const activeOutline = activeOutlines[i];
+    if (!activeOutline) continue;
+    const { outline } = activeOutline;
     const rect = getRect(outline.domNode);
     if (!rect) {
       activeOutlines.splice(i, 1);
@@ -132,7 +138,7 @@ export const recalcOutlines = throttle(() => {
     }
     outline.rect = rect;
   }
-}, 16); // 1 frame
+}, DEFAULT_THROTTLE_TIME);
 
 export const flushOutlines = (
   ctx: CanvasRenderingContext2D,
@@ -204,12 +210,8 @@ export const paintOutline = (
 ) => {
   return new Promise<void>((resolve) => {
     const unstable = isOutlineUnstable(outline);
-
-    const totalFrames = unstable ? 30 : 10;
-    const frame = 0;
+    const totalFrames = unstable ? 60 : 5;
     const alpha = 0.8;
-
-    const text: string | null = getLabelText(outline.renders);
 
     const { options } = ReactScanInternals;
     options.onPaintStart?.(outline);
@@ -217,20 +219,52 @@ export const paintOutline = (
       log(outline.renders);
     }
 
-    ReactScanInternals.activeOutlines.push({
-      outline,
-      alpha,
-      frame,
-      totalFrames,
-      resolve: () => {
-        resolve();
-        options.onPaintFinish?.(outline);
-      },
-      text,
-    });
+    const key = getOutlineKey(outline);
+    const existingActiveOutline = ReactScanInternals.activeOutlines.find(
+      (activeOutline) => getOutlineKey(activeOutline.outline) === key,
+    );
+
+    const renderCount = outline.renders.length;
+    const maxRenders = ReactScanInternals.options.maxRenders;
+    const t = Math.min(renderCount / (maxRenders ?? 20), 1);
+
+    const startColor = { r: 115, g: 97, b: 230 };
+    const endColor = { r: 185, g: 49, b: 115 };
+
+    const r = Math.round(startColor.r + t * (endColor.r - startColor.r));
+    const g = Math.round(startColor.g + t * (endColor.g - startColor.g));
+    const b = Math.round(startColor.b + t * (endColor.b - startColor.b));
+
+    const color = { r, g, b };
+
+    if (existingActiveOutline) {
+      existingActiveOutline.outline.renders.push(...outline.renders);
+      existingActiveOutline.outline.rect = outline.rect;
+      existingActiveOutline.frame = 0;
+      existingActiveOutline.totalFrames = totalFrames;
+      existingActiveOutline.alpha = alpha;
+      existingActiveOutline.text = getLabelText(
+        existingActiveOutline.outline.renders,
+      );
+      existingActiveOutline.color = color;
+    } else {
+      const frame = 0;
+      ReactScanInternals.activeOutlines.push({
+        outline,
+        alpha,
+        frame,
+        totalFrames,
+        resolve: () => {
+          resolve();
+          options.onPaintFinish?.(outline);
+        },
+        text: getLabelText(outline.renders),
+        color,
+      });
+    }
 
     if (!animationFrameId) {
-      fadeOutOutline(ctx);
+      animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
     }
   });
 };
@@ -247,34 +281,38 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
 
   const pendingLabeledOutlines: PaintedOutline[] = [];
 
-  for (let i = ReactScanInternals.activeOutlines.length - 1; i >= 0; i--) {
-    const animation = ReactScanInternals.activeOutlines[i];
-    const { outline, frame, totalFrames } = animation;
+  for (let i = activeOutlines.length - 1; i >= 0; i--) {
+    const activeOutline = activeOutlines[i];
+    if (!activeOutline) continue;
+    const { outline, frame, totalFrames } = activeOutline;
+    // const newRect = getRect(outline.domNode);
+    // if (newRect) {
+    //   outline.rect = newRect;
+    // }
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
 
     const alphaScalar = unstable ? 0.8 : 0.2;
 
-    animation.alpha = alphaScalar * (1 - frame / totalFrames);
+    activeOutline.alpha = alphaScalar * (1 - frame / totalFrames);
 
-    maxStrokeAlpha = Math.max(maxStrokeAlpha, animation.alpha);
-    maxFillAlpha = Math.max(maxFillAlpha, animation.alpha * 0.1);
+    maxStrokeAlpha = Math.max(maxStrokeAlpha, activeOutline.alpha);
+    maxFillAlpha = Math.max(maxFillAlpha, activeOutline.alpha * 0.1);
 
     combinedPath.rect(rect.x, rect.y, rect.width, rect.height);
 
     if (unstable) {
       pendingLabeledOutlines.push({
-        alpha: animation.alpha,
+        alpha: activeOutline.alpha,
         outline,
-        text: animation.text,
+        text: activeOutline.text,
       });
     }
 
-    animation.frame++;
+    activeOutline.frame++;
 
-    if (animation.frame > animation.totalFrames) {
+    if (activeOutline.frame > activeOutline.totalFrames) {
       activeOutlines.splice(i, 1);
-      animation.resolve();
     }
   }
 

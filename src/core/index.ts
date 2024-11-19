@@ -70,6 +70,20 @@ interface Options {
    */
   resetCountTimeout?: number;
 
+  /**
+   * Maximum number of renders for red indicator
+   *
+   * @default 20
+   */
+  maxRenders?: number;
+
+  /**
+   * Report data to getReport()
+   *
+   * @default false
+   */
+  report?: boolean;
+
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
@@ -92,14 +106,7 @@ interface Internals {
     {
       count: number;
       time: number;
-    }
-  >;
-  fiberMap: WeakMap<
-    Fiber,
-    {
-      count: number;
-      time: number;
-      lastUpdated: number;
+      renders: Render[];
     }
   >;
 }
@@ -126,17 +133,9 @@ export const ReactScanInternals: Internals = {
     log: false,
     showToolbar: true,
     longTaskThreshold: 50,
-    resetCountTimeout: 5000,
+    report: false,
   },
   reportData: {},
-  fiberMap: new WeakMap<
-    Fiber,
-    {
-      count: number;
-      time: number;
-      lastUpdated: number;
-    }
-  >(),
   scheduledOutlines: [],
   activeOutlines: [],
 };
@@ -182,15 +181,16 @@ export const start = () => {
     onRender(fiber, render) {
       options.onRender?.(fiber, render);
       const outline = getOutline(fiber, render);
-      if (outline) {
-        if (
-          render.name &&
-          ReactScanInternals.componentNameAllowList.size > 0 &&
-          !ReactScanInternals.componentNameAllowList.has(render.name)
-        ) {
-          /** */
-        } else ReactScanInternals.scheduledOutlines.push(outline);
-      }
+      if (!outline) return;
+      const { componentNameAllowList } = ReactScanInternals;
+      if (
+        !render.name ||
+        !componentNameAllowList.size ||
+        componentNameAllowList.has(render.name)
+      ) {
+        ReactScanInternals.scheduledOutlines.push(outline);
+      } 
+  
 
       if (options.playSound && audioContext) {
         const renderTimeThreshold = 10;
@@ -203,40 +203,17 @@ export const start = () => {
 
       if (render.name) {
         const prev = ReactScanInternals.reportData[render.name];
+        prev.renders.push(render);
         ReactScanInternals.reportData[render.name] = {
           count: (prev?.count ?? 0) + render.count,
           time: (prev?.time ?? 0) + render.time,
+          renders: prev.renders,
         };
         renderCheckbox();
       }
 
       requestAnimationFrame(() => {
         flushOutlines(ctx, new Map(), toolbar, perfObserver);
-
-        const fiberData = ReactScanInternals.fiberMap.get(fiber);
-        const now = Date.now();
-        let count = render.count;
-        let time = render.time;
-        if (fiberData) {
-          // clear aggregated fibers after 5 seconds
-          if (
-            now - fiberData.lastUpdated >
-            (options.resetCountTimeout ?? 5000)
-          ) {
-            ReactScanInternals.fiberMap.delete(fiber);
-          } else {
-            count += fiberData.count;
-            time += fiberData.time;
-            render.count = count;
-            render.time = time;
-          }
-        }
-
-        ReactScanInternals.fiberMap.set(fiber, {
-          count,
-          time,
-          lastUpdated: now,
-        });
       });
     },
     onCommitFinish() {

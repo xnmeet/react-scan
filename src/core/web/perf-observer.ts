@@ -12,13 +12,17 @@ export const createPerfObserver = () => {
 
 export const recalcOutlineColor = (entries: PerformanceEntryList) => {
   const { longTaskThreshold } = ReactScanInternals.options;
+  const minDuration = longTaskThreshold ?? 50;
+
+  let maxDurationFound = 0;
+
   for (let i = 0, len = entries.length; i < len; i++) {
-    const entry = entries[i];
-    // 64ms = 4 frames
-    // If longTaskThreshold is set, we show all "short" tasks, otherwise we hide them
-    if (entry.duration < (longTaskThreshold ?? 50)) continue;
-    colorRef.current = '185,49,115';
-    return;
+    const duration = entries[i].duration;
+    if (duration > maxDurationFound) {
+      maxDurationFound = duration;
+    }
   }
-  colorRef.current = '115,97,230';
+
+  colorRef.current =
+    maxDurationFound > minDuration ? '185,49,115' : '115,97,230';
 };
