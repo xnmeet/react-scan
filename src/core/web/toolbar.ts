@@ -9,7 +9,8 @@ export const createToolbar = () => {
 
   // Create a scrollable and resizable div containing checkboxes
   const checkboxContainer = createElement(
-    `<div id="react-scan-checkbox-list" style="position:fixed;bottom:3px;left:3px;min-width:140px;height:150px;background:#fff;padding:2px 4px;border:1px solid #ccc;border-radius:4px;z-index:2147483647;font-family:${MONO_FONT};overflow-y:auto;resize:horizontal;display:none;">
+    `<div id="react-scan-checkbox-list" style="position:fixed;bottom:3px;left:3px;min-width:200px;max-width:400px;height:200px;background:rgba(0,0,0,0.5);padding:8px;border:1px solid rgba(255,255,255,0.4);border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,0.15);z-index:2147483647;font-family:${MONO_FONT};overflow-y:auto;resize:horizontal;display:none;">
+      <div style="font-weight:400;margin-bottom:8px;color:white;border-bottom:1px solid rgba(255,255,255,0.4);padding-bottom:4px; font-size:14px;">Component Filters</div>
     </div>`,
   ) as HTMLDivElement;
 
@@ -26,7 +27,6 @@ export const createToolbar = () => {
     `<button style="margin-left:8px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.4);color:white;cursor:pointer;padding:3px 6px;border-radius:4px;font-size:16px;transition:all 0.2s;" title="Toggle component list">☰</button>`
   ) as HTMLButtonElement;
 
-  
   const updateVisibility = () => {
     const overlay = document.getElementById('react-scan-overlay');
     if (!overlay) return;
@@ -84,15 +84,29 @@ export const renderCheckbox = () => {
   const checkboxContainer = document.getElementById('react-scan-checkbox-list');
   if (!checkboxContainer) return;
 
-  checkboxContainer.innerHTML = '';
+  checkboxContainer.innerHTML = `
+    <div style="font-weight:600;margin-bottom:8px;color:white;border-bottom:1px solid rgba(255,255,255,0.4);padding-bottom:4px;">Component Filters</div>
+  `;
 
   for (const [name, { count, time }] of Object.entries(getReport())) {
     const label = createElement(
-      `<label style="display:block;"><input type="checkbox" value="${name}"> ${name} (✖︎${count}, ${time.toFixed(2)}ms)</label>`,
+      `<label style="display:flex;align-items:center;padding:4px 0;border-radius:4px;cursor:pointer;transition:background 0.2s;margin:2px 0;color:white;font-size:13px;">
+        <input type="checkbox" value="${name}" style="margin-right:8px;">
+        <div style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+        <div style="margin-left:8px;color:rgba(255,255,255,0.7);white-space:nowrap;">✖︎${count} · ${time.toFixed(1)}ms</div>
+      </label>`,
     ) as HTMLLabelElement;
 
     const checkbox = label.querySelector('input')!;
     checkbox.checked = ReactScanInternals.componentNameAllowList.has(name);
+
+    label.addEventListener('mouseenter', () => {
+      label.style.background = 'rgba(255,255,255,0.1)';
+    });
+
+    label.addEventListener('mouseleave', () => {
+      label.style.background = 'transparent';
+    });
 
     checkbox.addEventListener('change', () => {
       if (checkbox.checked)
