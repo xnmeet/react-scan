@@ -188,9 +188,8 @@ export const start = () => {
           ReactScanInternals.componentNameAllowList.size > 0 &&
           !ReactScanInternals.componentNameAllowList.has(render.name)
         ) {
-          // don't render if the render has a name, the allowlist is set, and the name is not in the allowlist
-        }
-        ReactScanInternals.scheduledOutlines.push(outline);
+          /** */
+        } else ReactScanInternals.scheduledOutlines.push(outline);
       }
 
       if (options.playSound && audioContext) {
