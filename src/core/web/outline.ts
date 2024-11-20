@@ -3,10 +3,9 @@ import { getNearestHostFiber } from '../instrumentation/fiber';
 import type { Render } from '../instrumentation/index';
 import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
-import { isOutlineUnstable, onIdle, throttle } from './utils';
+import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';
 import { recalcOutlineColor } from './perf-observer';
-// import { recalcOutlineColor } from './perf-observer';
 
 export interface PendingOutline {
   rect: DOMRect;
@@ -288,24 +287,60 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
   let maxStrokeAlpha = 0;
   let maxFillAlpha = 0;
 
-  const pendingLabeledOutlines: PaintedOutline[] = [];
+  // Group active outlines by position (rect.x and rect.y)
+  const groupedOutlines = new Map<string, ActiveOutline>();
 
   for (let i = activeOutlines.length - 1; i >= 0; i--) {
     const activeOutline = activeOutlines[i];
     if (!activeOutline) continue;
-    const { outline, frame, totalFrames } = activeOutline;
+    const { outline } = activeOutline;
+
     requestAnimationFrame(() => {
-      if (!outline) return;
-      const newRect = getRect(outline.domNode);
-      if (newRect) {
-        outline.rect = newRect;
+      if (outline) {
+        const newRect = getRect(outline.domNode);
+        if (newRect) {
+          outline.rect = newRect;
+        }
       }
     });
+
+    const { rect } = outline;
+    const key = `${rect.x}-${rect.y}`;
+
+    if (!groupedOutlines.has(key)) {
+      groupedOutlines.set(key, activeOutline);
+    } else {
+      const group = groupedOutlines.get(key)!;
+
+      if (group.outline.renders !== outline.renders) {
+        group.outline.renders = [...group.outline.renders, ...outline.renders];
+      }
+
+      group.alpha = Math.max(group.alpha, activeOutline.alpha);
+      group.frame = Math.min(group.frame, activeOutline.frame);
+      group.totalFrames = Math.max(
+        group.totalFrames,
+        activeOutline.totalFrames,
+      );
+
+      activeOutlines.splice(i, 1);
+    }
+
+    activeOutline.frame++;
+
+    if (activeOutline.frame > activeOutline.totalFrames) {
+      activeOutlines.splice(i, 1);
+    }
+  }
+
+  const pendingLabeledOutlines: PaintedOutline[] = [];
+
+  for (const activeOutline of Array.from(groupedOutlines.values())) {
+    const { outline, frame, totalFrames } = activeOutline;
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
 
     const alphaScalar = unstable ? 0.8 : 0.2;
-
     activeOutline.alpha = alphaScalar * (1 - frame / totalFrames);
 
     maxStrokeAlpha = Math.max(maxStrokeAlpha, activeOutline.alpha);
@@ -314,17 +349,12 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
     combinedPath.rect(rect.x, rect.y, rect.width, rect.height);
 
     if (unstable) {
+      const text = getLabelText(outline.renders);
       pendingLabeledOutlines.push({
         alpha: activeOutline.alpha,
         outline,
-        text: activeOutline.text,
+        text,
       });
-    }
-
-    activeOutline.frame++;
-
-    if (activeOutline.frame > activeOutline.totalFrames) {
-      activeOutlines.splice(i, 1);
     }
   }
 

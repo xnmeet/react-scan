@@ -105,7 +105,7 @@ interface Internals {
     {
       count: number;
       time: number;
-      renders: Render[];
+      badRenders: Render[];
     }
   >;
 }
@@ -189,18 +189,6 @@ export const start = () => {
           (render.time - renderTimeThreshold) / (renderTimeThreshold * 2),
         );
         playGeigerClickSound(audioContext, amplitude);
-      }
-
-      if (render.name) {
-        const report = ReactScanInternals.reportData[render.name];
-        if (report) {
-          report.renders.push(render);
-        }
-        ReactScanInternals.reportData[render.name] = {
-          count: (report?.count ?? 0) + render.count,
-          time: (report?.time ?? 0) + render.time,
-          renders: report?.renders || [],
-        };
       }
 
       requestAnimationFrame(() => {

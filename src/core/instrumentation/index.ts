@@ -8,6 +8,7 @@ import {
   getSelfTime,
   hasMemoCache,
   registerDevtoolsHook,
+  shouldFilterFiber,
   traverseContexts,
   traverseFiber,
 } from './fiber';
@@ -45,6 +46,7 @@ export interface Render {
   trigger: boolean;
   forget: boolean;
   changes: Change[] | null;
+  label?: string;
 }
 
 const unstableTypes = ['function', 'object'];
@@ -145,6 +147,30 @@ export const getContextRender = (
   };
 };
 
+export const reportRender = (
+  name: string,
+  fiber: Fiber,
+  renders: (Render | null)[],
+) => {
+  if (ReactScanInternals.options.report === false) return;
+  const report = ReactScanInternals.reportData[name];
+  if (report) {
+    for (let i = 0, len = renders.length; i < len; i++) {
+      const render = renders[i];
+      if (render) {
+        report.badRenders.push(render);
+      }
+    }
+  }
+  const time = getSelfTime(fiber) ?? 0;
+
+  ReactScanInternals.reportData[name] = {
+    count: (report?.count ?? 0) + 1,
+    time: (report?.time ?? 0) + time,
+    badRenders: report?.badRenders || [],
+  };
+};
+
 export const instrument = ({
   onCommitStart,
   onRender,
@@ -155,15 +181,27 @@ export const instrument = ({
   onCommitFinish: () => void;
 }) => {
   const handleCommitFiberRoot = (_rendererID: number, root: FiberRoot) => {
-    if (ReactScanInternals.isPaused) return;
+    if (
+      ReactScanInternals.isPaused ||
+      ReactScanInternals.options.enabled === false
+    ) {
+      return;
+    }
     onCommitStart();
 
-    const handleFiber = (fiber: Fiber, trigger: boolean) => {
+    const recordRender = (fiber: Fiber, trigger: boolean) => {
       const type = getType(fiber.type);
       if (!type) return null;
       if (!didFiberRender(fiber)) return null;
+
       const propsRender = getPropsRender(fiber, type);
       const contextRender = getContextRender(fiber, type);
+
+      const name = getDisplayName(type);
+      if (name) {
+        reportRender(name, fiber, [propsRender, contextRender]);
+      }
+
       if (!propsRender && !contextRender) return null;
 
       const allowList = ReactScanInternals.componentAllowList;
@@ -193,15 +231,63 @@ export const instrument = ({
       }
     };
 
-    if (root.memoizedUpdaters) {
-      for (const fiber of root.memoizedUpdaters) {
-        handleFiber(fiber, true);
-      }
-    }
+    const rootFiber = root.current;
+    const wasMounted =
+      rootFiber.alternate !== null &&
+      Boolean(rootFiber.alternate.memoizedState?.element) &&
+      // A dehydrated root is not considered mounted
+      rootFiber.alternate.memoizedState.isDehydrated !== true;
+    const isMounted = Boolean(rootFiber.memoizedState?.element);
 
-    traverseFiber(root.current, (fiber) => {
-      handleFiber(fiber, false);
-    });
+    const mountFiber = (firstChild: Fiber, traverseSiblings: boolean) => {
+      let fiber: Fiber | null = firstChild;
+
+      // eslint-disable-next-line eqeqeq
+      while (fiber != null) {
+        const shouldIncludeInTree = !shouldFilterFiber(fiber);
+        if (shouldIncludeInTree) {
+          recordRender(fiber, false);
+        }
+
+        // eslint-disable-next-line eqeqeq
+        if (fiber.child != null) {
+          mountFiber(fiber.child, true);
+        }
+        fiber = traverseSiblings ? fiber.sibling : null;
+      }
+    };
+
+    const updateFiber = (nextFiber: Fiber, prevFiber: Fiber) => {
+      if (!prevFiber) return;
+
+      const shouldIncludeInTree = !shouldFilterFiber(nextFiber);
+      if (shouldIncludeInTree) {
+        recordRender(nextFiber, false);
+      }
+
+      if (nextFiber.child !== prevFiber.child) {
+        let nextChild = nextFiber.child;
+
+        while (nextChild) {
+          if (nextChild.alternate) {
+            const prevChild = nextChild.alternate;
+
+            updateFiber(nextChild, prevChild);
+          } else {
+            mountFiber(nextChild, false);
+          }
+
+          // Try the next child.
+          nextChild = nextChild.sibling;
+        }
+      }
+    };
+
+    if (!wasMounted && isMounted) {
+      mountFiber(rootFiber, false);
+    } else if (wasMounted && isMounted) {
+      updateFiber(rootFiber, rootFiber.alternate);
+    }
 
     onCommitFinish();
   };

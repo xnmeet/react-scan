@@ -14,6 +14,15 @@ const SimpleMemoComponentTag = 15;
 const HostComponentTag = 5;
 const HostHoistableTag = 26;
 const HostSingletonTag = 27;
+const DehydratedSuspenseComponent = 18;
+const HostText = 6;
+const Fragment = 7;
+const LegacyHiddenComponent = 23;
+const OffscreenComponent = 22;
+const HostRoot = 3;
+export const CONCURRENT_MODE_NUMBER = 0xeacf;
+export const CONCURRENT_MODE_SYMBOL_STRING = 'Symbol(react.concurrent_mode)';
+export const DEPRECATED_ASYNC_MODE_SYMBOL_STRING = 'Symbol(react.async_mode)';
 
 export const registerDevtoolsHook = ({
   onCommitFiberRoot,
@@ -85,7 +94,28 @@ export const traverseContexts = (
     nextContext = nextContext.next;
     prevContext = prevContext.next;
   }
-  return true;
+  return false;
+};
+
+export const traverseState = (
+  fiber: Fiber,
+  selector: (
+    prevValue: { memoizedValue: unknown },
+    nextValue: { memoizedValue: unknown },
+    // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
+  ) => boolean | void,
+) => {
+  let prevState = fiber.memoizedState;
+  let nextState = fiber.alternate?.memoizedState;
+
+  while (prevState && nextState) {
+    if (selector(prevState, nextState) === true) return true;
+
+    prevState = prevState.next;
+    nextState = nextState.next;
+  }
+
+  return false;
 };
 
 export const isHostComponent = (fiber: Fiber) =>
@@ -95,37 +125,8 @@ export const isHostComponent = (fiber: Fiber) =>
   // @ts-expect-error: it exists
   fiber.tag === HostSingletonTag;
 
-const seenProps = new WeakSet<any>();
-const seenContextValues = new WeakMap<
-  Fiber,
-  WeakMap<React.Context<unknown>, unknown>
->();
-
 export const didFiberRender = (fiber: Fiber): boolean => {
-  let nextProps = fiber.memoizedProps;
-  const hasSeenProps = seenProps.has(nextProps);
-
-  if (nextProps && typeof nextProps === 'object') {
-    seenProps.add(nextProps);
-  }
-
-  let isContextChanged = false;
-  traverseContexts(fiber, (_prevContext, nextContext) => {
-    const contextMap = seenContextValues.get(fiber) ?? new WeakMap();
-    const seenContextValue = contextMap.get(nextContext.context);
-    if (
-      !contextMap.has(nextContext.context) ||
-      !Object.is(seenContextValue, nextContext.memoizedValue)
-    ) {
-      isContextChanged = true;
-    }
-    contextMap.set(nextContext.context, nextContext.memoizedValue);
-    seenContextValues.set(fiber, contextMap);
-  });
-  if (!isContextChanged && hasSeenProps) return false;
-
-  nextProps ??= {};
-
+  const nextProps = fiber.memoizedProps;
   const prevProps = fiber.alternate?.memoizedProps || {};
   const flags = fiber.flags ?? (fiber as any).effectTag ?? 0;
 
@@ -145,6 +146,50 @@ export const didFiberRender = (fiber: Fiber): boolean => {
         fiber.alternate.memoizedState !== fiber.memoizedState ||
         fiber.alternate.ref !== fiber.ref
       );
+  }
+};
+
+export const shouldFilterFiber = (fiber: Fiber) => {
+  switch (fiber.tag) {
+    case DehydratedSuspenseComponent:
+      // TODO: ideally we would show dehydrated Suspense immediately.
+      // However, it has some special behavior (like disconnecting
+      // an alternate and turning into real Suspense) which breaks DevTools.
+      // For now, ignore it, and only show it once it gets hydrated.
+      // https://github.com/bvaughn/react-devtools-experimental/issues/197
+      return true;
+
+    case HostText:
+    case Fragment:
+    case LegacyHiddenComponent:
+    case OffscreenComponent:
+      return true;
+
+    case HostRoot:
+      // It is never valid to filter the root element.
+      return false;
+
+    default: {
+      const symbolOrNumber =
+        typeof fiber.type === 'object' && fiber.type !== null
+          ? fiber.type.$$typeof
+          : fiber.type;
+
+      const typeSymbol =
+        typeof symbolOrNumber === 'symbol'
+          ? symbolOrNumber.toString()
+          : symbolOrNumber;
+
+      switch (typeSymbol) {
+        case CONCURRENT_MODE_NUMBER:
+        case CONCURRENT_MODE_SYMBOL_STRING:
+        case DEPRECATED_ASYNC_MODE_SYMBOL_STRING:
+          return true;
+
+        default:
+          return false;
+      }
+    }
   }
 };
 

@@ -1,4 +1,4 @@
-import { scan } from 'react-scan/dist/index.mjs'; // force production build
+import { scan, getReport } from 'react-scan/dist/index.mjs'; // force production build
 import React, { useState, createContext } from 'react';
 import ReactDOMClient from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
@@ -8,6 +8,7 @@ import './styles.css';
 
 scan({
   enabled: true,
+  report: true,
   // log: true,
   // clearLog: true,
   // playSound: true,
@@ -29,10 +30,18 @@ const copyToClipboard = (text) => {
 
 const TooltipContext = createContext({ tooltip: '' });
 
+setTimeout(() => {
+  console.log(getReport());
+}, 5000);
+
+const tooltip = { tooltip: 'Hello' };
+
 export const App = () => {
   const [tasks, setTasks] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState('nextjs-pages');
+
+  console.count('App');
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -45,7 +54,7 @@ export const App = () => {
   }, []);
 
   return (
-    <TooltipContext.Provider value={{ tooltip: 'Hello' }}>
+    <TooltipContext.Provider value={tooltip}>
       <div className="app-container">
         <div className="main-content">
           <nav className="navbar">

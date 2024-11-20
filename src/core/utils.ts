@@ -34,7 +34,15 @@ export const getLabelText = (renders: Render[]) => {
   }
 
   const sortedComponents = Array.from(components.entries()).sort(
-    ([, a], [, b]) => b.count - a.count,
+    ([nameA, a], [nameB, b]) => {
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
+      if (a.trigger !== b.trigger) {
+        return a.trigger ? -1 : 1;
+      }
+      return nameA.localeCompare(nameB);
+    }
   );
 
   const parts: string[] = [];
@@ -52,7 +60,7 @@ export const getLabelText = (renders: Render[]) => {
     parts.push(text);
   }
 
-  labelText = parts.join(' ');
+  labelText = parts.join(', ');
 
   if (!labelText.length) return null;
   if (labelText.length > 20) {
