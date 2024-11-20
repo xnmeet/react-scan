@@ -11,6 +11,7 @@ import {
   shouldFilterFiber,
   traverseContexts,
   traverseFiber,
+  traverseState,
 } from './fiber';
 
 declare global {
@@ -189,13 +190,23 @@ export const instrument = ({
     }
     onCommitStart();
 
-    const recordRender = (fiber: Fiber, trigger: boolean) => {
+    const recordRender = (fiber: Fiber) => {
       const type = getType(fiber.type);
       if (!type) return null;
       if (!didFiberRender(fiber)) return null;
 
       const propsRender = getPropsRender(fiber, type);
       const contextRender = getContextRender(fiber, type);
+
+      let trigger = false;
+      if (fiber.alternate) {
+        const didStateChange = traverseState(fiber, (prevState, nextState) => {
+          return !Object.is(prevState.memoizedState, nextState.memoizedState);
+        });
+        if (didStateChange) {
+          trigger = true;
+        }
+      }
 
       const name = getDisplayName(type);
       if (name) {
@@ -246,7 +257,7 @@ export const instrument = ({
       while (fiber != null) {
         const shouldIncludeInTree = !shouldFilterFiber(fiber);
         if (shouldIncludeInTree) {
-          recordRender(fiber, false);
+          recordRender(fiber);
         }
 
         // eslint-disable-next-line eqeqeq
@@ -262,7 +273,7 @@ export const instrument = ({
 
       const shouldIncludeInTree = !shouldFilterFiber(nextFiber);
       if (shouldIncludeInTree) {
-        recordRender(nextFiber, false);
+        recordRender(nextFiber);
       }
 
       if (nextFiber.child !== prevFiber.child) {

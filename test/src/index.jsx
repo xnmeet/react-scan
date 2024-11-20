@@ -30,18 +30,10 @@ const copyToClipboard = (text) => {
 
 const TooltipContext = createContext({ tooltip: '' });
 
-setTimeout(() => {
-  console.log(getReport());
-}, 5000);
-
-const tooltip = { tooltip: 'Hello' };
-
 export const App = () => {
   const [tasks, setTasks] = useState([]);
   const [isMobile, setIsMobile] = useState(false);
   const [activeTab, setActiveTab] = useState('nextjs-pages');
-
-  console.count('App');
 
   React.useEffect(() => {
     const checkMobile = () => {
@@ -54,7 +46,7 @@ export const App = () => {
   }, []);
 
   return (
-    <TooltipContext.Provider value={tooltip}>
+    <TooltipContext.Provider value={{ tooltip: 'Hello' }}>
       <div className="app-container">
         <div className="main-content">
           <nav className="navbar">

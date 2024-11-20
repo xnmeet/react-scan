@@ -5,7 +5,6 @@ import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';
-import { recalcOutlineColor } from './perf-observer';
 
 export interface PendingOutline {
   rect: DOMRect;
@@ -23,16 +22,19 @@ export interface ActiveOutline {
   color: { r: number; g: number; b: number };
 }
 
-export interface PaintedOutline {
+export interface OutlineLabel {
   alpha: number;
   outline: PendingOutline;
   text: string | null;
+  color: { r: number; g: number; b: number };
 }
 
 export const MONO_FONT =
   'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
 const DEFAULT_THROTTLE_TIME = 16; // 1 frame
-export const colorRef = { current: '115,97,230' };
+
+const START_COLOR = { r: 115, g: 97, b: 230 };
+const END_COLOR = { r: 185, g: 49, b: 115 };
 
 export const getOutlineKey = (outline: PendingOutline): string => {
   return `${outline.rect.top}-${outline.rect.left}-${outline.rect.width}-${outline.rect.height}`;
@@ -152,7 +154,6 @@ export const flushOutlines = (
   ctx: CanvasRenderingContext2D,
   previousOutlines: Map<string, PendingOutline> = new Map(),
   toolbar: HTMLElement | null = null,
-  perfObserver: PerformanceObserver | null = null,
 ) => {
   if (!ReactScanInternals.scheduledOutlines.length) {
     return;
@@ -162,9 +163,6 @@ export const flushOutlines = (
   ReactScanInternals.scheduledOutlines = [];
 
   requestAnimationFrame(() => {
-    if (perfObserver) {
-      recalcOutlineColor(perfObserver.takeRecords());
-    }
     recalcOutlines();
     void (async () => {
       const secondOutlines = ReactScanInternals.scheduledOutlines;
@@ -204,7 +202,7 @@ export const flushOutlines = (
         }),
       );
       if (ReactScanInternals.scheduledOutlines.length) {
-        flushOutlines(ctx, newPreviousOutlines, toolbar, perfObserver);
+        flushOutlines(ctx, newPreviousOutlines, toolbar);
       }
     })();
   });
@@ -232,16 +230,24 @@ export const paintOutline = (
       (activeOutline) => getOutlineKey(activeOutline.outline) === key,
     );
 
-    const renderCount = outline.renders.length;
-    const maxRenders = ReactScanInternals.options.maxRenders;
-    const t = Math.min(renderCount / (maxRenders ?? 20), 1);
+    let renders = outline.renders;
+    if (existingActiveOutline) {
+      existingActiveOutline.outline.renders.push(...outline.renders);
+      renders = existingActiveOutline.outline.renders;
+    }
 
-    const startColor = { r: 115, g: 97, b: 230 };
-    const endColor = { r: 185, g: 49, b: 115 };
+    let count = 0;
+    for (let i = 0, len = renders.length; i < len; i++) {
+      const render = renders[i];
+      count += render.count;
+    }
 
-    const r = Math.round(startColor.r + t * (endColor.r - startColor.r));
-    const g = Math.round(startColor.g + t * (endColor.g - startColor.g));
-    const b = Math.round(startColor.b + t * (endColor.b - startColor.b));
+    const maxRenders = ReactScanInternals.options.maxRenders ?? 100;
+    const t = Math.min(count / maxRenders, 1);
+
+    const r = Math.round(START_COLOR.r + t * (END_COLOR.r - START_COLOR.r));
+    const g = Math.round(START_COLOR.g + t * (END_COLOR.g - START_COLOR.g));
+    const b = Math.round(START_COLOR.b + t * (END_COLOR.b - START_COLOR.b));
 
     const color = { r, g, b };
 
@@ -282,12 +288,6 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-  const combinedPath = new Path2D();
-
-  let maxStrokeAlpha = 0;
-  let maxFillAlpha = 0;
-
-  // Group active outlines by position (rect.x and rect.y)
   const groupedOutlines = new Map<string, ActiveOutline>();
 
   for (let i = activeOutlines.length - 1; i >= 0; i--) {
@@ -333,44 +333,46 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
     }
   }
 
-  const pendingLabeledOutlines: PaintedOutline[] = [];
+  const pendingLabeledOutlines: OutlineLabel[] = [];
+
+  ctx.save();
 
   for (const activeOutline of Array.from(groupedOutlines.values())) {
-    const { outline, frame, totalFrames } = activeOutline;
+    const { outline, frame, totalFrames, color } = activeOutline;
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
 
     const alphaScalar = unstable ? 0.8 : 0.2;
     activeOutline.alpha = alphaScalar * (1 - frame / totalFrames);
 
-    maxStrokeAlpha = Math.max(maxStrokeAlpha, activeOutline.alpha);
-    maxFillAlpha = Math.max(maxFillAlpha, activeOutline.alpha * 0.1);
+    const alpha = activeOutline.alpha;
+    const fillAlpha = unstable ? activeOutline.alpha * 0.1 : 0;
 
-    combinedPath.rect(rect.x, rect.y, rect.width, rect.height);
+    const rgb = `${color.r},${color.g},${color.b}`;
+    ctx.strokeStyle = `rgba(${rgb}, ${alpha})`;
+    ctx.lineWidth = 1;
+    ctx.fillStyle = `rgba(${rgb}, ${fillAlpha})`;
+
+    ctx.beginPath();
+    ctx.rect(rect.x, rect.y, rect.width, rect.height);
+    ctx.stroke();
+    ctx.fill();
 
     if (unstable) {
       const text = getLabelText(outline.renders);
       pendingLabeledOutlines.push({
-        alpha: activeOutline.alpha,
+        alpha,
         outline,
         text,
+        color,
       });
     }
   }
 
-  ctx.save();
-
-  ctx.strokeStyle = `rgba(${colorRef.current}, ${maxStrokeAlpha})`;
-  ctx.lineWidth = 1;
-  ctx.fillStyle = `rgba(${colorRef.current}, ${maxFillAlpha})`;
-
-  ctx.stroke(combinedPath);
-  ctx.fill(combinedPath);
-
   ctx.restore();
 
   for (let i = 0, len = pendingLabeledOutlines.length; i < len; i++) {
-    const { alpha, outline, text } = pendingLabeledOutlines[i];
+    const { alpha, outline, text, color } = pendingLabeledOutlines[i];
     const { rect } = outline;
     ctx.save();
 
@@ -383,7 +385,7 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
       const labelX: number = rect.x;
       const labelY: number = rect.y - textHeight - 4;
 
-      ctx.fillStyle = `rgba(${colorRef.current},${alpha})`;
+      ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${alpha})`;
       ctx.fillRect(labelX, labelY, textWidth + 4, textHeight + 4);
 
       ctx.fillStyle = `rgba(255,255,255,${alpha})`;

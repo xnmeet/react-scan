@@ -100,8 +100,8 @@ export const traverseContexts = (
 export const traverseState = (
   fiber: Fiber,
   selector: (
-    prevValue: { memoizedValue: unknown },
-    nextValue: { memoizedValue: unknown },
+    prevValue: { memoizedState: unknown },
+    nextValue: { memoizedState: unknown },
     // eslint-disable-next-line @typescript-eslint/no-invalid-void-type
   ) => boolean | void,
 ) => {

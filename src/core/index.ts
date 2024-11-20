@@ -11,7 +11,6 @@ import { createOverlay } from './web/index';
 import { logIntro } from './web/log';
 import { createToolbar } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
-import { createPerfObserver } from './web/perf-observer';
 
 interface Options {
   /**
@@ -157,7 +156,6 @@ export const start = () => {
   const { options } = ReactScanInternals;
   const ctx = createOverlay();
   const toolbar = options.showToolbar ? createToolbar() : null;
-  const perfObserver = createPerfObserver();
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
@@ -192,7 +190,7 @@ export const start = () => {
       }
 
       requestAnimationFrame(() => {
-        flushOutlines(ctx, new Map(), toolbar, perfObserver);
+        flushOutlines(ctx, new Map(), toolbar);
       });
     },
     onCommitFinish() {

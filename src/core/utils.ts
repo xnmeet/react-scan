@@ -35,14 +35,14 @@ export const getLabelText = (renders: Render[]) => {
 
   const sortedComponents = Array.from(components.entries()).sort(
     ([nameA, a], [nameB, b]) => {
-      if (b.count !== a.count) {
-        return b.count - a.count;
-      }
       if (a.trigger !== b.trigger) {
         return a.trigger ? -1 : 1;
       }
+      if (b.count !== a.count) {
+        return b.count - a.count;
+      }
       return nameA.localeCompare(nameB);
-    }
+    },
   );
 
   const parts: string[] = [];
