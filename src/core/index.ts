@@ -55,12 +55,12 @@ interface Options {
   showToolbar?: boolean;
 
   /**
-   * Long task threshold in milliseconds, only show
-   * when main thread is blocked for longer than this
+   * Render count threshold, only show
+   * when a component renders more than this
    *
-   * @default 50
+   * @default 0
    */
-  longTaskThreshold?: number;
+  renderCountThreshold?: number;
 
   /**
    * Clear aggregated fibers after this time in milliseconds
@@ -129,7 +129,7 @@ export const ReactScanInternals: Internals = {
     playSound: false,
     log: false,
     showToolbar: true,
-    longTaskThreshold: 50,
+    renderCountThreshold: 0,
     report: false,
   },
   reportData: {},

@@ -12,7 +12,7 @@ scan({
   // log: true,
   // clearLog: true,
   // playSound: true,
-  // longTaskThreshold: 50,
+  renderCountThreshold: 100,
   runInProduction: true,
 });
 

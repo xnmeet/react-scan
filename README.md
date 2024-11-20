@@ -165,10 +165,10 @@ scan({
   showToolbar: true,
 
   /**
-   * Long task threshold in milliseconds, only show
-   * when main thread is blocked for longer than this
+   * Render count threshold, only show
+   * when a component renders more than this
    */
-  longTaskThreshold: 50,
+  renderCountThreshold: 0,
 
   /**
    * Report data to getReport()
@@ -228,10 +228,10 @@ withScan(Component, {
   showToolbar: true,
 
   /**
-   * Long task threshold in milliseconds, only show
-   * when main thread is blocked for longer than this
+   * Render count threshold, only show
+   * when a component renders more than this
    */
-  longTaskThreshold: 50,
+  renderCountThreshold: 0,
 
   /**
    * Report data to getReport()
@@ -308,10 +308,10 @@ setOptions({
   showToolbar: true,
 
   /**
-   * Long task threshold in milliseconds, only show
-   * when main thread is blocked for longer than this
+   * Render count threshold, only show
+   * when a component renders more than this
    */
-  longTaskThreshold: 50,
+  renderCountThreshold: 0,
 
   /**
    * Report data to getReport()

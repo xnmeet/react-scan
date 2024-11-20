@@ -284,7 +284,7 @@ export const paintOutline = (
 };
 
 export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
-  const { activeOutlines } = ReactScanInternals;
+  const { activeOutlines, options } = ReactScanInternals;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
@@ -337,10 +337,22 @@ export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
 
   ctx.save();
 
+  const renderCountThreshold = options.renderCountThreshold ?? 0;
   for (const activeOutline of Array.from(groupedOutlines.values())) {
     const { outline, frame, totalFrames, color } = activeOutline;
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
+
+    if (renderCountThreshold > 0) {
+      let count = 0;
+      for (let i = 0, len = outline.renders.length; i < len; i++) {
+        const render = outline.renders[i];
+        count += render.count;
+      }
+      if (count < renderCountThreshold) {
+        continue;
+      }
+    }
 
     const alphaScalar = unstable ? 0.8 : 0.2;
     activeOutline.alpha = alphaScalar * (1 - frame / totalFrames);
