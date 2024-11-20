@@ -139,15 +139,13 @@ scan({
    * Enable/disable scanning
    */
   enabled: true,
+  // Recommended way:
+  // enabled: process.env.NODE_ENV === 'development',
+
   /**
    * Include children of a component applied with withScan
    */
   includeChildren: true,
-
-  /**
-   * Run in production
-   */
-  runInProduction: false,
 
   /**
    * Enable/disable geiger sound
@@ -202,15 +200,13 @@ withScan(Component, {
    * Enable/disable scanning
    */
   enabled: true,
+  // Recommended way:
+  // enabled: process.env.NODE_ENV === 'development',
+
   /**
    * Include children of a component applied with withScan
    */
   includeChildren: true,
-
-  /**
-   * Run in production
-   */
-  runInProduction: false,
 
   /**
    * Enable/disable geiger sound
@@ -282,15 +278,14 @@ setOptions({
    * Enable/disable scanning
    */
   enabled: true,
+  // Recommended way:
+  // enabled: process.env.NODE_ENV === 'development',
+
   /**
    * Include children of a component applied with withScan
    */
   includeChildren: true,
 
-  /**
-   * Run in production
-   */
-  runInProduction: false,
 
   /**
    * Enable/disable geiger sound

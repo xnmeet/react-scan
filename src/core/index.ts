@@ -1,5 +1,5 @@
 import type { Fiber, FiberRoot } from 'react-reconciler';
-import * as React from 'react';
+import type * as React from 'react';
 import { instrument, type Render } from './instrumentation/index';
 import {
   type ActiveOutline,
@@ -15,6 +15,9 @@ import { playGeigerClickSound } from './web/geiger';
 interface Options {
   /**
    * Enable/disable scanning
+   *
+   * Please use the recommended way:
+   * enabled: process.env.NODE_ENV === 'development',
    *
    * @default true
    */
@@ -92,7 +95,6 @@ interface Options {
 
 interface Internals {
   onCommitFiberRoot: (rendererID: number, root: FiberRoot) => void;
-  isProd: boolean;
   isInIframe: boolean;
   isPaused: boolean;
   componentAllowList: WeakMap<React.ComponentType<any>, Options> | null;
@@ -112,12 +114,6 @@ interface Internals {
 export const ReactScanInternals: Internals = {
   onCommitFiberRoot: (_rendererID: number, _root: FiberRoot): void => {
     /**/
-  },
-  get isProd() {
-    return (
-      '_self' in React.createElement('div') &&
-      !ReactScanInternals.options.runInProduction
-    );
   },
   isInIframe: window.self !== window.top,
   isPaused: false,
@@ -204,8 +200,8 @@ export const withScan = <T>(
   options: Options = {},
 ) => {
   setOptions(options);
-  const { isInIframe, isProd, componentAllowList } = ReactScanInternals;
-  if (isInIframe || isProd || options.enabled === false) return component;
+  const { isInIframe, componentAllowList } = ReactScanInternals;
+  if (isInIframe || options.enabled === false) return component;
   if (!componentAllowList) {
     ReactScanInternals.componentAllowList = new WeakMap<
       React.ComponentType<any>,
@@ -223,8 +219,8 @@ export const withScan = <T>(
 
 export const scan = (options: Options = {}) => {
   setOptions(options);
-  const { isInIframe, isProd } = ReactScanInternals;
-  if (isInIframe || isProd || options.enabled === false) return;
+  const { isInIframe } = ReactScanInternals;
+  if (isInIframe || options.enabled === false) return;
 
   start();
 };

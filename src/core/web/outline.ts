@@ -151,7 +151,7 @@ export const recalcOutlines = throttle(() => {
 }, DEFAULT_THROTTLE_TIME);
 
 export const flushOutlines = (
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   previousOutlines: Map<string, PendingOutline> = new Map(),
   toolbar: HTMLElement | null = null,
 ) => {
@@ -211,7 +211,7 @@ export const flushOutlines = (
 let animationFrameId: number | null = null;
 
 export const paintOutline = (
-  ctx: CanvasRenderingContext2D,
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   outline: PendingOutline,
 ) => {
   return new Promise<void>((resolve) => {
@@ -283,7 +283,9 @@ export const paintOutline = (
   });
 };
 
-export const fadeOutOutline = (ctx: CanvasRenderingContext2D) => {
+export const fadeOutOutline = (
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+) => {
   const { activeOutlines, options } = ReactScanInternals;
 
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);

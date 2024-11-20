@@ -1,18 +1,31 @@
 import { recalcOutlines } from './outline';
-import { createElement, onIdle } from './utils';
+import { createElement } from './utils';
 
 export const createOverlay = () => {
   const canvas = createElement(
     `<canvas id="react-scan-overlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:2147483646" aria-hidden="true"/>`,
   ) as HTMLCanvasElement;
-  const ctx = canvas.getContext('2d');
+
+  const prevCanvas = document.getElementById('react-scan-overlay');
+  if (prevCanvas) {
+    prevCanvas.remove();
+  }
+  document.documentElement.appendChild(canvas);
+
+  const isOffscreenCanvasSupported = 'OffscreenCanvas' in globalThis;
+  const offscreenCanvas = isOffscreenCanvasSupported
+    ? canvas.transferControlToOffscreen()
+    : canvas;
+  const ctx = offscreenCanvas.getContext('2d') as
+    | CanvasRenderingContext2D
+    | OffscreenCanvasRenderingContext2D;
 
   let resizeScheduled = false;
 
   const resize = () => {
     const dpi = window.devicePixelRatio;
-    canvas.width = dpi * window.innerWidth;
-    canvas.height = dpi * window.innerHeight;
+    ctx.canvas.width = dpi * window.innerWidth;
+    ctx.canvas.height = dpi * window.innerHeight;
 
     if (ctx) {
       ctx.resetTransform();
@@ -35,14 +48,6 @@ export const createOverlay = () => {
   });
   window.addEventListener('scroll', () => {
     recalcOutlines();
-  });
-
-  onIdle(() => {
-    const prevCanvas = document.getElementById('react-scan-overlay');
-    if (prevCanvas) {
-      prevCanvas.remove();
-    }
-    document.documentElement.appendChild(canvas);
   });
 
   return ctx;

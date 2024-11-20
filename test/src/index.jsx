@@ -8,7 +8,7 @@ import './styles.css';
 
 scan({
   enabled: true,
-  report: true,
+  // report: true,
   // log: true,
   // clearLog: true,
   // playSound: true,
