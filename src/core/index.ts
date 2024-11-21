@@ -97,8 +97,8 @@ interface Options {
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
-  onPaintStart?: (outline: PendingOutline) => void;
-  onPaintFinish?: (outline: PendingOutline) => void;
+  onPaintStart?: (outlines: PendingOutline[]) => void;
+  onPaintFinish?: (outlines: PendingOutline[]) => void;
 }
 
 interface Internals {

@@ -3,7 +3,7 @@ import { getNearestHostFiber } from '../instrumentation/fiber';
 import type { Render } from '../instrumentation/index';
 import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
-import { isOutlineUnstable, onIdle, throttle } from './utils';
+import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';
 import { getMainThreadTaskTime } from './perf-observer';
 
@@ -192,14 +192,15 @@ export const flushOutlines = (
         toolbar.textContent = `${text} · react-scan`;
       }
 
-      await Promise.all(
-        mergedOutlines.map(async (outline) => {
+      await paintOutlines(
+        ctx,
+        mergedOutlines.filter((outline) => {
           const key = getOutlineKey(outline);
           if (previousOutlines.has(key)) {
-            return;
+            return false;
           }
-          await paintOutline(ctx, outline);
           newPreviousOutlines.set(key, outline);
+          return true;
         }),
       );
 
@@ -222,7 +223,6 @@ export const paintOutline = (
     const totalFrames = unstable || options.alwaysShowLabels ? 60 : 5;
     const alpha = 0.8;
 
-    options.onPaintStart?.(outline);
     if (options.log) {
       log(outline.renders);
     }
@@ -274,10 +274,7 @@ export const paintOutline = (
         alpha,
         frame,
         totalFrames,
-        resolve: () => {
-          resolve();
-          options.onPaintFinish?.(outline);
-        },
+        resolve,
         text: getLabelText(outline.renders),
         color,
       });
@@ -338,7 +335,15 @@ export const fadeOutOutline = (
 
     activeOutline.frame++;
 
-    if (activeOutline.frame > activeOutline.totalFrames) {
+    const progress = activeOutline.frame / activeOutline.totalFrames;
+    const isImportant =
+      isOutlineUnstable(activeOutline.outline) || options.alwaysShowLabels;
+
+    const alphaScalar = isImportant ? 0.8 : 0.2;
+    activeOutline.alpha = alphaScalar * (1 - progress);
+
+    if (activeOutline.frame >= activeOutline.totalFrames) {
+      activeOutline.resolve();
       activeOutlines.splice(i, 1);
     }
   }
@@ -436,3 +441,53 @@ export const fadeOutOutline = (
     animationFrameId = null;
   }
 };
+
+async function paintOutlines(
+  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
+  outlines: PendingOutline[],
+): Promise<void> {
+  return new Promise<void>((resolve) => {
+    const { options } = ReactScanInternals;
+    const totalFrames = options.alwaysShowLabels ? 60 : 30;
+    const alpha = 0.8;
+
+    options.onPaintStart?.(outlines);
+
+    const newActiveOutlines = outlines.map((outline) => {
+      const renders = outline.renders;
+      let count = 0;
+      let time = 0;
+      for (const render of renders) {
+        count += render.count;
+        time += render.time;
+      }
+
+      const maxRenders = options.maxRenders ?? 100;
+      const t = Math.min((count * (time || 1)) / maxRenders, 1);
+
+      const r = Math.round(START_COLOR.r + t * (END_COLOR.r - START_COLOR.r));
+      const g = Math.round(START_COLOR.g + t * (END_COLOR.g - START_COLOR.g));
+      const b = Math.round(START_COLOR.b + t * (END_COLOR.b - START_COLOR.b));
+
+      const color = { r, g, b };
+
+      const frame = 0;
+
+      return {
+        outline,
+        alpha,
+        frame,
+        totalFrames,
+        resolve,
+        text: getLabelText(renders),
+        color,
+      };
+    });
+
+    ReactScanInternals.activeOutlines.push(...newActiveOutlines);
+
+    if (!animationFrameId) {
+      animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
+    }
+  });
+}
