@@ -1,6 +1,14 @@
 import { recalcOutlines } from './outline';
 import { createElement } from './utils';
 
+let worker: Worker | null = null;
+
+if ('Worker' in globalThis) {
+  worker = new Worker(new URL('./canvas.worker.js', import.meta.url), {
+    type: 'module',
+  });
+}
+
 export const createOverlay = () => {
   const canvas = createElement(
     `<canvas id="react-scan-overlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:2147483646" aria-hidden="true"/>`,
@@ -16,9 +24,14 @@ export const createOverlay = () => {
   const offscreenCanvas = isOffscreenCanvasSupported
     ? canvas.transferControlToOffscreen()
     : canvas;
-  const ctx = offscreenCanvas.getContext('2d') as
-    | CanvasRenderingContext2D
-    | OffscreenCanvasRenderingContext2D;
+
+  if (worker && isOffscreenCanvasSupported) {
+    worker.postMessage({ source: 'react-scan', canvas: offscreenCanvas }, [
+      offscreenCanvas as any,
+    ]);
+  }
+
+  const ctx = offscreenCanvas.getContext('2d')!;
 
   // if (isOffscreenCanvasSupported) {
   //   const worker = new Worker(new URL('./worker.js', import.meta.url), {

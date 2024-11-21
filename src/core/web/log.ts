@@ -1,4 +1,4 @@
-import type { Render } from '../instrumentation';
+import type { Render } from '../instrumentation/index';
 import { getLabelText } from '../utils';
 import { MONO_FONT } from './outline';
 
