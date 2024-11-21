@@ -13,9 +13,7 @@ export const createOverlay = () => {
   document.documentElement.appendChild(canvas);
 
   const isOffscreenCanvasSupported = 'OffscreenCanvas' in globalThis;
-  const offscreenCanvas = isOffscreenCanvasSupported
-    ? canvas.transferControlToOffscreen()
-    : canvas;
+  const offscreenCanvas = isOffscreenCanvasSupported ? canvas : canvas;
   const ctx = offscreenCanvas.getContext('2d') as
     | CanvasRenderingContext2D
     | OffscreenCanvasRenderingContext2D;
