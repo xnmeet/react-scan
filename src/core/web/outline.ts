@@ -3,7 +3,7 @@ import { getNearestHostFiber } from '../instrumentation/fiber';
 import type { Render } from '../instrumentation/index';
 import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
-import { isOutlineUnstable, throttle } from './utils';
+import { isOutlineUnstable, onIdle, throttle } from './utils';
 import { log } from './log';
 import { getMainThreadTaskTime } from './perf-observer';
 
@@ -61,10 +61,10 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
   const rect = domNode.getBoundingClientRect();
 
   const isVisible =
-    rect.bottom >= 0 &&
-    rect.right >= 0 &&
-    rect.top <= window.innerHeight &&
-    rect.left <= window.innerWidth;
+    rect.bottom > 0 &&
+    rect.right > 0 &&
+    rect.top < window.innerHeight &&
+    rect.left < window.innerWidth;
 
   if (!isVisible || !rect.width || !rect.height) {
     return null;
@@ -168,7 +168,7 @@ export const flushOutlines = (
     void (async () => {
       const secondOutlines = ReactScanInternals.scheduledOutlines;
       ReactScanInternals.scheduledOutlines = [];
-      const mergedOutlines = secondOutlines
+      const mergedOutlines = secondOutlines.length
         ? mergeOutlines([...firstOutlines, ...secondOutlines])
         : firstOutlines;
 
@@ -180,7 +180,7 @@ export const flushOutlines = (
 
         for (let i = 0, len = mergedOutlines.length; i < len; i++) {
           const outline = mergedOutlines[i];
-          for (let j = 0, len = outline.renders.length; j < len; j++) {
+          for (let j = 0, len2 = outline.renders.length; j < len2; j++) {
             const render = outline.renders[j];
             totalTime += render.time;
             totalCount += render.count;
@@ -202,6 +202,7 @@ export const flushOutlines = (
           newPreviousOutlines.set(key, outline);
         }),
       );
+
       if (ReactScanInternals.scheduledOutlines.length) {
         flushOutlines(ctx, newPreviousOutlines, toolbar);
       }
