@@ -10,7 +10,7 @@ export const createOverlay = () => {
   if (prevCanvas) {
     prevCanvas.remove();
   }
-  // document.documentElement.appendChild(canvas);
+  document.documentElement.appendChild(canvas);
 
   const isOffscreenCanvasSupported = 'OffscreenCanvas' in globalThis;
   const offscreenCanvas = isOffscreenCanvasSupported

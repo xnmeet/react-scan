@@ -2,7 +2,7 @@
 
 React Scan detects performance issues in your React app.
 
-Previously, tools like [`<Profiler />`](https://react.dev/reference/react-devtools), [Why Did You Render?](https://github.com/welldone-software/why-did-you-render), and [React Devtools](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html) required lots of manual code change, lacked simple visual cues, and had noisy data.
+Previously, tools like [`<Profiler />`](https://react.dev/reference/react-devtools), [Why Did You Render?](https://github.com/welldone-software/why-did-you-render), and [React Devtools](https://legacy.reactjs.org/blog/2018/09/10/introducing-the-react-profiler.html) required lots of manual code change, lacked simple visual cues, or didn't have a simple, programmatic API.
 
 Instead, React Scan automatically detects and highlights renders that cause performance issues. This shows you exactly which components you need to fix.
 
