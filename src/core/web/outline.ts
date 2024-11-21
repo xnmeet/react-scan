@@ -44,8 +44,10 @@ export const getOutlineKey = (outline: PendingOutline): string => {
 const rectCache = new Map<HTMLElement, { rect: DOMRect; timestamp: number }>();
 
 export const getRect = (domNode: HTMLElement): DOMRect | null => {
+  const now = performance.now();
   const cached = rectCache.get(domNode);
-  if (cached && cached.timestamp > performance.now() - DEFAULT_THROTTLE_TIME) {
+
+  if (cached && now - cached.timestamp < DEFAULT_THROTTLE_TIME) {
     return cached.rect;
   }
 
@@ -70,7 +72,7 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
     return null;
   }
 
-  rectCache.set(domNode, { rect, timestamp: performance.now() });
+  rectCache.set(domNode, { rect, timestamp: now });
 
   return rect;
 };
@@ -300,15 +302,6 @@ export const fadeOutOutline = (
     const activeOutline = activeOutlines[i];
     if (!activeOutline) continue;
     const { outline } = activeOutline;
-
-    requestAnimationFrame(() => {
-      if (outline) {
-        const newRect = getRect(outline.domNode);
-        if (newRect) {
-          outline.rect = newRect;
-        }
-      }
-    });
 
     const { rect } = outline;
 
