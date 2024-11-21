@@ -5,6 +5,7 @@ import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
 import { log } from './log';
+import { isMainThreadBlocked } from './perf-observer';
 
 export interface PendingOutline {
   rect: DOMRect;
@@ -227,7 +228,9 @@ export const paintOutline = (
 
     const key = getOutlineKey(outline);
     const existingActiveOutline = ReactScanInternals.activeOutlines.find(
-      (activeOutline) => getOutlineKey(activeOutline.outline) === key,
+      (activeOutline) =>
+        getOutlineKey(activeOutline.outline) === key &&
+        activeOutline.outline.domNode === outline.domNode,
     );
 
     let renders = outline.renders;
@@ -288,7 +291,8 @@ export const fadeOutOutline = (
 ) => {
   const { activeOutlines, options } = ReactScanInternals;
 
-  ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  const dpi = window.devicePixelRatio || 1;
+  ctx.clearRect(0, 0, ctx.canvas.width / dpi, ctx.canvas.height / dpi);
 
   const groupedOutlines = new Map<string, ActiveOutline>();
 
@@ -307,6 +311,7 @@ export const fadeOutOutline = (
     });
 
     const { rect } = outline;
+
     const key = `${rect.x}-${rect.y}`;
 
     if (!groupedOutlines.has(key)) {
@@ -342,6 +347,10 @@ export const fadeOutOutline = (
   const renderCountThreshold = options.renderCountThreshold ?? 0;
   for (const activeOutline of Array.from(groupedOutlines.values())) {
     const { outline, frame, totalFrames, color } = activeOutline;
+    const isBlocked = isMainThreadBlocked();
+    if (isBlocked) {
+      activeOutline.totalFrames = Math.floor(Math.max(1, totalFrames / 1.1));
+    }
     const { rect } = outline;
     const unstable = isOutlineUnstable(outline);
 
@@ -372,7 +381,7 @@ export const fadeOutOutline = (
     ctx.stroke();
     ctx.fill();
 
-    if (unstable) {
+    if (unstable || options.alwaysShowLabels) {
       const text = getLabelText(outline.renders);
       pendingLabeledOutlines.push({
         alpha,

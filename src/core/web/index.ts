@@ -20,17 +20,23 @@ export const createOverlay = () => {
     | CanvasRenderingContext2D
     | OffscreenCanvasRenderingContext2D;
 
+  // if (isOffscreenCanvasSupported) {
+  //   const worker = new Worker(new URL('./worker.js', import.meta.url), {
+  //     type: 'module',
+  //   });
+  // }
+
   let resizeScheduled = false;
 
   const resize = () => {
-    const dpi = window.devicePixelRatio;
+    const dpi = window.devicePixelRatio || 1;
     ctx.canvas.width = dpi * window.innerWidth;
     ctx.canvas.height = dpi * window.innerHeight;
+    canvas.style.width = `${window.innerWidth}px`;
+    canvas.style.height = `${window.innerHeight}px`;
 
-    if (ctx) {
-      ctx.resetTransform();
-      ctx.scale(dpi, dpi);
-    }
+    ctx.resetTransform();
+    ctx.scale(dpi, dpi);
 
     resizeScheduled = false;
   };

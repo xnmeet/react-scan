@@ -11,6 +11,7 @@ import { createOverlay } from './web/index';
 import { logIntro } from './web/log';
 import { createToolbar } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
+import { createPerfObserver } from './web/perf-observer';
 
 interface Options {
   /**
@@ -86,6 +87,13 @@ interface Options {
    */
   report?: boolean;
 
+  /**
+   * Always show labels
+   *
+   * @default false
+   */
+  alwaysShowLabels?: boolean;
+
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
@@ -127,6 +135,7 @@ export const ReactScanInternals: Internals = {
     showToolbar: true,
     renderCountThreshold: 0,
     report: false,
+    alwaysShowLabels: false,
   },
   reportData: {},
   scheduledOutlines: [],
@@ -158,6 +167,7 @@ export const start = () => {
           // @ts-expect-error -- This is a fallback for Safari
           window.webkitAudioContext)()
       : null;
+  createPerfObserver();
 
   if (!ctx) return;
   logIntro();
@@ -184,13 +194,12 @@ export const start = () => {
         );
         playGeigerClickSound(audioContext, amplitude);
       }
-
-      requestAnimationFrame(() => {
-        flushOutlines(ctx, new Map(), toolbar);
-      });
     },
     onCommitFinish() {
       options.onCommitFinish?.();
+      requestAnimationFrame(() => {
+        flushOutlines(ctx, new Map(), toolbar);
+      });
     },
   });
 };
