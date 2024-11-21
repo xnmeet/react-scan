@@ -162,55 +162,48 @@ export const flushOutlines = (
     return;
   }
 
-  const firstOutlines = ReactScanInternals.scheduledOutlines;
+  const scheduledOutlines = ReactScanInternals.scheduledOutlines;
   ReactScanInternals.scheduledOutlines = [];
 
-  requestAnimationFrame(() => {
-    recalcOutlines();
-    void (async () => {
-      const secondOutlines = ReactScanInternals.scheduledOutlines;
-      ReactScanInternals.scheduledOutlines = [];
-      const mergedOutlines = secondOutlines.length
-        ? mergeOutlines([...firstOutlines, ...secondOutlines])
-        : firstOutlines;
+  recalcOutlines();
 
-      const newPreviousOutlines = new Map<string, PendingOutline>();
+  const newPreviousOutlines = new Map<string, PendingOutline>();
 
-      if (toolbar) {
-        let totalCount = 0;
-        let totalTime = 0;
+  if (toolbar) {
+    let totalCount = 0;
+    let totalTime = 0;
 
-        for (let i = 0, len = mergedOutlines.length; i < len; i++) {
-          const outline = mergedOutlines[i];
-          for (let j = 0, len2 = outline.renders.length; j < len2; j++) {
-            const render = outline.renders[j];
-            totalTime += render.time;
-            totalCount += render.count;
-          }
-        }
-
-        let text = `×${totalCount}`;
-        if (totalTime > 0) text += ` (${totalTime.toFixed(2)}ms)`;
-        toolbar.textContent = `${text} · react-scan`;
+    for (let i = 0, len = scheduledOutlines.length; i < len; i++) {
+      const outline = scheduledOutlines[i];
+      for (let j = 0, len2 = outline.renders.length; j < len2; j++) {
+        const render = outline.renders[j];
+        totalTime += render.time;
+        totalCount += render.count;
       }
+    }
 
-      await paintOutlines(
-        ctx,
-        mergedOutlines.filter((outline) => {
-          const key = getOutlineKey(outline);
-          if (previousOutlines.has(key)) {
-            return false;
-          }
-          newPreviousOutlines.set(key, outline);
-          return true;
-        }),
-      );
+    let text = `×${totalCount}`;
+    if (totalTime > 0) text += ` (${totalTime.toFixed(2)}ms)`;
+    toolbar.textContent = `${text} · react-scan`;
+  }
 
-      if (ReactScanInternals.scheduledOutlines.length) {
-        flushOutlines(ctx, newPreviousOutlines, toolbar);
+  void paintOutlines(
+    ctx,
+    scheduledOutlines.filter((outline) => {
+      const key = getOutlineKey(outline);
+      if (previousOutlines.has(key)) {
+        return false;
       }
-    })();
-  });
+      newPreviousOutlines.set(key, outline);
+      return true;
+    }),
+  );
+
+  if (ReactScanInternals.scheduledOutlines.length) {
+    requestAnimationFrame(() => {
+      flushOutlines(ctx, newPreviousOutlines, toolbar);
+    });
+  }
 };
 
 let animationFrameId: number | null = null;

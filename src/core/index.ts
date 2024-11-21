@@ -194,12 +194,10 @@ export const start = () => {
         );
         playGeigerClickSound(audioContext, amplitude);
       }
+      flushOutlines(ctx, new Map(), toolbar);
     },
     onCommitFinish() {
       options.onCommitFinish?.();
-      requestAnimationFrame(() => {
-        flushOutlines(ctx, new Map(), toolbar);
-      });
     },
   });
 };
