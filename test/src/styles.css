@@ -10,7 +10,6 @@
   --sh-comment: #6e7781;
 }
 
-
 .app-container {
   padding: 5rem 2rem 1rem 2rem;
   max-width: 700px;
@@ -23,6 +22,9 @@
 @media (max-width: 640px) {
   .app-container {
     padding: 1rem;
+  }
+  .framework-instructions {
+    display: none;
   }
 }
 
@@ -68,7 +70,8 @@
   padding: 0.5rem 0.75rem;
 }
 
-html, body {
+html,
+body {
   font-family: 'Geist', sans-serif;
   font-optical-sizing: auto;
   font-style: normal;

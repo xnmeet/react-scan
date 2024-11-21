@@ -47,7 +47,7 @@ export const createToolbar = () => {
   if (prevElement) {
     prevElement.remove();
   }
-  document.documentElement.appendChild(status);
+  // document.documentElement.appendChild(status);
 
   return status;
 };
