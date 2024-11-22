@@ -147,37 +147,14 @@ export const getContextRender = (
     forget: hasMemoCache(fiber),
   };
 };
-
+// back compat
 export const reportRender = (
   name: string,
   fiber: Fiber,
   renders: (Render | null)[],
 ) => {
-  // TODO ROB: TURN ON REPORTING ASAP!!
   if (ReactScanInternals.options.report === false) return;
-
-  const [reportFiber, report] = (() => {
-    const currentFiberData = ReactScanInternals.reportData.get(fiber);
-    if (currentFiberData) {
-      return [fiber, currentFiberData] as const;
-    }
-    if (!fiber.alternate) {
-      return [fiber, null] as const; // use the current fiber as a key
-    }
-
-    const alternateFiberData = ReactScanInternals.reportData.get(
-      fiber.alternate,
-    );
-    return [fiber.alternate, alternateFiberData] as const;
-  })();
-
-  // const [reportFiber, report] =
-  //   ([fiber, ReactScanInternals.reportData.get(fiber)] as const) ??
-  //   (fiber.alternate &&
-  //     ([
-  //       ReactScanInternals.reportData.get(fiber.alternate),
-  //       fiber.alternate,
-  //     ] as const));
+  const report = ReactScanInternals.reportData[name];
   if (report) {
     for (let i = 0, len = renders.length; i < len; i++) {
       const render = renders[i];
@@ -188,20 +165,54 @@ export const reportRender = (
   }
   const time = getSelfTime(fiber) ?? 0;
 
-  // ReactScanInternals.reportData[name] = {
-  // count: (report?.count ?? 0) + 1,
-  // time: (report?.time ?? 0) + time,
-  // badRenders: report?.badRenders || [],
-  // };
-  ReactScanInternals.reportData.set(reportFiber, {
+  ReactScanInternals.reportData[name] = {
+    count: (report?.count ?? 0) + 1,
+    time: (report?.time ?? 0) + time,
+    badRenders: report?.badRenders || [],
+  };
+};
+export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
+  const [reportFiber, report] = (() => {
+    const currentFiberData = ReactScanInternals.reportDataFiber.get(fiber);
+    if (currentFiberData) {
+      return [fiber, currentFiberData] as const;
+    }
+    if (!fiber.alternate) {
+      return [fiber, null] as const; // use the current fiber as a key
+    }
+
+    const alternateFiberData = ReactScanInternals.reportDataFiber.get(
+      fiber.alternate,
+    );
+    return [fiber.alternate, alternateFiberData] as const;
+  })();
+
+  if (report) {
+    for (let i = 0, len = renders.length; i < len; i++) {
+      const render = renders[i];
+      if (render) {
+        report.badRenders.push(render);
+      }
+    }
+  }
+  const time = getSelfTime(fiber) ?? 0.1; // .1ms lowest precision
+
+  ReactScanInternals.reportDataFiber.set(reportFiber, {
     count: (report?.count ?? 0) + 1,
     time: (report?.time ?? 0) + time,
     badRenders: report?.badRenders || [],
     // @ts-expect-error
     displayName: getDisplayName(fiber.type),
   });
-  ReactScanInternals.emit('reportData', ReactScanInternals.reportData);
-  console.log('SETTING', ReactScanInternals.reportData);
+  ReactScanInternals.emit(
+    'reportDataFiber',
+    ReactScanInternals.reportDataFiber,
+  );
+
+  // console.log('emitting report data fiber');
+  // ReactScanInternals.emit('reportDataFiber', {
+  //   ...ReactScanInternals.reportDataFiber,
+  // });
 };
 
 export const instrument = ({
@@ -215,13 +226,13 @@ export const instrument = ({
 }) => {
   const handleCommitFiberRoot = (_rendererID: number, root: FiberRoot) => {
     if (
-      ReactScanInternals.isPaused ||
+      (ReactScanInternals.isPaused &&
+        ReactScanInternals.inspectState.kind === 'inspect-off') ||
       ReactScanInternals.options.enabled === false
     ) {
       return;
     }
     onCommitStart();
-
     const recordRender = (fiber: Fiber) => {
       const type = getType(fiber.type);
       if (!type) return null;
@@ -239,10 +250,9 @@ export const instrument = ({
           trigger = true;
         }
       }
-
       const name = getDisplayName(type);
       if (name) {
-        console.log('reporting render', fiber);
+        reportRenderFiber(fiber, [propsRender, contextRender]); // back compat
         reportRender(name, fiber, [propsRender, contextRender]);
       }
 
@@ -360,6 +370,10 @@ export const instrument = ({
     rendererID: number,
     root: FiberRoot,
   ) => {
+    if (root) {
+      ReactScanInternals.fiberRoots.add(root);
+    }
+
     try {
       handleCommitFiberRoot(rendererID, root);
     } catch (err) {

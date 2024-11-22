@@ -11,7 +11,11 @@ import { logIntro } from './web/log';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
 import { initReactScanOverlay } from './web/overlay';
-import { createStore } from './utils';
+import {
+  createInspectElementStateMachine,
+  States,
+} from './web/inspect-state-machine';
+import { createToolbar } from './web/toolbar';
 
 export interface Options {
   /**
@@ -107,8 +111,16 @@ export interface Internals {
   options: Options;
   scheduledOutlines: PendingOutline[];
   activeOutlines: ActiveOutline[];
-  reportData: WeakMap<
+  reportDataFiber: WeakMap<
     Fiber,
+    {
+      count: number;
+      time: number;
+      badRenders: Render[];
+    }
+  >;
+  reportData: Record<
+    string,
     {
       count: number;
       time: number;
@@ -117,15 +129,128 @@ export interface Internals {
   >;
   activePropOverlays: Array<ActiveProp>;
   hoveredDomElement: HTMLElement | null;
+  lastHoveredDomElement: HTMLElement | null;
   focusedDomElement: HTMLElement | null;
+  inspectElement: boolean;
+  fiberRoots: WeakSet<Fiber>;
+  inspectState: States;
 }
 
+type Listener<T> = (value: T) => void;
+
+export interface StoreMethods<T extends object> {
+  subscribe<K extends keyof T>(key: K, listener: Listener<T[K]>): () => void;
+  set<K extends keyof T>(key: K, value: T[K]): void;
+  setState(state: Partial<T>): void;
+  emit<K extends keyof T>(key: K, value: T[K]): void;
+  subscribeMultiple(
+    subscribeTo: Array<keyof T>,
+    listener: Listener<T>,
+  ): () => void;
+  // subscribeAll(listener: Listener<T[keyof ]>)
+}
+
+type Store<T extends object> = T & StoreMethods<T>;
+
+const createStore = <T extends object>(initialData: T): Store<T> => {
+  const data: T = { ...initialData };
+  const listeners: { [K in keyof T]?: Array<Listener<T[K]>> } = {};
+
+  const emit = <K extends keyof T>(key: K, value: T[K]): void => {
+    // console.log('emitting', key, value);
+    // if (key === 'inspectState') {
+    // }
+    listeners[key]?.forEach((listener) => listener(value));
+  };
+
+  const set = <K extends keyof T>(key: K, value: T[K]): void => {
+    if (data[key] !== value) {
+      data[key] = value;
+      emit(key, value);
+    }
+  };
+
+  const subscribe = <K extends keyof T>(
+    key: K,
+    listener: Listener<T[K]>,
+  ): (() => void) => {
+    if (!listeners[key]) {
+      listeners[key] = [];
+    }
+    listeners[key]!.push(listener);
+    listener(data[key]);
+    return () => {
+      listeners[key] = listeners[key]!.filter((l) => l !== listener);
+    };
+  };
+
+  const setState = (state: Partial<T>) => {
+    for (const key in state) {
+      if (state.hasOwnProperty(key)) {
+        set(key as keyof T, state[key] as T[keyof T]);
+      }
+    }
+  };
+
+  const subscribeMultiple = (
+    subscribeTo: Array<keyof T>,
+    listener: (store: typeof data) => void,
+  ) => {
+    subscribeTo.forEach((key) => {
+      if (!listeners[key]) {
+        listeners[key] = [];
+      }
+      listeners[key]?.push(() => listener(data));
+    });
+
+    return () => {
+      subscribeTo.forEach((key) => {
+        listeners[key as keyof T] = listeners[key as keyof T]?.filter(
+          (cb) => cb !== listener,
+        );
+      });
+    };
+  };
+
+  const proxy = new Proxy(data, {
+    get(target, prop, receiver) {
+      if (prop === 'subscribe') return subscribe;
+      if (prop === 'setState') return setState;
+      if (prop === 'emit') return emit;
+      if (prop === 'set') return set;
+      if (prop === 'subscribeMultiple') return subscribeMultiple;
+
+      return Reflect.get(target, prop, receiver);
+    },
+    set(target, prop, value, receiver) {
+      if (prop in target) {
+        set(prop as keyof T, value as T[keyof T]);
+        return true;
+      } else {
+        throw new Error(`Property "${String(prop)}" does not exist`);
+      }
+    },
+    deleteProperty(_, prop) {
+      throw new Error(`Cannot delete property "${String(prop)}" from store`);
+    },
+  });
+
+  return proxy as Store<T>;
+};
+
+const tryParse = (x: any) => {
+  try {
+    return JSON.parse(x);
+  } catch {
+    return 'false';
+  }
+};
 export const ReactScanInternals = createStore<Internals>({
   onCommitFiberRoot: (_rendererID: number, _root: FiberRoot): void => {
     /**/
   },
   isInIframe: window.self !== window.top,
-  isPaused: false,
+  isPaused: tryParse(localStorage.getItem('react-scan-paused') ?? 'false'),
   componentAllowList: null,
   options: {
     enabled: true,
@@ -137,12 +262,19 @@ export const ReactScanInternals = createStore<Internals>({
     report: undefined,
     alwaysShowLabels: false,
   },
-  reportData: new WeakMap(),
+  reportData: {},
+  reportDataFiber: new WeakMap(),
   scheduledOutlines: [],
   activeOutlines: [],
   activePropOverlays: [],
   hoveredDomElement: null,
   focusedDomElement: null,
+  inspectElement: false,
+  fiberRoots: new WeakSet(),
+  lastHoveredDomElement: null,
+  inspectState: {
+    kind: 'uninitialized',
+  },
 });
 
 export const getReport = () => ReactScanInternals.reportData;
@@ -165,12 +297,10 @@ export const start = () => {
   const overlayElement = document.createElement('react-scan-overlay') as any;
   document.body.appendChild(overlayElement);
 
-  const toolbar = overlayElement.getToolbar();
+  // const toolbar = overlayElement.getToolbar();
   const ctx = overlayElement.getContext();
-
-  if (options.showToolbar === false) {
-    overlayElement.hideToolbar();
-  }
+  createInspectElementStateMachine();
+  createToolbar(); // todo, make this hidable
 
   const audioContext =
     typeof window !== 'undefined'
@@ -191,6 +321,10 @@ export const start = () => {
       options.onCommitStart?.();
     },
     onRender(fiber, render) {
+      if (ReactScanInternals.isPaused) {
+        // don't draw if it's paused
+        return;
+      }
       options.onRender?.(fiber, render);
       const outline = getOutline(fiber, render);
       if (!outline) return;
@@ -204,8 +338,7 @@ export const start = () => {
         );
         playGeigerClickSound(audioContext, amplitude);
       }
-      console.log('flush');
-      flushOutlines(ctx, new Map(), toolbar);
+      flushOutlines(ctx, new Map());
     },
     onCommitFinish() {
       options.onCommitFinish?.();

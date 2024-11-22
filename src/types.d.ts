@@ -16,6 +16,10 @@ declare module globalThis {
   };
   var reactScan: scan;
 
+  var scheduler: {
+    postTask: (cb: any, options: { priority: string }) => void;
+  };
+
   function myGlobalFunction(message: string): void;
 }
 

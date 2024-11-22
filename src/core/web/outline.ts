@@ -153,7 +153,6 @@ export const recalcOutlines = throttle(() => {
 export const flushOutlines = (
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   previousOutlines: Map<string, PendingOutline> = new Map(),
-  toolbar: HTMLElement | null = null,
 ) => {
   if (!ReactScanInternals.scheduledOutlines.length) {
     return;
@@ -166,22 +165,6 @@ export const flushOutlines = (
 
   const newPreviousOutlines = new Map<string, PendingOutline>();
 
-  if (toolbar) {
-    let totalCount = 0;
-    let totalTime = 0;
-
-    for (const componentName in ReactScanInternals.reportData) {
-      const componentData = ReactScanInternals.reportData[componentName];
-      totalCount += componentData.count;
-      totalTime += componentData.time;
-    }
-
-    let text = `×${totalCount}`;
-    if (totalTime > 0) text += ` (${totalTime.toFixed(2)}ms)`;
-    toolbar.textContent = totalCount ? `${text} · react-scan` : 'react-scan';
-  }
-
-  console.log('paint');
   void paintOutlines(
     ctx,
     scheduledOutlines.filter((outline) => {
@@ -196,7 +179,7 @@ export const flushOutlines = (
 
   if (ReactScanInternals.scheduledOutlines.length) {
     requestAnimationFrame(() => {
-      flushOutlines(ctx, newPreviousOutlines, toolbar);
+      flushOutlines(ctx, newPreviousOutlines);
     });
   }
 };
@@ -367,12 +350,10 @@ export const fadeOutOutline = (
     animationFrameId = null;
   }
 };
-console.log('confirm');
 async function paintOutlines(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   outlines: PendingOutline[],
 ): Promise<void> {
-  console.log('i run!!!');
   return new Promise<void>((resolve) => {
     const { options } = ReactScanInternals;
     const totalFrames = options.alwaysShowLabels ? 60 : 30;
@@ -396,7 +377,6 @@ async function paintOutlines(
     });
 
     ReactScanInternals.activeOutlines.push(...newActiveOutlines);
-    console.log('fade out');
     if (!animationFrameId) {
       animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
     }
