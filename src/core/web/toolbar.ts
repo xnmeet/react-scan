@@ -1,10 +1,8 @@
 import { ReactScanInternals } from '../../index';
-import { createElement } from './utils';
-import { MONO_FONT } from './outline';
 
 export const createToolbar = (shadowRoot: ShadowRoot) => {
-  const status = createElement(
-    `<div id="react-scan-toolbar" title="Number of unnecessary renders and time elapsed" style="position:fixed;bottom:3px;right:3px;background:rgba(0,0,0,0.5);padding:4px 8px;border-radius:4px;color:white;z-index:2147483647;font-family:${MONO_FONT}" aria-hidden="true">react-scan</div>`,
+  const status = shadowRoot.getElementById(
+    'react-scan-toolbar',
   ) as HTMLDivElement;
 
   let isHidden =
@@ -13,9 +11,9 @@ export const createToolbar = (shadowRoot: ShadowRoot) => {
     localStorage.getItem('react-scan-hidden') === 'true';
 
   const updateVisibility = () => {
-    const overlay = shadowRoot.getElementById('react-scan-overlay');
-    if (!overlay) return;
-    overlay.style.display = isHidden ? 'none' : 'block';
+    const canvas = shadowRoot.getElementById('react-scan-canvas');
+    if (!canvas) return;
+    canvas.style.display = isHidden ? 'none' : 'block';
     status.textContent = isHidden ? 'start ►' : 'stop ⏹';
     ReactScanInternals.isPaused = isHidden;
     if (ReactScanInternals.isPaused) {
@@ -42,8 +40,6 @@ export const createToolbar = (shadowRoot: ShadowRoot) => {
   status.addEventListener('mouseleave', () => {
     status.style.backgroundColor = 'rgba(0,0,0,0.5)';
   });
-
-  shadowRoot.appendChild(status);
 
   return status;
 };

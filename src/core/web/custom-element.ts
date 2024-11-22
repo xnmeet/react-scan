@@ -1,10 +1,12 @@
+import { MONO_FONT } from './outline';
+
 class ReactScanOverlay extends HTMLElement {
   constructor() {
     super();
     const shadow = this.attachShadow({ mode: 'open' });
 
     const canvas = document.createElement('canvas');
-    canvas.id = 'react-scan-overlay';
+    canvas.id = 'react-scan-canvas';
     canvas.style.position = 'fixed';
     canvas.style.top = '0';
     canvas.style.left = '0';
@@ -25,7 +27,7 @@ class ReactScanOverlay extends HTMLElement {
     toolbar.style.borderRadius = '4px';
     toolbar.style.color = 'white';
     toolbar.style.zIndex = '2147483647';
-    toolbar.style.fontFamily = 'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
+    toolbar.style.fontFamily = MONO_FONT;
     toolbar.setAttribute('aria-hidden', 'true');
     toolbar.textContent = 'react-scan';
 

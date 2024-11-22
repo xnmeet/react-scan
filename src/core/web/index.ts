@@ -1,12 +1,9 @@
 import { recalcOutlines } from './outline';
-import { createElement } from './utils';
 
 export const createOverlay = (shadowRoot: ShadowRoot) => {
-  const canvas = createElement(
-    `<canvas id="react-scan-overlay" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:2147483646" aria-hidden="true"/>`,
+  const canvas = shadowRoot.getElementById(
+    'react-scan-canvas',
   ) as HTMLCanvasElement;
-
-  shadowRoot.appendChild(canvas);
 
   const isOffscreenCanvasSupported = 'OffscreenCanvas' in globalThis;
   const offscreenCanvas = isOffscreenCanvasSupported
