@@ -208,79 +208,6 @@ export const flushOutlines = (
 
 let animationFrameId: number | null = null;
 
-export const paintOutline = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-  outline: PendingOutline,
-) => {
-  return new Promise<void>((resolve) => {
-    const unstable = isOutlineUnstable(outline);
-    const { options } = ReactScanInternals;
-    const totalFrames = unstable || options.alwaysShowLabels ? 60 : 5;
-    const alpha = 0.8;
-
-    if (options.log) {
-      log(outline.renders);
-    }
-
-    const key = getOutlineKey(outline);
-    const existingActiveOutline = ReactScanInternals.activeOutlines.find(
-      (activeOutline) =>
-        getOutlineKey(activeOutline.outline) === key &&
-        activeOutline.outline.domNode === outline.domNode,
-    );
-
-    let renders = outline.renders;
-    if (existingActiveOutline) {
-      existingActiveOutline.outline.renders.push(...outline.renders);
-      renders = existingActiveOutline.outline.renders;
-    }
-
-    let count = 0;
-    let time = 0;
-    for (let i = 0, len = renders.length; i < len; i++) {
-      const render = renders[i];
-      count += render.count;
-      time += render.time;
-    }
-
-    const maxRenders = ReactScanInternals.options.maxRenders ?? 100;
-    const t = Math.min((count * (time || 1)) / maxRenders, 1);
-
-    const r = Math.round(START_COLOR.r + t * (END_COLOR.r - START_COLOR.r));
-    const g = Math.round(START_COLOR.g + t * (END_COLOR.g - START_COLOR.g));
-    const b = Math.round(START_COLOR.b + t * (END_COLOR.b - START_COLOR.b));
-
-    const color = { r, g, b };
-
-    if (existingActiveOutline) {
-      existingActiveOutline.outline.renders.push(...outline.renders);
-      existingActiveOutline.outline.rect = outline.rect;
-      existingActiveOutline.frame = 0;
-      existingActiveOutline.totalFrames = totalFrames;
-      existingActiveOutline.alpha = alpha;
-      existingActiveOutline.text = getLabelText(
-        existingActiveOutline.outline.renders,
-      );
-      existingActiveOutline.color = color;
-    } else {
-      const frame = 0;
-      ReactScanInternals.activeOutlines.push({
-        outline,
-        alpha,
-        frame,
-        totalFrames,
-        resolve,
-        text: getLabelText(outline.renders),
-        color,
-      });
-    }
-
-    if (!animationFrameId) {
-      animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
-    }
-  });
-};
-
 export const fadeOutOutline = (
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 ) => {
@@ -440,15 +367,27 @@ async function paintOutlines(
     options.onPaintStart?.(outlines);
 
     const newActiveOutlines = outlines.map((outline) => {
-      const renders = outline.renders;
+      const existingActiveOutline = ReactScanInternals.activeOutlines.find(
+        (activeOutline) =>
+          getOutlineKey(activeOutline.outline) === getOutlineKey(outline) &&
+          activeOutline.outline.domNode === outline.domNode,
+      );
+
+      let renders = outline.renders;
+      if (existingActiveOutline) {
+        renders = existingActiveOutline.outline.renders.concat(outline.renders);
+        existingActiveOutline.outline.renders = renders;
+      }
+
       let count = 0;
       let time = 0;
-      for (const render of renders) {
+      for (let i = 0, len = renders.length; i < len; i++) {
+        const render = renders[i];
         count += render.count;
         time += render.time;
       }
 
-      const maxRenders = options.maxRenders ?? 100;
+      const maxRenders = ReactScanInternals.options.maxRenders ?? 100;
       const t = Math.min((count * (time || 1)) / maxRenders, 1);
 
       const r = Math.round(START_COLOR.r + t * (END_COLOR.r - START_COLOR.r));
