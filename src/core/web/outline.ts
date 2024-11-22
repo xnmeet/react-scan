@@ -4,8 +4,6 @@ import type { Render } from '../instrumentation/index';
 import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
-import { log } from './log';
-import { getMainThreadTaskTime } from './perf-observer';
 
 export interface PendingOutline {
   rect: DOMRect;
@@ -20,7 +18,6 @@ export interface ActiveOutline {
   totalFrames: number;
   resolve: () => void;
   text: string | null;
-  color: { r: number; g: number; b: number };
 }
 
 export interface OutlineLabel {
@@ -267,8 +264,26 @@ export const fadeOutOutline = (
 
   const renderCountThreshold = options.renderCountThreshold ?? 0;
   for (const activeOutline of Array.from(groupedOutlines.values())) {
-    const { outline, frame, totalFrames, color } = activeOutline;
-    const _totalTime = getMainThreadTaskTime();
+    const { outline, frame, totalFrames } = activeOutline;
+
+    let count = 0;
+    let time = 0;
+    for (let i = 0, len = outline.renders.length; i < len; i++) {
+      const render = outline.renders[i];
+      count += render.count;
+      time += render.time;
+    }
+
+    const maxRenders = ReactScanInternals.options.maxRenders ?? 100;
+    const t = Math.min((count * (time || 1)) / maxRenders, 1);
+
+    const r = Math.round(START_COLOR.r + t * (END_COLOR.r - START_COLOR.r));
+    const g = Math.round(START_COLOR.g + t * (END_COLOR.g - START_COLOR.g));
+    const b = Math.round(START_COLOR.b + t * (END_COLOR.b - START_COLOR.b));
+
+    const color = { r, g, b };
+
+    // const _totalTime = getMainThreadTaskTime();
     // if (totalTime) {
     //   console.log(totalTime);
     //   let divideBy = 1;
@@ -367,34 +382,7 @@ async function paintOutlines(
     options.onPaintStart?.(outlines);
 
     const newActiveOutlines = outlines.map((outline) => {
-      const existingActiveOutline = ReactScanInternals.activeOutlines.find(
-        (activeOutline) =>
-          getOutlineKey(activeOutline.outline) === getOutlineKey(outline) &&
-          activeOutline.outline.domNode === outline.domNode,
-      );
-
-      let renders = outline.renders;
-      if (existingActiveOutline) {
-        renders = existingActiveOutline.outline.renders.concat(outline.renders);
-        existingActiveOutline.outline.renders = renders;
-      }
-
-      let count = 0;
-      let time = 0;
-      for (let i = 0, len = renders.length; i < len; i++) {
-        const render = renders[i];
-        count += render.count;
-        time += render.time;
-      }
-
-      const maxRenders = ReactScanInternals.options.maxRenders ?? 100;
-      const t = Math.min((count * (time || 1)) / maxRenders, 1);
-
-      const r = Math.round(START_COLOR.r + t * (END_COLOR.r - START_COLOR.r));
-      const g = Math.round(START_COLOR.g + t * (END_COLOR.g - START_COLOR.g));
-      const b = Math.round(START_COLOR.b + t * (END_COLOR.b - START_COLOR.b));
-
-      const color = { r, g, b };
+      const renders = outline.renders;
 
       const frame = 0;
 
@@ -405,7 +393,6 @@ async function paintOutlines(
         totalFrames,
         resolve,
         text: getLabelText(renders),
-        color,
       };
     });
 
