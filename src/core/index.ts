@@ -152,8 +152,6 @@ export const setOptions = (options: Options) => {
 
 export const getOptions = () => ReactScanInternals.options;
 
-customElements.define('react-scan-overlay', ReactScanOverlay);
-
 export const start = () => {
   const { options } = ReactScanInternals;
 
@@ -240,3 +238,6 @@ export const scan = (options: Options = {}) => {
 
   start();
 };
+
+// Define custom element
+customElements.define('react-scan-overlay', ReactScanOverlay);
