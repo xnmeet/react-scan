@@ -7,9 +7,7 @@ import {
   getOutline,
   type PendingOutline,
 } from './web/outline';
-import { createOverlay as setupOverlay } from './web/index';
 import { logIntro } from './web/log';
-import { createToolbar as setupToolbar } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
 
@@ -153,20 +151,19 @@ export const setOptions = (options: Options) => {
 
 export const getOptions = () => ReactScanInternals.options;
 
-let inited = false;
-
 export const start = () => {
-  if (inited) return;
-  inited = true;
   const { options } = ReactScanInternals;
 
+  if (document.querySelector('react-scan-overlay')) return;
   const overlayElement = document.createElement('react-scan-overlay');
   document.body.appendChild(overlayElement);
 
-  const shadowRoot = overlayElement.shadowRoot!;
-
-  const ctx = setupOverlay(shadowRoot);
-  const toolbar = setupToolbar(shadowRoot);
+  const canvas = overlayElement.shadowRoot?.getElementById(
+    'react-scan-canvas',
+  ) as HTMLCanvasElement | null;
+  const toolbar =
+    overlayElement.shadowRoot?.getElementById('react-scan-toolbar');
+  const ctx = canvas?.getContext('2d');
 
   const audioContext =
     typeof window !== 'undefined'
