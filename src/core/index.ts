@@ -12,6 +12,7 @@ import { logIntro } from './web/log';
 import { createToolbar } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
+import { ReactScanOverlay } from './web/react-scan-overlay';
 
 interface Options {
   /**
@@ -159,8 +160,11 @@ export const start = () => {
   if (inited) return;
   inited = true;
   const { options } = ReactScanInternals;
-  const ctx = createOverlay();
-  const toolbar = options.showToolbar ? createToolbar() : null;
+  const overlayElement = document.createElement('react-scan-overlay');
+  document.body.appendChild(overlayElement);
+  const shadowRoot = overlayElement.shadowRoot;
+  const ctx = shadowRoot ? createOverlay(shadowRoot) : null;
+  const toolbar = options.showToolbar ? createToolbar(shadowRoot) : null;
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
