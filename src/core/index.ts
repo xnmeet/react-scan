@@ -10,6 +10,7 @@ import {
 import { logIntro } from './web/log';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
+import { ReactScanOverlay } from './web/custom-element';
 
 interface Options {
   /**
@@ -151,19 +152,19 @@ export const setOptions = (options: Options) => {
 
 export const getOptions = () => ReactScanInternals.options;
 
+customElements.define('react-scan-overlay', ReactScanOverlay);
+
 export const start = () => {
   const { options } = ReactScanInternals;
 
   if (document.querySelector('react-scan-overlay')) return;
-  const overlayElement = document.createElement('react-scan-overlay');
+  const overlayElement = document.createElement(
+    'react-scan-overlay',
+  ) as ReactScanOverlay;
   document.body.appendChild(overlayElement);
 
-  const canvas = overlayElement.shadowRoot?.getElementById(
-    'react-scan-canvas',
-  ) as HTMLCanvasElement | null;
-  const toolbar =
-    overlayElement.shadowRoot?.getElementById('react-scan-toolbar');
-  const ctx = canvas?.getContext('2d');
+  const toolbar = overlayElement.getToolbar();
+  const ctx = overlayElement.getContext();
 
   const audioContext =
     typeof window !== 'undefined'
@@ -173,7 +174,6 @@ export const start = () => {
       : null;
   createPerfObserver();
 
-  if (!ctx) return;
   logIntro();
 
   globalThis.__REACT_SCAN__ = {

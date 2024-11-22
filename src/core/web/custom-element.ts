@@ -9,16 +9,24 @@ class ReactScanOverlay extends HTMLElement {
   constructor() {
     super();
 
+    const shadow = this.attachShadow({ mode: 'open' });
+
     this.setupCanvas();
     this.setupToolbar();
-
-    const shadow = this.attachShadow({ mode: 'open' });
 
     shadow.appendChild(this.canvas);
     shadow.appendChild(this.toolbar);
   }
 
-  setupCanvas() {
+  public getContext() {
+    return this.ctx;
+  }
+
+  public getToolbar() {
+    return this.toolbar;
+  }
+
+  private setupCanvas() {
     this.canvas = document.createElement('canvas');
 
     this.canvas.id = 'react-scan-canvas';
@@ -71,7 +79,7 @@ class ReactScanOverlay extends HTMLElement {
     });
   }
 
-  setupToolbar() {
+  private setupToolbar() {
     this.toolbar = document.createElement('div');
 
     this.toolbar.id = 'react-scan-toolbar';
@@ -123,7 +131,5 @@ class ReactScanOverlay extends HTMLElement {
     });
   }
 }
-
-customElements.define('react-scan-overlay', ReactScanOverlay);
 
 export { ReactScanOverlay };
