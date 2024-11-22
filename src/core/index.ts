@@ -158,6 +158,7 @@ export const start = () => {
   const { options } = ReactScanInternals;
 
   if (document.querySelector('react-scan-overlay')) return;
+
   const overlayElement = document.createElement(
     'react-scan-overlay',
   ) as ReactScanOverlay;
