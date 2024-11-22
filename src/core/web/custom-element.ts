@@ -26,6 +26,14 @@ class ReactScanOverlay extends HTMLElement {
     return this.toolbar;
   }
 
+  public showToolbar() {
+    this.toolbar.style.display = 'block';
+  }
+
+  public hideToolbar() {
+    this.toolbar.style.display = 'none';
+  }
+
   private setupCanvas() {
     this.canvas = document.createElement('canvas');
 

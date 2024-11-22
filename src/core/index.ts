@@ -167,6 +167,10 @@ export const start = () => {
   const toolbar = overlayElement.getToolbar();
   const ctx = overlayElement.getContext();
 
+  if (options.showToolbar === false) {
+    overlayElement.hideToolbar();
+  }
+
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
