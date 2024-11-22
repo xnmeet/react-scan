@@ -11,6 +11,7 @@ import { logIntro } from './web/log';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
 import { initReactScanOverlay } from './web/overlay';
+import { createStore } from './utils';
 
 export interface Options {
   /**
@@ -93,6 +94,11 @@ export interface Options {
   onPaintFinish?: (outlines: PendingOutline[]) => void;
 }
 
+interface ActiveProp {
+  rect: DOMRect;
+  displayName: string;
+  props: Record<string, unknown>;
+}
 export interface Internals {
   onCommitFiberRoot: (rendererID: number, root: FiberRoot) => void;
   isInIframe: boolean;
@@ -101,17 +107,20 @@ export interface Internals {
   options: Options;
   scheduledOutlines: PendingOutline[];
   activeOutlines: ActiveOutline[];
-  reportData: Record<
-    string,
+  reportData: WeakMap<
+    Fiber,
     {
       count: number;
       time: number;
       badRenders: Render[];
     }
   >;
+  activePropOverlays: Array<ActiveProp>;
+  hoveredDomElement: HTMLElement | null;
+  focusedDomElement: HTMLElement | null;
 }
 
-export const ReactScanInternals: Internals = {
+export const ReactScanInternals = createStore<Internals>({
   onCommitFiberRoot: (_rendererID: number, _root: FiberRoot): void => {
     /**/
   },
@@ -128,10 +137,13 @@ export const ReactScanInternals: Internals = {
     report: undefined,
     alwaysShowLabels: false,
   },
-  reportData: {},
+  reportData: new WeakMap(),
   scheduledOutlines: [],
   activeOutlines: [],
-};
+  activePropOverlays: [],
+  hoveredDomElement: null,
+  focusedDomElement: null,
+});
 
 export const getReport = () => ReactScanInternals.reportData;
 
@@ -192,6 +204,7 @@ export const start = () => {
         );
         playGeigerClickSound(audioContext, amplitude);
       }
+      console.log('flush');
       flushOutlines(ctx, new Map(), toolbar);
     },
     onCommitFinish() {

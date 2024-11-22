@@ -44,9 +44,9 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
   const now = performance.now();
   const cached = rectCache.get(domNode);
 
-  if (cached && now - cached.timestamp < DEFAULT_THROTTLE_TIME) {
-    return cached.rect;
-  }
+  // if (cached && now - cached.timestamp < DEFAULT_THROTTLE_TIME) {
+  //   return cached.rect;
+  // }
 
   const style = window.getComputedStyle(domNode);
   if (
@@ -181,6 +181,7 @@ export const flushOutlines = (
     toolbar.textContent = totalCount ? `${text} · react-scan` : 'react-scan';
   }
 
+  console.log('paint');
   void paintOutlines(
     ctx,
     scheduledOutlines.filter((outline) => {
@@ -366,11 +367,12 @@ export const fadeOutOutline = (
     animationFrameId = null;
   }
 };
-
+console.log('confirm');
 async function paintOutlines(
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
   outlines: PendingOutline[],
 ): Promise<void> {
+  console.log('i run!!!');
   return new Promise<void>((resolve) => {
     const { options } = ReactScanInternals;
     const totalFrames = options.alwaysShowLabels ? 60 : 30;
@@ -394,7 +396,7 @@ async function paintOutlines(
     });
 
     ReactScanInternals.activeOutlines.push(...newActiveOutlines);
-
+    console.log('fade out');
     if (!animationFrameId) {
       animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
     }
