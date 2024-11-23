@@ -3,7 +3,6 @@ import { chromium, firefox, webkit, type Browser, devices } from 'playwright';
 import mri from 'mri';
 import { intro, confirm, isCancel, cancel, spinner } from '@clack/prompts';
 import { bgMagenta, dim, red } from 'kleur';
-import { magenta } from 'kleur/colors';
 
 const inferValidURL = (maybeURL: string) => {
   try {
@@ -27,9 +26,6 @@ const getBrowserDetails = async (browserType: string) => {
       return { browserType: chromium, channel: 'chrome', name: 'chrome' };
   }
 };
-
-const REPORT_CONSOLE_SIGNAL =
-  '__SECRET_REACT_SCAN_REPORT_DATA_IGNORE_OR_YOU_WILL_BE_FIRED__';
 
 const init = async () => {
   intro(`${bgMagenta('[·]')} React Scan`);
@@ -141,13 +137,26 @@ const init = async () => {
       const globalHook = globalThis.__REACT_SCAN__;
       if (!globalHook) return;
       const reportData = globalHook.ReactScanInternals.reportData;
-      console.log(REPORT_CONSOLE_SIGNAL, JSON.stringify(reportData));
+      if (!Object.keys(reportData).length) return;
+      console.log(
+        'REACT_SCAN_REPORT',
+        JSON.stringify(reportData, (key, value) => {
+          return ['prevValue', 'nextValue'].includes(key) ? undefined : value;
+        }),
+      );
     });
   };
 
+  let renders = 0;
+  let currentSpinner: ReturnType<typeof spinner> | undefined;
+  let currentURL = urlString;
+
   const inject = async (url: string) => {
-    const s = spinner();
-    s.start(dim(`Navigating to: ${url}`));
+    currentURL = url;
+    currentSpinner?.stop(`${url}${renders ? ` (×${renders})` : ''}`);
+    currentSpinner = spinner();
+    currentSpinner.start(dim(`Scanning: ${url}`));
+    renders = 0;
     try {
       await page.waitForLoadState('load');
       await page.waitForTimeout(500);
@@ -163,17 +172,12 @@ const init = async () => {
       await page.evaluate(() => {
         if (typeof globalThis.reactScan !== 'function') return;
         globalThis.reactScan({ report: true });
-        setInterval(() => {
-          const globalHook = globalThis.__REACT_SCAN__;
-          if (!globalHook) return;
-          const reportData = globalHook.ReactScanInternals.reportData;
-          if (!Object.keys(reportData).length) return;
-          console.log(REPORT_CONSOLE_SIGNAL, JSON.stringify(reportData));
-        }, 1000);
       });
-      s.stop(url);
+      setInterval(() => {
+        generateReport();
+      }, 1000);
     } catch (e) {
-      s.stop(red(`Failed to inject React Scan to: ${url}`));
+      currentSpinner.stop(red(`Failed to inject React Scan to: ${url}`));
     }
   };
 
@@ -187,24 +191,18 @@ const init = async () => {
 
   page.on('console', async (msg) => {
     const text = msg.text();
-    console.log(text);
-    if (!text.startsWith(REPORT_CONSOLE_SIGNAL)) return;
-    const location = msg.location();
-    const reportDataString = text.replace(REPORT_CONSOLE_SIGNAL, '').trim();
+    if (!text.startsWith('REACT_SCAN_REPORT')) return;
+    const reportDataString = text.replace('REACT_SCAN_REPORT', '').trim();
     const reportData = JSON.parse(reportDataString);
+    let newRenders = 0;
     for (const componentName in reportData) {
       const componentData = reportData[componentName];
-
-      const badProps: string[] = [];
-      for (let i = 0; i < (componentData.badRenders || []).length; i++) {
-        const render = componentData.badRenders[i];
-        if (render.type !== 'props' && render.name) continue;
-        badProps.push(render.name);
-      }
-      console.log(
-        `${componentName}: ×${componentData.count}${componentData.time ? ` (${componentData.time.toFixed(0)}ms)` : ''} - props: ${badProps.join(', ')}`,
-      );
+      newRenders += componentData.count;
     }
+    renders = newRenders;
+    currentSpinner?.message(
+      dim(`Scanning: ${currentURL}${renders ? ` (×${renders})` : ''}`),
+    );
   });
 };
 
