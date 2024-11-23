@@ -127,5 +127,12 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@clack/core": "^0.3.5",
+    "@clack/prompts": "^0.8.2",
+    "kleur": "^4.1.5",
+    "mri": "^1.2.0",
+    "playwright": "^1.49.0"
   }
 }

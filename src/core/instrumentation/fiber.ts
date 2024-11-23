@@ -1,8 +1,8 @@
 // Note: do not import React in this file
 // since it will be executed before the react devtools hook is created
 
-import type { FiberRoot, Fiber } from 'react-reconciler';
-import { NO_OP } from '../utils';
+import type * as React from 'react';
+import type { Fiber } from 'react-reconciler';
 
 const PerformedWorkFlag = 0b01;
 const ClassComponentTag = 1;
@@ -23,41 +23,6 @@ const HostRoot = 3;
 export const CONCURRENT_MODE_NUMBER = 0xeacf;
 export const CONCURRENT_MODE_SYMBOL_STRING = 'Symbol(react.concurrent_mode)';
 export const DEPRECATED_ASYNC_MODE_SYMBOL_STRING = 'Symbol(react.async_mode)';
-
-export const registerDevtoolsHook = ({
-  onCommitFiberRoot,
-}: {
-  onCommitFiberRoot: (rendererID: number, root: FiberRoot) => void;
-}) => {
-  let devtoolsHook = globalThis.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-  const renderers = new Map();
-  let i = 0;
-
-  if (!devtoolsHook) {
-    devtoolsHook = {
-      checkDCE: NO_OP,
-      supportsFiber: true,
-      renderers,
-      onScheduleFiberRoot: NO_OP,
-      onCommitFiberRoot: NO_OP,
-      onCommitFiberUnmount: NO_OP,
-      inject(renderer) {
-        const nextID = ++i;
-        renderers.set(nextID, renderer);
-        return nextID;
-      },
-    };
-    globalThis.__REACT_DEVTOOLS_GLOBAL_HOOK__ = devtoolsHook;
-  }
-
-  const prevOnCommitFiberRoot = devtoolsHook.onCommitFiberRoot;
-  devtoolsHook.onCommitFiberRoot = (rendererID: number, root: FiberRoot) => {
-    if (prevOnCommitFiberRoot) prevOnCommitFiberRoot(rendererID, root);
-    onCommitFiberRoot(rendererID, root);
-  };
-
-  return devtoolsHook;
-};
 
 export const traverseContexts = (
   fiber: Fiber,
@@ -136,8 +101,9 @@ export const didFiberRender = (fiber: Fiber): boolean => {
     case ContextConsumerTag:
     case ForwardRefTag:
     case MemoComponentTag:
-    case SimpleMemoComponentTag:
+    case SimpleMemoComponentTag: {
       return (flags & PerformedWorkFlag) === PerformedWorkFlag;
+    }
     default:
       // Host nodes (DOM, root, etc.)
       if (!fiber.alternate) return true;

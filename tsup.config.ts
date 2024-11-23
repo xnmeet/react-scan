@@ -1,18 +1,38 @@
+import fs from 'node:fs';
 import { defineConfig } from 'tsup';
 
-export default defineConfig({
-  entry: ['./src/index.ts', './src/auto.ts', './src/rsc-shim.ts'],
-  outDir: './dist',
-  splitting: false,
-  sourcemap: false,
-  format: ['cjs', 'esm', 'iife'],
-  target: 'esnext',
-  platform: 'browser',
-  treeshake: true,
-  dts: true,
-  minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
-  env: {
-    NODE_ENV: process.env.NODE_ENV ?? 'development',
+export default defineConfig([
+  {
+    entry: ['./src/index.ts', './src/auto.ts', './src/rsc-shim.ts'],
+    outDir: './dist',
+    splitting: false,
+    sourcemap: false,
+    format: ['cjs', 'esm', 'iife'],
+    target: 'esnext',
+    platform: 'browser',
+    treeshake: true,
+    dts: true,
+    minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
+    env: {
+      NODE_ENV: process.env.NODE_ENV ?? 'development',
+    },
+    external: ['react', 'react-dom', 'react-reconciler'],
   },
-  external: ['react', 'react-dom', 'react-reconciler'],
-});
+  {
+    entry: ['./src/cli.mts'],
+    outDir: './dist',
+    splitting: false,
+    sourcemap: false,
+    format: ['cjs'],
+    target: 'esnext',
+    platform: 'node',
+    minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
+    env: {
+      NODE_ENV: process.env.NODE_ENV ?? 'development',
+      REACT_SCAN_SCRIPT_CONTENT: fs.readFileSync(
+        './dist/auto.global.js',
+        'utf8',
+      ),
+    },
+  },
+]);

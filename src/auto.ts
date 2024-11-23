@@ -2,7 +2,7 @@ import './core/instrumentation/placeholder';
 import { scan } from './index';
 
 if (typeof window !== 'undefined') {
-  scan({ runInProduction: true });
+  scan();
   window.reactScan = scan;
 }
 

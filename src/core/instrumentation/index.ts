@@ -7,12 +7,12 @@ import {
   didFiberRender,
   getSelfTime,
   hasMemoCache,
-  registerDevtoolsHook,
   shouldFilterFiber,
   traverseContexts,
   traverseFiber,
   traverseState,
 } from './fiber';
+import { registerDevtoolsHook } from './placeholder';
 
 declare global {
   interface Window {
@@ -40,7 +40,7 @@ export interface Change {
 }
 
 export interface Render {
-  type: 'props' | 'context';
+  type: 'props' | 'context' | 'state';
   name: string | null;
   time: number;
   count: number;
@@ -240,6 +240,17 @@ export const instrument = ({
         contextRender.trigger = trigger;
         onRender(fiber, contextRender);
       }
+      if (trigger) {
+        onRender(fiber, {
+          type: 'state',
+          count: 1,
+          trigger,
+          changes: [],
+          name: getDisplayName(type),
+          time: getSelfTime(fiber),
+          forget: hasMemoCache(fiber),
+        });
+      }
     };
 
     const rootFiber = root.current;
@@ -280,15 +291,13 @@ export const instrument = ({
         let nextChild = nextFiber.child;
 
         while (nextChild) {
-          if (nextChild.alternate) {
-            const prevChild = nextChild.alternate;
-
+          const prevChild = nextChild.alternate;
+          if (prevChild) {
             updateFiber(nextChild, prevChild);
           } else {
             mountFiber(nextChild, false);
           }
 
-          // Try the next child.
           nextChild = nextChild.sibling;
         }
       }

@@ -31,13 +31,6 @@ interface Options {
   includeChildren?: boolean;
 
   /**
-   * Run in production
-   *
-   * @default false
-   */
-  runInProduction?: boolean;
-
-  /**
    * Enable/disable geiger sound
    *
    * @default true
@@ -129,7 +122,6 @@ export const ReactScanInternals: Internals = {
   options: {
     enabled: true,
     includeChildren: true,
-    runInProduction: false,
     playSound: false,
     log: false,
     showToolbar: true,
