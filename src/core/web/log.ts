@@ -1,6 +1,5 @@
 import type { Render } from '../instrumentation/index';
 import { getLabelText } from '../utils';
-import { MONO_FONT } from './outline';
 
 export const log = (renders: Render[]) => {
   const logMap = new Map<
@@ -75,7 +74,12 @@ export const log = (renders: Render[]) => {
 export const logIntro = () => {
   // eslint-disable-next-line no-console
   console.log(
-    '%cTry Million Lint to automatically optimize your app: https://million.dev',
-    `font-weight:bold;font-size:14px;font-weight:bold;font-family:${MONO_FONT}`,
+    `%c[·] %cReact Scan`,
+    'font-weight:bold;color:#7a68e8;font-size:20px;',
+    'font-weight:bold;font-size:14px;',
+  );
+  // eslint-disable-next-line no-console
+  console.log(
+    'Try Million Lint to automatically optimize your app: https://million.dev',
   );
 };
