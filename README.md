@@ -12,7 +12,9 @@ It's also just JavaScript, so you drop it in anywhere – script tag, npm, you n
 
 ![React Scan in action](https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/demo.gif?token=GHSAT0AAAAAAB4IOFACRC6P6E45TB2FPYFCZZV2AYA)
 
-<a href="https://airbnb.com"><img src="https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/airbnb-logo.png" height="30" /></a> <a href="https://polaris.shopify.com/"><img src="https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/shopify-logo.png" height="30" /></a> <a href="https://www.faire.com/"><img src="https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/faire-logo.svg" height="30" /></a>
+Engineering teams use React Scan to optimize their React apps:
+
+<a href="https://airbnb.com"><img src="https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/airbnb-logo.png" height="30" align="center" /></a>&nbsp;&nbsp;&nbsp;<a href="https://polaris.shopify.com/"><img src="https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/shopify-logo.png" height="30" align="center" /></a>&nbsp;&nbsp;&nbsp;<a href="https://www.faire.com/"><img src="https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/faire-logo.svg" height="20" align="center" /></a>&nbsp;&nbsp;&nbsp;<a href="https://www.faire.com/"><img src="https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/perplexity-logo.svg" height="20" align="center" /></a>
 
 > Looking for a more advanced version? Check out [Million Lint](https://million.dev)!
 
