@@ -13,7 +13,7 @@ import { createToolbar } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
 
-interface Options {
+export interface Options {
   /**
    * Enable/disable scanning
    *
