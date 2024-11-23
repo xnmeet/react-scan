@@ -170,13 +170,10 @@ export const flushOutlines = (
     let totalCount = 0;
     let totalTime = 0;
 
-    for (let i = 0, len = scheduledOutlines.length; i < len; i++) {
-      const outline = scheduledOutlines[i];
-      for (let j = 0, len2 = outline.renders.length; j < len2; j++) {
-        const render = outline.renders[j];
-        totalTime += render.time;
-        totalCount += render.count;
-      }
+    for (const componentName in ReactScanInternals.reportData) {
+      const componentData = ReactScanInternals.reportData[componentName];
+      totalCount += componentData.count;
+      totalTime += componentData.time;
     }
 
     let text = `×${totalCount}`;

@@ -29,6 +29,12 @@ Get started in 5 seconds, add this script to your app:
 <script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
 ```
 
+Or, run it on any website:
+
+```bash
+npx react-scan@latest https://react.dev
+```
+
 Examples:
 
 <details>
