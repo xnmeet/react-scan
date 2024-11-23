@@ -3,6 +3,8 @@ import { chromium, firefox, webkit, type Browser, devices } from 'playwright';
 import mri from 'mri';
 import { intro, confirm, isCancel, cancel, spinner } from '@clack/prompts';
 import { bgMagenta, dim, red } from 'kleur';
+import fs from 'node:fs';
+import path from 'node:path';
 
 const inferValidURL = (maybeURL: string) => {
   try {
@@ -38,7 +40,7 @@ const init = async () => {
   try {
     browser = await browserType.launch({
       headless: false,
-      channel: channel,
+      channel,
     });
   } catch {
     /**/
@@ -92,7 +94,11 @@ const init = async () => {
     return;
   }
 
-  const context = await browser.newContext({ bypassCSP: true, ...device });
+  const context = await browser.newContext({
+    bypassCSP: true,
+    ...device,
+    viewport: null,
+  });
 
   await context.addInitScript({
     content: `(() => {
@@ -116,23 +122,24 @@ const init = async () => {
 
   const page = await context.newPage();
 
-  const scriptContent = process.env.REACT_SCAN_SCRIPT_CONTENT;
+  const scriptContent = fs.readFileSync(
+    path.resolve(__dirname, './auto.global.js'),
+    'utf8',
+  );
 
   const inputUrl = args._[0] || 'about:blank';
 
   const urlString = inferValidURL(inputUrl);
 
   await page.goto(urlString);
-
   await page.waitForLoadState('load');
-
   await page.waitForTimeout(500);
 
   await page.addScriptTag({
     content: `${scriptContent}\n//# sourceURL=react-scan.js`,
   });
 
-  const generateReport = async () => {
+  const pollReport = async () => {
     await page.evaluate(() => {
       const globalHook = globalThis.__REACT_SCAN__;
       if (!globalHook) return;
@@ -174,7 +181,7 @@ const init = async () => {
         globalThis.reactScan({ report: true });
       });
       setInterval(() => {
-        generateReport();
+        pollReport();
       }, 1000);
     } catch (e) {
       currentSpinner.stop(red(`Failed to inject React Scan to: ${url}`));
@@ -184,7 +191,7 @@ const init = async () => {
   await inject(urlString);
 
   page.on('framenavigated', async (frame) => {
-    if (frame !== page.mainFrame()) return;
+    if (frame !== page.mainFrame()) return currentSpinner?.stop();
     const url = frame.url();
     inject(url);
   });

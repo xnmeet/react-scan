@@ -1,6 +1,6 @@
 {
   "name": "react-scan",
-  "version": "0.0.16",
+  "version": "0.0.22",
   "description": "Scan your React app for renders",
   "keywords": [
     "react",
@@ -98,9 +98,10 @@
   "module": "dist/index.mjs",
   "browser": "dist/auto.global.js",
   "types": "dist/index.d.ts",
-  "bin": "dist/cli.js",
+  "bin": "bin/cli.js",
   "files": [
     "dist",
+    "bin",
     "package.json",
     "README.md",
     "LICENSE",

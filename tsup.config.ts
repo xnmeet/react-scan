@@ -29,10 +29,6 @@ export default defineConfig([
     minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
     env: {
       NODE_ENV: process.env.NODE_ENV ?? 'development',
-      REACT_SCAN_SCRIPT_CONTENT: fs.readFileSync(
-        './dist/auto.global.js',
-        'utf8',
-      ),
     },
   },
 ]);
