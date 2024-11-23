@@ -40,7 +40,7 @@ export interface Change {
 }
 
 export interface Render {
-  type: 'props' | 'context' | 'state';
+  type: 'props' | 'context' | 'state' | 'misc';
   name: string | null;
   time: number;
   count: number;
@@ -243,6 +243,17 @@ export const instrument = ({
       if (trigger) {
         onRender(fiber, {
           type: 'state',
+          count: 1,
+          trigger,
+          changes: [],
+          name: getDisplayName(type),
+          time: getSelfTime(fiber),
+          forget: hasMemoCache(fiber),
+        });
+      }
+      if (!propsRender && !contextRender && !trigger) {
+        onRender(fiber, {
+          type: 'misc',
           count: 1,
           trigger,
           changes: [],
