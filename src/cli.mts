@@ -1,5 +1,12 @@
 import { spawn } from 'node:child_process';
-import { chromium, firefox, webkit, type Browser, devices } from 'playwright';
+import {
+  chromium,
+  firefox,
+  webkit,
+  devices,
+  type Browser,
+  type BrowserContext,
+} from 'playwright';
 import mri from 'mri';
 import { intro, confirm, isCancel, cancel, spinner } from '@clack/prompts';
 import { bgMagenta, dim, red } from 'kleur';
@@ -29,13 +36,76 @@ const getBrowserDetails = async (browserType: string) => {
   }
 };
 
+const userAgentStrings = [
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.2227.0 Safari/537.36',
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.3497.92 Safari/537.36',
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36',
+];
+
+const applyStealthScripts = async (context: BrowserContext) => {
+  await context.addInitScript(() => {
+    // Override the navigator.webdriver property
+    Object.defineProperty(navigator, 'webdriver', {
+      get: () => undefined,
+    });
+
+    // Mock languages and plugins to mimic a real browser
+    Object.defineProperty(navigator, 'languages', {
+      get: () => ['en-US', 'en'],
+    });
+
+    Object.defineProperty(navigator, 'plugins', {
+      get: () => [1, 2, 3, 4, 5],
+    });
+
+    // Remove Playwright-specific properties
+    delete (window as any).__playwright;
+    delete (window as any).__pw_manual;
+    delete (window as any).__PW_inspect;
+
+    // Redefine the headless property
+    Object.defineProperty(navigator, 'headless', {
+      get: () => false,
+    });
+
+    // Override the permissions API
+    const originalQuery = window.navigator.permissions.query;
+    window.navigator.permissions.query = (parameters: any) =>
+      parameters.name === 'notifications'
+        ? Promise.resolve({
+            state: Notification.permission,
+          } as PermissionStatus)
+        : originalQuery(parameters);
+  });
+};
+
 const init = async () => {
   intro(`${bgMagenta('[·]')} React Scan`);
   const args = mri(process.argv.slice(2));
   let browser: Browser | undefined;
 
   const device = devices[args.device];
-  const { browserType, channel, name } = await getBrowserDetails(args.browser);
+  const { browserType, channel } = await getBrowserDetails(args.browser);
+
+  const contextOptions = {
+    headless: false,
+    channel,
+    ...device,
+    acceptDownloads: true,
+    viewport: null,
+    locale: 'en-US',
+    timezoneId: 'America/New_York',
+    args: [
+      '--enable-webgl',
+      '--use-gl=swiftshader',
+      '--enable-accelerated-2d-canvas',
+      '--disable-blink-features=AutomationControlled',
+      '--disable-web-security',
+    ],
+    userAgent:
+      userAgentStrings[Math.floor(Math.random() * userAgentStrings.length)],
+  };
 
   try {
     browser = await browserType.launch({
@@ -94,11 +164,8 @@ const init = async () => {
     return;
   }
 
-  const context = await browser.newContext({
-    bypassCSP: true,
-    ...device,
-    viewport: null,
-  });
+  const context = await browser.newContext(contextOptions);
+  await applyStealthScripts(context);
 
   await context.addInitScript({
     content: `(() => {
