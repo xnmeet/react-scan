@@ -14,7 +14,7 @@ import { initReactScanOverlay } from './web/overlay';
 import {
   createInspectElementStateMachine,
   States,
-} from './web/inspect-state-machine';
+} from './web/inspect-element/inspect-state-machine';
 import { createToolbar } from './web/toolbar';
 
 export interface Options {

@@ -22,5 +22,3 @@ declare module globalThis {
 
   function myGlobalFunction(message: string): void;
 }
-
-declare function require(path: string): any;

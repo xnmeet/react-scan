@@ -1,12 +1,12 @@
 import { Fiber, FiberRoot } from 'react-reconciler';
 import { ReactScanInternals } from '../../index';
 import {
-  ClassComponentTag,
-  ForwardRefTag,
   FunctionComponentTag,
+  ClassComponentTag,
   isHostComponent,
+  ForwardRefTag,
   traverseFiber,
-} from '../instrumentation/fiber';
+} from '../../instrumentation/fiber';
 
 export const getFiberFromElement = (element: HTMLElement): Fiber | null => {
   if ('__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) {
@@ -44,9 +44,7 @@ export const getFirstStateNode = (fiber: Fiber): HTMLElement | null => {
     if (current.stateNode instanceof HTMLElement) {
       return current.stateNode;
     }
-    if (current === current.child) {
-      return null; // Protects against circular references
-    }
+
     if (!current.child) {
       return null;
     }

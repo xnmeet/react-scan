@@ -1,16 +1,12 @@
 import { ReactScanInternals } from '../../index';
 import { createElement } from './utils';
-import { getRect, MONO_FONT } from './outline';
-import { INSPECT_TOGGLE_ID } from './inspect-state-machine';
+import { MONO_FONT } from './outline';
+import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
 
 export const createToolbar = () => {
   if (typeof window === 'undefined') {
     return;
   }
-
-  const getPath = (section: string, parentPath: string, key: string) => {
-    return parentPath ? `${parentPath}.${key}` : `${section}.${key}`;
-  };
 
   const INSPECT_SVG = `
     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
