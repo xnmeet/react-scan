@@ -7,11 +7,10 @@ import {
   getOutline,
   type PendingOutline,
 } from './web/outline';
-import { createOverlay } from './web/index';
 import { logIntro } from './web/log';
-import { createToolbar } from './web/toolbar';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
+import { ReactScanOverlay } from './web/custom-element';
 
 interface Options {
   /**
@@ -145,14 +144,23 @@ export const setOptions = (options: Options) => {
 
 export const getOptions = () => ReactScanInternals.options;
 
-let inited = false;
-
 export const start = () => {
-  if (inited) return;
-  inited = true;
   const { options } = ReactScanInternals;
-  const ctx = createOverlay();
-  const toolbar = options.showToolbar ? createToolbar() : null;
+
+  if (document.querySelector('react-scan-overlay')) return;
+
+  const overlayElement = document.createElement(
+    'react-scan-overlay',
+  ) as ReactScanOverlay;
+  document.body.appendChild(overlayElement);
+
+  const toolbar = overlayElement.getToolbar();
+  const ctx = overlayElement.getContext();
+
+  if (options.showToolbar === false) {
+    overlayElement.hideToolbar();
+  }
+
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
@@ -161,7 +169,6 @@ export const start = () => {
       : null;
   createPerfObserver();
 
-  if (!ctx) return;
   logIntro();
 
   globalThis.__REACT_SCAN__ = {
@@ -223,3 +230,6 @@ export const scan = (options: Options = {}) => {
 
   start();
 };
+
+// Define custom element
+customElements.define('react-scan-overlay', ReactScanOverlay);
