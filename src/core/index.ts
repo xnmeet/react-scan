@@ -12,7 +12,7 @@ import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
 import { ReactScanOverlay } from './web/custom-element';
 
-interface Options {
+export interface Options {
   /**
    * Enable/disable scanning
    *
