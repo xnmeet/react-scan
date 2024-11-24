@@ -44,7 +44,6 @@ export const drawHoverOverlay = (
   ctx: CanvasRenderingContext2D,
   kind: 'locked' | 'inspecting',
 ) => {
-  console.log('draw hover overlay');
   const res = getNearestFiberFromElement(overlayElement);
   if (!res) {
     return;

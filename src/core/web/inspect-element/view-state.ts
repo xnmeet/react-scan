@@ -1,11 +1,13 @@
 import { getChangedProps, getChangedState, getStateFromFiber } from './utils';
 
-// exists for animations, this is not a replacement for fiber.alternate.memoizedState/memoizedProps
 let prevChangedProps = new Set<string>();
 let prevChangedState = new Set<string>();
 
+const EXPANDED_PATHS = new Set<string>();
+const fadeOutTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
+
 export const renderPropsAndState = (
-  didRender: boolean, // this may be called even when the component did not render, so this is necessary information
+  didRender: boolean,
   fiber: any,
   reportDataFiber: any,
   propsContainer: HTMLDivElement,
@@ -36,7 +38,6 @@ export const renderPropsAndState = (
   const content = document.createElement('div');
   content.className = 'react-scan-content';
 
-  console.log('hm', fiber.memoizedProps, 'vs', fiber.alternate?.memoizedProps);
   content.appendChild(
     renderSection(
       didRender,
@@ -70,7 +71,7 @@ export const renderPropsAndState = (
   });
 };
 
-export const renderSection = (
+const renderSection = (
   didRender: boolean,
   propsContainer: HTMLDivElement,
   title: string,
@@ -92,17 +93,18 @@ export const renderSection = (
         title.toLowerCase(),
         0,
         changedKeys,
+        '',
+        new WeakMap(),
       ),
     );
   });
 
   return section;
 };
+
 const getPath = (section: string, parentPath: string, key: string) => {
   return parentPath ? `${parentPath}.${key}` : `${section}.${key}`;
 };
-const fadeOutTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
-const EXPANDED_PATHS = new Set<string>();
 
 export const createPropertyElement = (
   didRender: boolean,
@@ -113,6 +115,7 @@ export const createPropertyElement = (
   level = 0,
   changedKeys: Set<string> = new Set(),
   parentPath = '',
+  objectPathMap: WeakMap<object, Set<string>> = new WeakMap(),
 ) => {
   const container = document.createElement('div');
   container.className = 'react-scan-property';
@@ -124,10 +127,24 @@ export const createPropertyElement = (
     const currentPath = getPath(section, parentPath, key);
     const isExpanded = EXPANDED_PATHS.has(currentPath);
 
+    if (typeof value === 'object' && value !== null) {
+      let paths = objectPathMap.get(value);
+      if (!paths) {
+        paths = new Set();
+        objectPathMap.set(value, paths);
+      }
+      if (paths.has(currentPath)) {
+        // Circular reference detected
+        return createCircularReferenceElement(key, currentPath);
+      }
+      paths.add(currentPath);
+    }
+
     container.classList.add('react-scan-expandable');
     if (isExpanded) {
       container.classList.add('react-scan-expanded');
     }
+
     const arrow = document.createElement('span');
     arrow.className = 'react-scan-arrow';
     arrow.textContent = '▶';
@@ -141,56 +158,61 @@ export const createPropertyElement = (
     preview.dataset.key = key;
     preview.dataset.section = section;
     preview.innerHTML = `
-        <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
-          value,
-        )}">${getValuePreview(value)}</span>
-      `;
+      <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
+        value,
+      )}">${getValuePreview(value)}</span>
+    `;
 
     const content = document.createElement('div');
     content.className = isExpanded
       ? 'react-scan-nested-object'
       : 'react-scan-nested-object react-scan-hidden';
 
-    if (Array.isArray(value)) {
-      const arrayContainer = document.createElement('div');
-      arrayContainer.className = 'react-scan-array-container';
-      value.forEach((item, index) => {
-        arrayContainer.appendChild(
-          createPropertyElement(
-            didRender,
-            propsContainer,
-            index.toString(),
-            item,
-            section,
-            level + 1,
-            changedKeys,
-            currentPath,
-          ),
-        );
-      });
-      content.appendChild(arrayContainer);
-    } else {
-      Object.entries(value).forEach(([k, v]) => {
-        content.appendChild(
-          createPropertyElement(
-            didRender,
-            propsContainer,
-            k,
-            v,
-            section,
-            level + 1,
-            changedKeys,
-            currentPath,
-          ),
-        );
-      });
-    }
-
     contentWrapper.appendChild(preview);
     contentWrapper.appendChild(content);
     container.appendChild(contentWrapper);
 
-    container.addEventListener('click', (e) => {
+    // Only create nested content if expanded
+    if (isExpanded) {
+      if (Array.isArray(value)) {
+        const arrayContainer = document.createElement('div');
+        arrayContainer.className = 'react-scan-array-container';
+        value.forEach((item, index) => {
+          arrayContainer.appendChild(
+            createPropertyElement(
+              didRender,
+              propsContainer,
+              index.toString(),
+              item,
+              section,
+              level + 1,
+              changedKeys,
+              currentPath,
+              objectPathMap,
+            ),
+          );
+        });
+        content.appendChild(arrayContainer);
+      } else {
+        Object.entries(value).forEach(([k, v]) => {
+          content.appendChild(
+            createPropertyElement(
+              didRender,
+              propsContainer,
+              k,
+              v,
+              section,
+              level + 1,
+              changedKeys,
+              currentPath,
+              objectPathMap,
+            ),
+          );
+        });
+      }
+    }
+
+    arrow.addEventListener('click', (e) => {
       e.stopPropagation();
       const isExpanding = !container.classList.contains('react-scan-expanded');
 
@@ -198,6 +220,45 @@ export const createPropertyElement = (
         EXPANDED_PATHS.add(currentPath);
         container.classList.add('react-scan-expanded');
         content.classList.remove('react-scan-hidden');
+
+        if (!content.hasChildNodes()) {
+          if (Array.isArray(value)) {
+            const arrayContainer = document.createElement('div');
+            arrayContainer.className = 'react-scan-array-container';
+            value.forEach((item, index) => {
+              arrayContainer.appendChild(
+                createPropertyElement(
+                  didRender,
+                  propsContainer,
+                  index.toString(),
+                  item,
+                  section,
+                  level + 1,
+                  changedKeys,
+                  currentPath,
+                  new WeakMap(),
+                ),
+              );
+            });
+            content.appendChild(arrayContainer);
+          } else {
+            Object.entries(value).forEach(([k, v]) => {
+              content.appendChild(
+                createPropertyElement(
+                  didRender,
+                  propsContainer,
+                  k,
+                  v,
+                  section,
+                  level + 1,
+                  changedKeys,
+                  currentPath,
+                  new WeakMap(),
+                ),
+              );
+            });
+          }
+        }
       } else {
         EXPANDED_PATHS.delete(currentPath);
         container.classList.remove('react-scan-expanded');
@@ -218,21 +279,21 @@ export const createPropertyElement = (
     preview.dataset.key = key;
     preview.dataset.section = section;
     preview.innerHTML = `
-        <span style="width: 8px; display: inline-block"></span>
-        <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
-          value,
-        )}">${getValuePreview(value)}</span>
-      `;
+      <span style="width: 8px; display: inline-block"></span>
+      <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
+        value,
+      )}">${getValuePreview(value)}</span>
+    `;
     container.appendChild(preview);
   }
 
   const isChanged = changedKeys.has(key) && didRender;
 
-  const flashOverlay = document.createElement('div');
-  flashOverlay.className = 'react-scan-flash-overlay';
-  container.appendChild(flashOverlay);
-
   if (isChanged) {
+    const flashOverlay = document.createElement('div');
+    flashOverlay.className = 'react-scan-flash-overlay';
+    container.appendChild(flashOverlay);
+
     // If it's already flashing set opacity back to peak
     flashOverlay.style.opacity = '0.5';
 
@@ -253,6 +314,20 @@ export const createPropertyElement = (
   return container;
 };
 
+const createCircularReferenceElement = (key: string, path: string) => {
+  const container = document.createElement('div');
+  container.className = 'react-scan-property';
+
+  const preview = document.createElement('div');
+  preview.className = 'react-scan-preview-line';
+  preview.innerHTML = `
+    <span style="width: 8px; display: inline-block"></span>
+    <span class="react-scan-key">${key}</span>: <span class="react-scan-circular">[Circular Reference]</span>
+  `;
+  container.appendChild(preview);
+  return container;
+};
+
 export const getValueClassName = (value: any) => {
   if (Array.isArray(value)) return 'react-scan-array';
   if (value === null || value === undefined) return 'react-scan-null';
@@ -269,6 +344,7 @@ export const getValueClassName = (value: any) => {
       return '';
   }
 };
+
 export const getValuePreview = (value: any) => {
   if (Array.isArray(value)) {
     return `Array(${value.length})`;

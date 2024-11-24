@@ -3,6 +3,7 @@ import { createElement } from './utils';
 import { MONO_FONT } from './outline';
 import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
 
+let isDragging = false;
 export const createToolbar = () => {
   if (typeof window === 'undefined') {
     return;
@@ -53,6 +54,7 @@ export const createToolbar = () => {
       flex-direction: column-reverse;
       align-items: flex-end;
       pointer-events: none;
+      max-height: 500px;
     ">
       <div id="react-scan-toolbar-content" style="
         background: rgba(0, 0, 0, 0.9);
@@ -115,7 +117,7 @@ export const createToolbar = () => {
           background: #252526;
           border-top: 1px solid rgba(255, 255, 255, 0.1);
           width: 360px;
-          overflow: hidden;
+          overflow: auto;
           max-height: 0;
           transition: max-height ${TRANSITION_MS} ${BEZIER}, width ${TRANSITION_MS} ${BEZIER};
         ">
@@ -203,17 +205,16 @@ export const createToolbar = () => {
     }
 
     .react-scan-expandable {
-      cursor: pointer;
       display: flex;
       align-items: flex-start;
     }
 
-    .react-scan-expandable:hover {
-      opacity: 0.8;
-    }
+   
 
     .react-scan-arrow {
+      cursor: pointer;
       content: '▶';
+      padding: 1.5px;
       display: inline-block;
       font-size: 8px;
       margin: 4px 3px 0 0;
@@ -239,7 +240,6 @@ export const createToolbar = () => {
       overflow-y: auto;
       margin-left: 12px;
       margin-top: 8px;
-      max-height: 350px;
     }
 
     .react-scan-nested-object {
@@ -257,9 +257,6 @@ export const createToolbar = () => {
 
     .react-scan-preview-line {
       position: relative;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
       padding: 2px 4px;
       border-radius: 3px;
     }
@@ -303,7 +300,6 @@ export const createToolbar = () => {
 
   document.body.appendChild(toolbar);
 
-  let isDragging = false;
   let initialX = 0;
   let initialY = 0;
   let currentX = 0;
@@ -389,6 +385,7 @@ export const createToolbar = () => {
         propContainer.innerHTML = '';
         propContainer.style.maxHeight = '0';
         propContainer.style.width = 'fit-content';
+
         ReactScanInternals.inspectState = {
           kind: 'inspect-off',
           propContainer: currentState.propContainer,

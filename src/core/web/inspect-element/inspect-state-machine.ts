@@ -93,7 +93,6 @@ export const createInspectElementStateMachine = () => {
       unSub();
     });
   };
-  // let clearRectTimer: ReturnType<typeof setTimeout>;
   ReactScanInternals.subscribeMultiple(
     ['reportDataFiber', 'inspectState'],
     throttle((store: Internals) => {
@@ -119,24 +118,42 @@ export const createInspectElementStateMachine = () => {
             };
           }
           case 'inspecting': {
-            inspectState.propContainer.style.maxHeight = '0';
+            // we want to allow the user to be able to inspect clickable things
+            const eventCatcher = document.createElement('div');
+            eventCatcher.style.cssText = `
+              position: fixed;
+              left: 0;
+              top: 0;
+              width: 100vw;
+              height: 100vh;
+              z-index: ${parseInt(canvas!.style.zIndex) - 1};
+              pointer-events: auto;
+            `;
+
+            canvas!.parentNode!.insertBefore(eventCatcher, canvas);
             let currentHoveredElement: HTMLElement | null = null;
             const mouseMove = throttle((e: MouseEvent) => {
-              if (!e.target) {
+              if (ReactScanInternals.inspectState.kind !== 'inspecting') {
                 return;
               }
 
-              currentHoveredElement = e.target as HTMLElement;
-              inspectState.hoveredDomElement = currentHoveredElement;
-              drawHoverOverlay(
-                currentHoveredElement,
-                canvas,
-                ctx,
-                'inspecting',
-              );
-            }, 16); // 60fps
+              // temp hide event catcher to get real target
+              eventCatcher.style.pointerEvents = 'none';
+              const el = document.elementFromPoint(
+                e.clientX,
+                e.clientY,
+              ) as HTMLElement;
+              eventCatcher.style.pointerEvents = 'auto';
+
+              if (!el) return;
+
+              currentHoveredElement = el;
+              inspectState.hoveredDomElement = el;
+              drawHoverOverlay(el, canvas, ctx, 'inspecting');
+            }, 16);
 
             window.addEventListener('mousemove', mouseMove);
+
             const scroll = () => {
               if (!inspectState.hoveredDomElement) {
                 return;
@@ -150,15 +167,22 @@ export const createInspectElementStateMachine = () => {
               );
             };
             window.addEventListener('scroll', scroll);
-            const click = () => {
-              if (!currentHoveredElement) {
-                return;
-              }
+            const click = (e: MouseEvent) => {
+              e.stopImmediatePropagation();
 
-              drawHoverOverlay(currentHoveredElement, canvas, ctx, 'locked');
+              // temp hide event catcher to get real target
+              eventCatcher.style.pointerEvents = 'none';
+              const el =
+                currentHoveredElement ??
+                document.elementFromPoint(e.clientX, e.clientY);
+              eventCatcher.style.pointerEvents = 'auto';
+
+              if (!el) return;
+
+              drawHoverOverlay(el as HTMLElement, canvas, ctx, 'locked');
               ReactScanInternals.inspectState = {
                 kind: 'focused',
-                focusedDomElement: currentHoveredElement,
+                focusedDomElement: el as HTMLElement,
                 propContainer: inspectState.propContainer,
               };
             };
@@ -196,6 +220,7 @@ export const createInspectElementStateMachine = () => {
               window.removeEventListener('click', click);
               window.removeEventListener('mousemove', mouseMove);
               window.removeEventListener('keydown', keyDown);
+              eventCatcher.parentNode?.removeChild(eventCatcher);
             };
           }
           case 'focused': {
