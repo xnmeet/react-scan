@@ -22,17 +22,16 @@ Engineering teams use React Scan to optimize their React apps:
 
 ## Install
 
-Get started in 5 seconds, add this script to your app:
-
-```html
-<!-- import this BEFORE any scripts -->
-<script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
-```
-
-Or, run it on any website:
+The fastest way to get started is via CLI:
 
 ```bash
 npx react-scan@latest https://react.dev
+```
+
+If you want to test your app locally, add this script to your app:
+```html
+<!-- import this BEFORE any scripts -->
+<script src="https://unpkg.com/react-scan/dist/auto.global.js"></script>
 ```
 
 Examples:

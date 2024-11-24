@@ -8,7 +8,14 @@ import {
   type BrowserContext,
 } from 'playwright';
 import mri from 'mri';
-import { intro, confirm, isCancel, cancel, spinner } from '@clack/prompts';
+import {
+  intro,
+  confirm,
+  isCancel,
+  cancel,
+  spinner,
+  outro,
+} from '@clack/prompts';
 import { bgMagenta, dim, red } from 'kleur';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -105,6 +112,7 @@ const init = async () => {
     ],
     userAgent:
       userAgentStrings[Math.floor(Math.random() * userAgentStrings.length)],
+    bypassCSP: true,
   };
 
   try {
@@ -207,25 +215,30 @@ const init = async () => {
   });
 
   const pollReport = async () => {
-    await page.evaluate(() => {
-      const globalHook = globalThis.__REACT_SCAN__;
-      if (!globalHook) return;
-      const reportData = globalHook.ReactScanInternals.reportData;
-      if (!Object.keys(reportData).length) return;
-      console.log(
-        'REACT_SCAN_REPORT',
-        JSON.stringify(reportData, (key, value) => {
-          return ['prevValue', 'nextValue'].includes(key) ? undefined : value;
-        }),
-      );
-    });
+    if (page.url() !== currentURL) return;
+    await page
+      .evaluate(() => {
+        const globalHook = globalThis.__REACT_SCAN__;
+        if (!globalHook) return;
+        const reportData = globalHook.ReactScanInternals.reportData;
+        if (!Object.keys(reportData).length) return;
+        console.log(
+          'REACT_SCAN_REPORT',
+          JSON.stringify(reportData, (key, value) => {
+            return ['prevValue', 'nextValue'].includes(key) ? undefined : value;
+          }),
+        );
+      })
+      .catch(() => {});
   };
 
   let renders = 0;
   let currentSpinner: ReturnType<typeof spinner> | undefined;
   let currentURL = urlString;
 
+  let interval: NodeJS.Timeout | undefined;
   const inject = async (url: string) => {
+    if (interval) clearInterval(interval);
     currentURL = url;
     currentSpinner?.stop(`${url}${renders ? ` (×${renders})` : ''}`);
     currentSpinner = spinner();
@@ -246,26 +259,29 @@ const init = async () => {
       await page.evaluate(() => {
         if (typeof globalThis.reactScan !== 'function') return;
         globalThis.reactScan({ report: true });
+        globalThis.__REACT_SCAN__.ReactScanInternals.reportData = {};
       });
-      setInterval(() => {
+      interval = setInterval(() => {
         pollReport();
       }, 1000);
     } catch (e) {
-      currentSpinner.stop(red(`Failed to inject React Scan to: ${url}`));
+      currentSpinner?.stop(red(`Failed to inject React Scan to: ${url}`));
     }
   };
 
   await inject(urlString);
 
   page.on('framenavigated', async (frame) => {
-    if (frame !== page.mainFrame()) return currentSpinner?.stop();
+    if (frame !== page.mainFrame()) return;
     const url = frame.url();
     inject(url);
   });
 
   page.on('console', async (msg) => {
     const text = msg.text();
-    if (!text.startsWith('REACT_SCAN_REPORT')) return;
+    if (!text.startsWith('REACT_SCAN_REPORT')) {
+      return;
+    }
     const reportDataString = text.replace('REACT_SCAN_REPORT', '').trim();
     const reportData = JSON.parse(reportDataString);
     let newRenders = 0;
@@ -273,10 +289,18 @@ const init = async () => {
       const componentData = reportData[componentName];
       newRenders += componentData.count;
     }
+    const msgURL = msg.location().url;
+    // if (msgURL !== currentURL) {
+    //   currentSpinner?.stop(`${msgURL}${renders ? ` (×${renders})` : ''}`);
+    //   return;
+    // }
     renders = newRenders;
-    currentSpinner?.message(
-      dim(`Scanning: ${currentURL}${renders ? ` (×${renders})` : ''}`),
-    );
+
+    // if (currentSpinner) {
+    //   currentSpinner.message(
+    //     dim(`Scanning: ${currentURL}${renders ? ` (×${renders})` : ''}`),
+    //   );
+    // }
   });
 };
 
