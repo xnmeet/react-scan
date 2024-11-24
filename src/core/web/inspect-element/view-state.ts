@@ -12,7 +12,7 @@ export const renderPropsAndState = (
 ) => {
   const componentName =
     fiber.type?.displayName || fiber.type?.name || 'Unknown';
-  const props = fiber.pendingProps || {};
+  const props = fiber.memoizedProps || {};
   const state = getStateFromFiber(fiber) || {};
 
   const renderCount = reportDataFiber?.count || 0;
@@ -36,6 +36,7 @@ export const renderPropsAndState = (
   const content = document.createElement('div');
   content.className = 'react-scan-content';
 
+  console.log('hm', fiber.memoizedProps, 'vs', fiber.alternate?.memoizedProps);
   content.appendChild(
     renderSection(
       didRender,

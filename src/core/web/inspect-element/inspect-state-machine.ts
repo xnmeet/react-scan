@@ -16,6 +16,7 @@ import {
   getFirstStateNode,
   getParentCompositeFiber,
 } from './utils';
+import { didFiberRender } from '../../instrumentation/fiber';
 
 export type States =
   | {
@@ -248,7 +249,7 @@ export const createInspectElementStateMachine = () => {
               reportDataFiber?.count ?? 0,
             ); // the first set will be parentCompositeFiber
 
-            const didRender = lastReadValue !== reportDataFiber?.count; // because we react to any change, not just this fibers change, we need this check to know if the current fiber re-rendered for this publish
+            const didRender = didFiberRender(parentCompositeFiber); // because we react to any change, not just this fibers change, we need this check to know if the current fiber re-rendered for this publish
 
             renderPropsAndState(
               didRender,
