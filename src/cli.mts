@@ -290,17 +290,17 @@ const init = async () => {
       newRenders += componentData.count;
     }
     const msgURL = msg.location().url;
-    // if (msgURL !== currentURL) {
-    //   currentSpinner?.stop(`${msgURL}${renders ? ` (×${renders})` : ''}`);
-    //   return;
-    // }
+    if (msgURL !== currentURL) {
+      currentSpinner?.stop(`${msgURL}${renders ? ` (×${renders})` : ''}`);
+      return;
+    }
     renders = newRenders;
 
-    // if (currentSpinner) {
-    //   currentSpinner.message(
-    //     dim(`Scanning: ${currentURL}${renders ? ` (×${renders})` : ''}`),
-    //   );
-    // }
+    if (currentSpinner) {
+      currentSpinner.message(
+        dim(`Scanning: ${currentURL}${renders ? ` (×${renders})` : ''}`),
+      );
+    }
   });
 };
 
