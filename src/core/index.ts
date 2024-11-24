@@ -128,10 +128,6 @@ export interface Internals {
     }
   >;
   activePropOverlays: Array<ActiveProp>;
-  hoveredDomElement: HTMLElement | null;
-  lastHoveredDomElement: HTMLElement | null;
-  focusedDomElement: HTMLElement | null;
-  inspectElement: boolean;
   fiberRoots: WeakSet<Fiber>;
   inspectState: States;
 }
@@ -147,7 +143,6 @@ export interface StoreMethods<T extends object> {
     subscribeTo: Array<keyof T>,
     listener: Listener<T>,
   ): () => void;
-  // subscribeAll(listener: Listener<T[keyof ]>)
 }
 
 type Store<T extends object> = T & StoreMethods<T>;
@@ -157,9 +152,6 @@ const createStore = <T extends object>(initialData: T): Store<T> => {
   const listeners: { [K in keyof T]?: Array<Listener<T[K]>> } = {};
 
   const emit = <K extends keyof T>(key: K, value: T[K]): void => {
-    // console.log('emitting', key, value);
-    // if (key === 'inspectState') {
-    // }
     listeners[key]?.forEach((listener) => listener(value));
   };
 
@@ -267,11 +259,7 @@ export const ReactScanInternals = createStore<Internals>({
   scheduledOutlines: [],
   activeOutlines: [],
   activePropOverlays: [],
-  hoveredDomElement: null,
-  focusedDomElement: null,
-  inspectElement: false,
   fiberRoots: new WeakSet(),
-  lastHoveredDomElement: null,
   inspectState: {
     kind: 'uninitialized',
   },

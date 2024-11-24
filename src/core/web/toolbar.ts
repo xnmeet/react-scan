@@ -304,12 +304,6 @@ export const createToolbar = () => {
   ) as HTMLDivElement;
 
   let isActive = !ReactScanInternals.isPaused;
-  console.log('whats state here?, is paused?', ReactScanInternals.isPaused);
-  let isInspecting =
-    ReactScanInternals.inspectState.kind === 'inspecting' ||
-    ReactScanInternals.inspectState.kind === 'focused';
-
-  ReactScanInternals.inspectElement = isInspecting;
 
   document.body.appendChild(toolbar);
 
