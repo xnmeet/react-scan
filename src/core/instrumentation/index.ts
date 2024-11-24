@@ -155,7 +155,7 @@ export const reportRender = (
 };
 export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
   const [reportFiber, report] = (() => {
-    const currentFiberData = ReactScanInternals.reportDataFiber.get(fiber);
+    const currentFiberData = ReactScanInternals.reportDataByFiber.get(fiber);
     if (currentFiberData) {
       return [fiber, currentFiberData] as const;
     }
@@ -163,7 +163,7 @@ export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
       return [fiber, null] as const; // use the current fiber as a key
     }
 
-    const alternateFiberData = ReactScanInternals.reportDataFiber.get(
+    const alternateFiberData = ReactScanInternals.reportDataByFiber.get(
       fiber.alternate,
     );
     return [fiber.alternate, alternateFiberData] as const;
@@ -179,7 +179,7 @@ export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
   }
   const time = getSelfTime(fiber) ?? 0.1; // .1ms lowest precision
 
-  ReactScanInternals.reportDataFiber.set(reportFiber, {
+  ReactScanInternals.reportDataByFiber.set(reportFiber, {
     count: (report?.count ?? 0) + 1,
     time: (report?.time ?? 0) + time,
     badRenders: report?.badRenders || [],
@@ -187,8 +187,8 @@ export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
     displayName: getDisplayName(fiber.type),
   });
   ReactScanInternals.emit(
-    'reportDataFiber',
-    ReactScanInternals.reportDataFiber,
+    'reportDataByFiber',
+    ReactScanInternals.reportDataByFiber,
   );
 };
 

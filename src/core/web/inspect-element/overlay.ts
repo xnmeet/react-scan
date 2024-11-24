@@ -45,9 +45,9 @@ export const drawHoverOverlay = (
   }
 
   const reportDataFiber =
-    ReactScanInternals.reportDataFiber.get(parentCompositeFiber) ||
+    ReactScanInternals.reportDataByFiber.get(parentCompositeFiber) ||
     (parentCompositeFiber.alternate
-      ? ReactScanInternals.reportDataFiber.get(parentCompositeFiber.alternate)
+      ? ReactScanInternals.reportDataByFiber.get(parentCompositeFiber.alternate)
       : null);
 
   const stats: PerformanceStats = {

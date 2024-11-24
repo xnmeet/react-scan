@@ -66,26 +66,3 @@ export const getLabelText = (renders: Render[]) => {
 export const getCopiedActiveOutlines = () => [
   ...ReactScanInternals.activeOutlines,
 ];
-
-export const NEVER_RUN = Symbol('dev-invariant');
-
-export function devInvariant(
-  x: typeof NEVER_RUN,
-  message?: string,
-): asserts x is never;
-export function devInvariant<T>(
-  x: T | null | undefined,
-  message?: string,
-): asserts x is T;
-export function devInvariant(x: unknown, message?: string) {
-  // @ts-expect-error todo: process check incase user doesn't have process
-  if (typeof process === 'undefined' || process.env.NODE_ENV === 'production') {
-    return;
-  }
-  if (x === NEVER_RUN) {
-    throw new Error(message ?? 'dev invariant');
-  }
-  if (!x) {
-    throw new Error(message ?? 'dev invariant');
-  }
-}

@@ -116,7 +116,7 @@ export interface Internals {
   options: Options;
   scheduledOutlines: PendingOutline[];
   activeOutlines: ActiveOutline[];
-  reportDataFiber: WeakMap<
+  reportDataByFiber: WeakMap<
     Fiber,
     {
       count: number;
@@ -260,7 +260,7 @@ export const ReactScanInternals = createStore<Internals>({
     alwaysShowLabels: false,
   },
   reportData: {},
-  reportDataFiber: new WeakMap(),
+  reportDataByFiber: new WeakMap(),
   scheduledOutlines: [],
   activeOutlines: [],
   activePropOverlays: [],
@@ -290,10 +290,11 @@ export const start = () => {
   const overlayElement = document.createElement('react-scan-overlay') as any;
   document.body.appendChild(overlayElement);
 
-  // const toolbar = overlayElement.getToolbar();
+  if (options.showToolbar) {
+    createToolbar();
+  }
   const ctx = overlayElement.getContext();
   createInspectElementStateMachine();
-  createToolbar(); // todo, make this hidable
 
   const audioContext =
     typeof window !== 'undefined'

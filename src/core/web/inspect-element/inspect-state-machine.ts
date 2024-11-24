@@ -86,7 +86,7 @@ export const createInspectElementStateMachine = () => {
     });
   };
   ReactScanInternals.subscribeMultiple(
-    ['reportDataFiber', 'inspectState'],
+    ['reportDataByFiber', 'inspectState'],
     throttle((store: Internals) => {
       unsubscribeAll(); // potential optimization: only unSub if inspectStateKind transitioned
 
@@ -200,7 +200,6 @@ export const createInspectElementStateMachine = () => {
                   kind: 'inspect-off',
                   propContainer: inspectState.propContainer,
                 };
-                // race condition that I can't figure out
                 clearCanvas();
               }
             };
@@ -216,6 +215,12 @@ export const createInspectElementStateMachine = () => {
             };
           }
           case 'focused': {
+            drawHoverOverlay(
+              inspectState.focusedDomElement,
+              canvas,
+              ctx,
+              'locked',
+            );
             const element = inspectState.focusedDomElement;
 
             let { parentCompositeFiber } =
@@ -224,9 +229,9 @@ export const createInspectElementStateMachine = () => {
               return;
             }
             const reportDataFiber =
-              store.reportDataFiber.get(parentCompositeFiber) ||
+              store.reportDataByFiber.get(parentCompositeFiber) ||
               (parentCompositeFiber.alternate
-                ? store.reportDataFiber.get(parentCompositeFiber.alternate)
+                ? store.reportDataByFiber.get(parentCompositeFiber.alternate)
                 : null);
 
             const didRender = didFiberRender(parentCompositeFiber); // because we react to any change, not just this fibers change, we need this check to know if the current fiber re-rendered for this publish
@@ -237,12 +242,7 @@ export const createInspectElementStateMachine = () => {
               reportDataFiber,
               inspectState.propContainer,
             );
-            drawHoverOverlay(
-              inspectState.focusedDomElement,
-              canvas,
-              ctx,
-              'locked',
-            );
+
             const keyDown = (e: KeyboardEvent) => {
               if (e.key === 'Escape') {
                 clearCanvas();
@@ -262,10 +262,11 @@ export const createInspectElementStateMachine = () => {
             };
             window.addEventListener('keydown', keyDown);
 
-            const click = (e: MouseEvent) => {
+            const onClickCanvasLockIcon = (e: MouseEvent) => {
               if (!currentLockIconRect) {
                 return;
               }
+
               const rect = canvas.getBoundingClientRect();
               const scaleX = canvas.width / rect.width;
               const scaleY = canvas.height / rect.height;
@@ -301,7 +302,7 @@ export const createInspectElementStateMachine = () => {
                 return;
               }
             };
-            window.addEventListener('click', click);
+            window.addEventListener('click', onClickCanvasLockIcon);
 
             const scroll = (e: Event) => {
               drawHoverOverlay(
@@ -325,7 +326,7 @@ export const createInspectElementStateMachine = () => {
               window.removeEventListener('scroll', scroll);
               window.removeEventListener('resize', resize);
               window.removeEventListener('keydown', keyDown);
-              window.removeEventListener('click', click);
+              window.removeEventListener('click', onClickCanvasLockIcon);
             };
           }
         }

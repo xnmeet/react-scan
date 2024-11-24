@@ -259,7 +259,6 @@ export const createToolbar = () => {
     .react-scan-arrow {
       cursor: pointer;
       content: '▶';
-      padding: 1.5px;
       display: inline-block;
       font-size: 8px;
       margin: 4px 3px 0 0;
@@ -530,7 +529,10 @@ export const createToolbar = () => {
 
     while (nextParent) {
       const parentFiber = getNearestFiberFromElement(nextParent);
-      if (!parentFiber || parentFiber !== currentFiber) {
+      if (
+        !parentFiber ||
+        parentFiber.memoizedProps !== currentFiber?.memoizedProps
+      ) {
         break;
       }
       nextParent = nextParent.parentElement;
