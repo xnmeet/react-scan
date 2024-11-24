@@ -178,7 +178,7 @@ export const flushOutlines = (
 
     let text = `×${totalCount}`;
     if (totalTime > 0) text += ` (${totalTime.toFixed(2)}ms)`;
-    toolbar.textContent = `${text} · react-scan`;
+    toolbar.textContent = totalCount ? `${text} · react-scan` : 'react-scan';
   }
 
   void paintOutlines(

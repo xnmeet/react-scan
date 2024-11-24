@@ -125,7 +125,7 @@ export const ReactScanInternals: Internals = {
     log: false,
     showToolbar: true,
     renderCountThreshold: 0,
-    report: false,
+    report: undefined,
     alwaysShowLabels: false,
   },
   reportData: {},
@@ -231,5 +231,4 @@ export const scan = (options: Options = {}) => {
   start();
 };
 
-// Define custom element
 customElements.define('react-scan-overlay', ReactScanOverlay);
