@@ -10,7 +10,12 @@ import {
 import { logIntro } from './web/log';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
+<<<<<<< HEAD
 import { initReactScanOverlay } from './web/overlay';
+||||||| parent of 4176ead (add focus parent/previous buttons)
+// import { ReactScanOverlay } from './web/custom-element';
+=======
+>>>>>>> 4176ead (add focus parent/previous buttons)
 import {
   createInspectElementStateMachine,
   States,

@@ -44,9 +44,9 @@ export const getRect = (domNode: HTMLElement): DOMRect | null => {
   const now = performance.now();
   const cached = rectCache.get(domNode);
 
-  // if (cached && now - cached.timestamp < DEFAULT_THROTTLE_TIME) {
-  //   return cached.rect;
-  // }
+  if (cached && now - cached.timestamp < DEFAULT_THROTTLE_TIME) {
+    return cached.rect;
+  }
 
   const style = window.getComputedStyle(domNode);
   if (

@@ -2,6 +2,11 @@ import { ReactScanInternals } from '../../index';
 import { createElement } from './utils';
 import { MONO_FONT } from './outline';
 import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
+import {
+  getCompositeComponentFromElement,
+  getNearestFiberFromElement,
+  getParentCompositeFiber,
+} from './inspect-element/utils';
 
 let isDragging = false;
 export const createToolbar = () => {
@@ -34,6 +39,16 @@ export const createToolbar = () => {
     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <rect x="14" y="4" width="4" height="16" rx="1"/>
       <rect x="6" y="4" width="4" height="16" rx="1"/>
+    </svg>
+  `;
+
+  const PARENT_SVG = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="2"/>
+      <rect x="8" y="8" width="8" height="8" rx="1"/>
+      <path d="M12 4V2"/>
+      <path d="M8 4V2"/>
+      <path d="M16 4V2"/>
     </svg>
   `;
 
@@ -109,8 +124,40 @@ export const createToolbar = () => {
             display: flex;
             align-items: center;
             height: 100%;
-            font-size: 14px;
-          ">react-scan</div>
+            flex: 1;
+          ">
+            <span style="font-size: 14px; margin-right: auto;">react-scan</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <button id="react-scan-parent-focus" style="
+                padding: 4px 8px;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: none;
+                border: none;
+                color: #999;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                height: 24px;
+                outline: none;
+                font-size: 12px;
+              ">focus parent</button>
+              <button id="react-scan-previous-focus" style="
+                padding: 4px 8px;
+                display: none;
+                align-items: center;
+                justify-content: center;
+                background: none;
+                border: none;
+                color: #999;
+                cursor: pointer;
+                transition: all 0.15s ease;
+                height: 24px;
+                outline: none;
+                font-size: 12px;
+              ">previous</button>
+            </div>
+          </div>
         </div>
         <div id="react-scan-props" style="
           pointer-events: auto;
@@ -209,8 +256,6 @@ export const createToolbar = () => {
       align-items: flex-start;
     }
 
-   
-
     .react-scan-arrow {
       cursor: pointer;
       content: '▶';
@@ -289,6 +334,14 @@ export const createToolbar = () => {
   const powerBtn = toolbar.querySelector(
     '#react-scan-power',
   ) as HTMLButtonElement;
+  const parentFocusBtn = toolbar.querySelector(
+    '#react-scan-parent-focus',
+  ) as HTMLButtonElement;
+  const previousFocusBtn = toolbar.querySelector(
+    '#react-scan-previous-focus',
+  ) as HTMLButtonElement;
+
+  let focusHistory: Array<HTMLElement> = [];
   const propContainer = toolbar.querySelector(
     '#react-scan-props',
   ) as HTMLDivElement;
@@ -312,7 +365,12 @@ export const createToolbar = () => {
   updateToolbarPosition(0, 0);
 
   toolbarContent.addEventListener('mousedown', (e) => {
-    if (e.target === inspectBtn || e.target === powerBtn) return;
+    if (
+      e.target === inspectBtn ||
+      e.target === powerBtn ||
+      e.target === parentFocusBtn
+    )
+      return;
 
     isDragging = true;
     const transform = new DOMMatrix(getComputedStyle(toolbar).transform);
@@ -343,6 +401,47 @@ export const createToolbar = () => {
     toolbar.style.transition = '';
   });
 
+  const updateNavigationButtons = (
+    state: typeof ReactScanInternals.inspectState,
+  ) => {
+    if (state.kind === 'focused') {
+      const { focusedDomElement } = state;
+      if (!focusedDomElement) {
+        parentFocusBtn.style.display = 'none';
+        previousFocusBtn.style.display = 'none';
+        return;
+      }
+
+      let hasValidParent = false;
+      if (focusedDomElement.parentElement) {
+        let currentFiber = getNearestFiberFromElement(focusedDomElement);
+        let nextParent: typeof focusedDomElement.parentElement | null =
+          focusedDomElement.parentElement;
+
+        while (nextParent) {
+          const parentFiber = getNearestFiberFromElement(nextParent);
+          if (!parentFiber || parentFiber !== currentFiber) {
+            hasValidParent = true;
+            break;
+          }
+          nextParent = nextParent.parentElement;
+        }
+      }
+
+      parentFocusBtn.style.display = 'flex';
+      parentFocusBtn.style.color = hasValidParent ? '#999' : '#444';
+      parentFocusBtn.style.cursor = hasValidParent ? 'pointer' : 'not-allowed';
+
+      previousFocusBtn.style.display = 'flex';
+      previousFocusBtn.style.color = focusHistory.length > 0 ? '#999' : '#444';
+      previousFocusBtn.style.cursor =
+        focusHistory.length > 0 ? 'pointer' : 'not-allowed';
+    } else {
+      parentFocusBtn.style.display = 'none';
+      previousFocusBtn.style.display = 'none';
+    }
+  };
+
   const updateUI = () => {
     powerBtn.innerHTML = isActive ? PAUSE_SVG : PLAY_SVG;
     powerBtn.title = isActive ? 'Stop' : 'Start';
@@ -363,6 +462,8 @@ export const createToolbar = () => {
       propContainer.style.width = 'fit-content';
       propContainer.innerHTML = '';
     }
+
+    updateNavigationButtons(ReactScanInternals.inspectState);
   };
 
   powerBtn.addEventListener('click', (e) => {
@@ -410,6 +511,56 @@ export const createToolbar = () => {
       }
     }
     updateUI();
+  });
+
+  parentFocusBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+
+    const currentState = ReactScanInternals.inspectState;
+    if (currentState.kind !== 'focused') return;
+
+    const { focusedDomElement } = currentState;
+    if (!focusedDomElement || !focusedDomElement.parentElement) return;
+
+    focusHistory.push(focusedDomElement);
+
+    let nextParent: typeof focusedDomElement.parentElement | null =
+      focusedDomElement.parentElement;
+    let currentFiber = getNearestFiberFromElement(focusedDomElement);
+
+    while (nextParent) {
+      const parentFiber = getNearestFiberFromElement(nextParent);
+      if (!parentFiber || parentFiber !== currentFiber) {
+        break;
+      }
+      nextParent = nextParent.parentElement;
+    }
+
+    if (!nextParent) return;
+
+    ReactScanInternals.inspectState = {
+      kind: 'focused',
+      focusedDomElement: nextParent,
+      propContainer: currentState.propContainer,
+    };
+  });
+
+  previousFocusBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+
+    const currentState = ReactScanInternals.inspectState;
+    if (currentState.kind !== 'focused' || focusHistory.length === 0) return;
+
+    const previousElement = focusHistory.pop();
+    if (!previousElement) {
+      return; // invariant this exists
+    }
+
+    ReactScanInternals.inspectState = {
+      kind: 'focused',
+      focusedDomElement: previousElement,
+      propContainer: currentState.propContainer,
+    };
   });
 
   updateUI();

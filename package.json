@@ -112,8 +112,7 @@
     "dev": "NODE_ENV=development tsup --watch",
     "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
     "prettier": "prettier --config .prettierrc.mjs -w src",
-    "publint": "publint",
-    "reload": "bun run /Users/robby/react-scan/pack.ts"
+    "publint": "publint"
   },
   "dependencies": {
     "@clack/core": "^0.3.5",

@@ -14,24 +14,6 @@ import {
 } from './fiber';
 import { registerDevtoolsHook } from './placeholder';
 
-// declare global {
-//   interface Window {
-//     __REACT_SCAN__?: {
-//       ReactScanInternals: typeof ReactScanInternals;
-//     };
-//     reactScan: any;
-//     __REACT_DEVTOOLS_GLOBAL_HOOK__?: {
-//       checkDCE: typeof NO_OP;
-//       supportsFiber: boolean;
-//       renderers: Map<number, any>;
-//       onScheduleFiberRoot: typeof NO_OP;
-//       onCommitFiberRoot: (rendererID: number, root: FiberRoot) => void;
-//       onCommitFiberUnmount: typeof NO_OP;
-//       inject: (renderer: any) => number;
-//     };
-//   }
-// }
-
 export interface Change {
   name: string;
   prevValue: unknown;
@@ -208,11 +190,6 @@ export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
     'reportDataFiber',
     ReactScanInternals.reportDataFiber,
   );
-
-  // console.log('emitting report data fiber');
-  // ReactScanInternals.emit('reportDataFiber', {
-  //   ...ReactScanInternals.reportDataFiber,
-  // });
 };
 
 export const instrument = ({

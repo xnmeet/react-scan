@@ -1,6 +1,5 @@
 import { Fiber } from 'react-reconciler';
 import { Internals, ReactScanInternals } from '../../index';
-import { getRect } from '../outline';
 
 import { throttle } from '../utils';
 import { renderPropsAndState } from './view-state';
@@ -10,12 +9,7 @@ import {
   OVERLAY_DPR,
   updateCanvasSize,
 } from './overlay';
-import {
-  getNearestFiberFromElement,
-  isCurrentTree,
-  getFirstStateNode,
-  getParentCompositeFiber,
-} from './utils';
+import { getCompositeComponentFromElement } from './utils';
 import { didFiberRender } from '../../instrumentation/fiber';
 
 export type States =
@@ -39,8 +33,6 @@ export type States =
 
 export const INSPECT_TOGGLE_ID = 'react-scan-inspect-element-toggle';
 export const INSPECT_OVERLAY_CANVAS_ID = 'react-scan-inspect-canvas';
-
-const lastReadRenderCount = new WeakMap<Fiber, number>();
 
 type Kinds = States['kind'];
 export const createInspectElementStateMachine = () => {
@@ -225,54 +217,17 @@ export const createInspectElementStateMachine = () => {
           }
           case 'focused': {
             const element = inspectState.focusedDomElement;
-            // todo cleanup fiber tracking logic
-            const res = getNearestFiberFromElement(element);
-            if (!res) return;
-            const [associatedFiber] = res;
-            const currentAssociatedFiber = isCurrentTree(associatedFiber)
-              ? associatedFiber
-              : (associatedFiber.alternate ?? associatedFiber);
-            const stateNode = getFirstStateNode(currentAssociatedFiber);
-            if (!stateNode) return;
-            const targetRect = getRect(stateNode);
-            if (!targetRect) return;
-            const anotherRes = getParentCompositeFiber(currentAssociatedFiber);
-            if (!anotherRes) {
+
+            let { parentCompositeFiber } =
+              getCompositeComponentFromElement(element);
+            if (!parentCompositeFiber) {
               return;
             }
-            let [parentCompositeFiber] = anotherRes;
-            parentCompositeFiber =
-              (isCurrentTree(parentCompositeFiber)
-                ? parentCompositeFiber
-                : parentCompositeFiber.alternate) ?? parentCompositeFiber;
-
             const reportDataFiber =
               store.reportDataFiber.get(parentCompositeFiber) ||
               (parentCompositeFiber.alternate
                 ? store.reportDataFiber.get(parentCompositeFiber.alternate)
                 : null);
-
-            const [lastReadFiber, lastReadValue] = (() => {
-              const last = lastReadRenderCount.get(parentCompositeFiber);
-              if (last) {
-                return [parentCompositeFiber, last];
-              }
-
-              if (!parentCompositeFiber.alternate) {
-                return [null, 0];
-              }
-
-              const lastAlternate = lastReadRenderCount.get(
-                parentCompositeFiber.alternate,
-              );
-
-              return [parentCompositeFiber.alternate, lastAlternate ?? 0];
-            })();
-
-            lastReadRenderCount.set(
-              lastReadFiber ?? parentCompositeFiber,
-              reportDataFiber?.count ?? 0,
-            ); // the first set will be parentCompositeFiber
 
             const didRender = didFiberRender(parentCompositeFiber); // because we react to any change, not just this fibers change, we need this check to know if the current fiber re-rendered for this publish
 

@@ -1,13 +1,7 @@
 import { Fiber } from 'react-reconciler';
 import { ReactScanInternals } from '../..';
 import { getDisplayName } from '../../instrumentation/utils';
-import { getRect } from '../outline';
-import {
-  getNearestFiberFromElement,
-  isCurrentTree,
-  getFirstStateNode,
-  getParentCompositeFiber,
-} from './utils';
+import { getCompositeComponentFromElement } from './utils';
 
 interface Rect {
   left: number;
@@ -44,32 +38,11 @@ export const drawHoverOverlay = (
   ctx: CanvasRenderingContext2D,
   kind: 'locked' | 'inspecting',
 ) => {
-  const res = getNearestFiberFromElement(overlayElement);
-  if (!res) {
+  const { parentCompositeFiber, targetRect } =
+    getCompositeComponentFromElement(overlayElement);
+  if (!parentCompositeFiber || !targetRect) {
     return;
   }
-  const [associatedFiber] = res;
-  const currentAssociatedFiber = isCurrentTree(associatedFiber)
-    ? associatedFiber
-    : (associatedFiber.alternate ?? associatedFiber);
-  const stateNode = getFirstStateNode(currentAssociatedFiber);
-  if (!stateNode) {
-    return;
-  }
-  const targetRect = getRect(stateNode);
-  if (!targetRect) {
-    return;
-  }
-
-  const anotherRes = getParentCompositeFiber(currentAssociatedFiber);
-  if (!anotherRes) {
-    return;
-  }
-  let [parentCompositeFiber] = anotherRes;
-  parentCompositeFiber =
-    (isCurrentTree(parentCompositeFiber)
-      ? parentCompositeFiber
-      : parentCompositeFiber.alternate) ?? parentCompositeFiber;
 
   const reportDataFiber =
     ReactScanInternals.reportDataFiber.get(parentCompositeFiber) ||

@@ -7,6 +7,7 @@ import {
   ForwardRefTag,
   traverseFiber,
 } from '../../instrumentation/fiber';
+import { getRect } from '../outline';
 
 export const getFiberFromElement = (element: HTMLElement): Fiber | null => {
   if ('__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) {
@@ -65,7 +66,7 @@ export const getNearestFiberFromElement = (element: HTMLElement | null) => {
     return null;
   }
 
-  return [res[0], null] as const;
+  return res[0];
 };
 
 export const getParentCompositeFiber = (fiber: Fiber) => {
@@ -164,4 +165,30 @@ export const isCurrentTree = (fiber: Fiber) => {
   const currentRootFiber = fiberRoot.current;
 
   return isFiberInTree(fiber, currentRootFiber);
+};
+
+export const getCompositeComponentFromElement = (element: HTMLElement) => {
+  const associatedFiber = getNearestFiberFromElement(element);
+  if (!associatedFiber) return {};
+  const currentAssociatedFiber = isCurrentTree(associatedFiber)
+    ? associatedFiber
+    : (associatedFiber.alternate ?? associatedFiber);
+  const stateNode = getFirstStateNode(currentAssociatedFiber);
+  if (!stateNode) return {};
+  const targetRect = getRect(stateNode);
+  if (!targetRect) return {};
+  const anotherRes = getParentCompositeFiber(currentAssociatedFiber);
+  if (!anotherRes) {
+    return {};
+  }
+  let [parentCompositeFiber] = anotherRes;
+  parentCompositeFiber =
+    (isCurrentTree(parentCompositeFiber)
+      ? parentCompositeFiber
+      : parentCompositeFiber.alternate) ?? parentCompositeFiber;
+
+  return {
+    parentCompositeFiber,
+    targetRect,
+  };
 };

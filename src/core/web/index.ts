@@ -21,12 +21,6 @@ export const createOverlay = () => {
     | OffscreenCanvasRenderingContext2D
     | CanvasRenderingContext2D;
 
-  // if (isOffscreenCanvasSupported) {
-  //   const worker = new Worker(new URL('./worker.js', import.meta.url), {
-  //     type: 'module',
-  //   });
-  // }
-
   let resizeScheduled = false;
 
   const resize = () => {
