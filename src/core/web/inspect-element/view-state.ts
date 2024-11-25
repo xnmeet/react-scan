@@ -123,6 +123,11 @@ const renderSection = (
 const getPath = (section: string, parentPath: string, key: string) => {
   return parentPath ? `${parentPath}.${key}` : `${section}.${key}`;
 };
+const flippedAt = new Map<string, number>();
+
+setInterval(() => {
+  flippedAt.clear(); // periodic gc to protect against extreme scenarios of mem leaks
+}, 10000);
 
 export const createPropertyElement = (
   didRender: boolean,
@@ -140,9 +145,8 @@ export const createPropertyElement = (
 
   const isExpandable =
     (typeof value === 'object' && value !== null) || Array.isArray(value);
-
+  const currentPath = getPath(section, parentPath, key);
   if (isExpandable) {
-    const currentPath = getPath(section, parentPath, key);
     const isExpanded = EXPANDED_PATHS.has(currentPath);
 
     if (typeof value === 'object' && value !== null) {
@@ -307,7 +311,8 @@ export const createPropertyElement = (
 
   const isChanged = changedKeys.has(key) && didRender;
 
-  if (isChanged) {
+  if (isChanged || flippedAt.has(currentPath)) {
+    flippedAt.set(currentPath, Date.now());
     const flashOverlay = document.createElement('div');
     flashOverlay.className = 'react-scan-flash-overlay';
     container.appendChild(flashOverlay);
@@ -386,4 +391,8 @@ export const getValuePreview = (value: any) => {
     default:
       return typeof value;
   }
+};
+
+const hasFlashOverlay = (element: HTMLElement) => {
+  return element.querySelector('.react-scan-flash-overlay') !== null;
 };
