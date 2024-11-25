@@ -313,7 +313,7 @@ export const createPropertyElement = (
     container.appendChild(flashOverlay);
 
     // If it's already flashing set opacity back to peak
-    flashOverlay.style.opacity = '0.5';
+    flashOverlay.style.opacity = '.9';
 
     const existingTimer = fadeOutTimers.get(flashOverlay);
     if (existingTimer !== undefined) {

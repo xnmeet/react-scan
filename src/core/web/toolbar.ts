@@ -23,7 +23,6 @@ export const createToolbar = () => {
     </svg>
   `;
 
-  const BEZIER = 'cubic-bezier(0.4, 0, 0.2, 1)';
   const TRANSITION_MS = '150ms';
 
   const toolbar = createElement(`
@@ -40,7 +39,7 @@ export const createToolbar = () => {
     flex-direction: column-reverse;
     align-items: flex-end;
     pointer-events: none;
-    max-height: 500px;
+    max-height: 450px;
   ">
     <div id="react-scan-toolbar-content" style="
       background: rgba(0, 0, 0, 0.95);
@@ -124,7 +123,7 @@ export const createToolbar = () => {
                border: none;
               font-size: 12px;
               white-space: nowrap;
-            ">focus parent</button>
+            ">parent</button>
             <button id="react-scan-previous-focus" style="
               padding: 4px 10px;
               display: none;
@@ -150,7 +149,7 @@ export const createToolbar = () => {
         width: 360px;
         overflow: auto;
         max-height: 0;
-        transition: max-height ${TRANSITION_MS} ${BEZIER}, width ${TRANSITION_MS} ${BEZIER};
+        transition: max-height 500ms cubic-bezier(0, 0.95, 0.1, 1);
       ">
         <!-- Props content will be injected here -->
       </div>
@@ -530,6 +529,9 @@ export const createToolbar = () => {
         return;
       }
       case 'focused': {
+        propContainer.style.maxHeight = '0';
+        propContainer.style.width = 'fit-content';
+        propContainer.innerHTML = '';
         ReactScanInternals.inspectState = {
           kind: 'inspecting',
           hoveredDomElement: currentState.focusedDomElement,

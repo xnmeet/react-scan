@@ -235,6 +235,9 @@ export const createInspectElementStateMachine = () => {
           case 'focused': {
             if (!document.contains(inspectState.focusedDomElement)) {
               clearCanvas();
+              inspectState.propContainer.style.maxHeight = '0';
+              inspectState.propContainer.style.width = 'fit-content';
+              inspectState.propContainer.innerHTML = '';
               ReactScanInternals.inspectState = {
                 kind: 'inspecting',
                 hoveredDomElement: null,
@@ -280,6 +283,9 @@ export const createInspectElementStateMachine = () => {
                   ctx,
                   'inspecting',
                 );
+                inspectState.propContainer.style.maxHeight = '0';
+                inspectState.propContainer.style.width = 'fit-content';
+                inspectState.propContainer.innerHTML = '';
                 ReactScanInternals.inspectState = {
                   kind: 'inspecting',
                   hoveredDomElement:

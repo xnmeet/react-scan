@@ -201,7 +201,6 @@ export const getAllFiberContexts = (fiber: Fiber): Map<any, unknown> => {
   let currentFiber: Fiber | null = fiber;
 
   while (currentFiber) {
-    // Check for context dependencies
     const dependencies = currentFiber.dependencies;
     if (dependencies?.firstContext) {
       let contextItem: any = dependencies.firstContext;
@@ -229,7 +228,6 @@ export const getAllFiberContexts = (fiber: Fiber): Map<any, unknown> => {
       }
     }
 
-    // Move up to parent fiber
     currentFiber = currentFiber.return;
   }
 
