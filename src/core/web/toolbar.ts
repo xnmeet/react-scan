@@ -368,7 +368,7 @@ export const createToolbar = () => {
 }
   `;
 
-  document.head.appendChild(styleElement);
+  if (document.head) document.head.appendChild(styleElement);
 
   const inspectBtn = toolbar.querySelector<HTMLButtonElement>(
     `#${INSPECT_TOGGLE_ID}`,
@@ -391,7 +391,7 @@ export const createToolbar = () => {
 
   let isActive = !ReactScanInternals.isPaused;
 
-  document.body.appendChild(toolbar);
+  document.documentElement.appendChild(toolbar);
 
   let initialX = 0;
   let initialY = 0;
@@ -613,7 +613,7 @@ export const createToolbar = () => {
   if (existing) existing.remove();
 
   if (!toolbar.parentElement) {
-    document.body.appendChild(toolbar);
+    document.documentElement.appendChild(toolbar);
   }
 
   ReactScanInternals.inspectState = {

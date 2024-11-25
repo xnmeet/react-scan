@@ -283,7 +283,7 @@ export const start = () => {
   initReactScanOverlay();
 
   const overlayElement = document.createElement('react-scan-overlay') as any;
-  document.body.appendChild(overlayElement);
+  document.documentElement.appendChild(overlayElement);
 
   if (options.showToolbar) {
     createToolbar();
