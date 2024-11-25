@@ -15,6 +15,12 @@ function generateManifest() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      keep_fnames: true,
+    },
+  },
   plugins: [
     react(),
     webExtension({
