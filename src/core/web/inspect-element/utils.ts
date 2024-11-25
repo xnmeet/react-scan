@@ -109,7 +109,7 @@ export const getStateFromFiber = (fiber: Fiber): any => {
 
     while (memoizedState) {
       if (memoizedState.queue && memoizedState.memoizedState !== undefined) {
-        state[`Hook #${index}`] = memoizedState.memoizedState;
+        state[index] = memoizedState.memoizedState;
       }
       memoizedState = memoizedState.next;
       index++;
