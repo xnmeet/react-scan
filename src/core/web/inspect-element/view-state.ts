@@ -5,9 +5,6 @@ import {
   getStateFromFiber,
 } from './utils';
 
-let prevChangedProps = new Set<string>();
-let prevChangedState = new Set<string>();
-
 const EXPANDED_PATHS = new Set<string>();
 const fadeOutTimers = new WeakMap<HTMLElement, ReturnType<typeof setTimeout>>();
 
@@ -56,7 +53,6 @@ export const renderPropsAndState = (
         'Props',
         props,
         changedProps,
-        prevChangedProps,
       ),
     );
   }
@@ -69,7 +65,6 @@ export const renderPropsAndState = (
         'State',
         Object.values(state),
         changedState,
-        prevChangedState,
       ),
     );
   }
@@ -88,9 +83,6 @@ export const renderPropsAndState = (
   inspector.appendChild(content);
   propsContainer.appendChild(inspector);
 
-  prevChangedProps = changedProps;
-  prevChangedState = changedState;
-
   requestAnimationFrame(() => {
     const contentHeight = inspector.getBoundingClientRect().height;
     propsContainer.style.maxHeight = `${contentHeight}px`;
@@ -104,7 +96,6 @@ const renderSection = (
   title: string,
   data: any,
   changedKeys: Set<string> = new Set(),
-  prevChangedKeys: Set<string> = new Set(),
 ) => {
   const section = document.createElement('div');
   section.className = 'react-scan-section';
@@ -143,7 +134,7 @@ const getPath = (
 export const changedAt = new Map<string, number>();
 
 let changedAtInterval: ReturnType<typeof setInterval>;
-let lastRendered = new Map<string, unknown>();
+const lastRendered = new Map<string, unknown>();
 
 export const createPropertyElement = (
   componentName: string,
@@ -184,7 +175,7 @@ export const createPropertyElement = (
       }
       if (paths.has(currentPath)) {
         // Circular reference detected
-        return createCircularReferenceElement(key, currentPath);
+        return createCircularReferenceElement(key);
       }
       paths.add(currentPath);
     }
@@ -377,7 +368,7 @@ export const createPropertyElement = (
   return container;
 };
 
-const createCircularReferenceElement = (key: string, path: string) => {
+const createCircularReferenceElement = (key: string) => {
   const container = document.createElement('div');
   container.className = 'react-scan-property';
 
@@ -431,8 +422,4 @@ export const getValuePreview = (value: any) => {
     default:
       return typeof value;
   }
-};
-
-const hasFlashOverlay = (element: HTMLElement) => {
-  return element.querySelector('.react-scan-flash-overlay') !== null;
 };

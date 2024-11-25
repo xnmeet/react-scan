@@ -1,7 +1,6 @@
-import { Fiber } from 'react-reconciler';
-import { Internals, ReactScanInternals } from '../../index';
-
+import { type Internals, ReactScanInternals } from '../../index';
 import { throttle } from '../utils';
+import { didFiberRender } from '../../instrumentation/fiber';
 import { renderPropsAndState } from './view-state';
 import {
   currentLockIconRect,
@@ -10,7 +9,6 @@ import {
   updateCanvasSize,
 } from './overlay';
 import { getCompositeComponentFromElement, hasValidParent } from './utils';
-import { didFiberRender } from '../../instrumentation/fiber';
 
 export type States =
   | {
@@ -62,7 +60,7 @@ export const createInspectElementStateMachine = () => {
     if (!ctx) {
       return;
     }
-    updateCanvasSize(canvas!, ctx);
+    updateCanvasSize(canvas, ctx);
     window.addEventListener('resize', () => {
       updateCanvasSize(canvas!, ctx);
     }); // todo add cleanup/dispose logic for createInspectElementStateMachine
@@ -82,11 +80,11 @@ export const createInspectElementStateMachine = () => {
 
     ctx.restore();
   };
-  let unsubscribeFns: Partial<{ [_ in keyof States as Kinds]: () => void }> =
+  const unsubscribeFns: Partial<{ [_ in keyof States as Kinds]: () => void }> =
     {};
 
   const unsubscribeAll = () => {
-    Object.entries(unsubscribeFns).forEach(([unSubKey, unSub]) => {
+    Object.entries(unsubscribeFns).forEach(([_, unSub]) => {
       unSub();
     });
   };
@@ -148,11 +146,11 @@ export const createInspectElementStateMachine = () => {
               top: 0;
               width: 100vw;
               height: 100vh;
-              z-index: ${parseInt(canvas!.style.zIndex) - 1};
+              z-index: ${parseInt(canvas.style.zIndex) - 1};
               pointer-events: auto;
             `;
 
-            canvas!.parentNode!.insertBefore(eventCatcher, canvas);
+            canvas.parentNode!.insertBefore(eventCatcher, canvas);
             let currentHoveredElement: HTMLElement | null = null;
             const mouseMove = throttle((e: MouseEvent) => {
               if (ReactScanInternals.inspectState.kind !== 'inspecting') {
@@ -222,7 +220,9 @@ export const createInspectElementStateMachine = () => {
               }
             };
             window.addEventListener('keydown', keyDown);
-            let cleanup = () => {};
+            let cleanup = () => {
+              /**/
+            };
             if (inspectState.hoveredDomElement) {
               cleanup = trackElementPosition(
                 inspectState.hoveredDomElement,
@@ -274,14 +274,14 @@ export const createInspectElementStateMachine = () => {
             );
             const element = inspectState.focusedDomElement;
 
-            let { parentCompositeFiber } =
+            const { parentCompositeFiber } =
               getCompositeComponentFromElement(element);
             if (!parentCompositeFiber) {
               return;
             }
 
             const reportDataFiber =
-              store.reportDataByFiber.get(parentCompositeFiber) ||
+              store.reportDataByFiber.get(parentCompositeFiber) ??
               (parentCompositeFiber.alternate
                 ? store.reportDataByFiber.get(parentCompositeFiber.alternate)
                 : null);
@@ -388,7 +388,9 @@ export const createInspectElementStateMachine = () => {
     }, 16),
   );
 
-  return () => {};
+  return () => {
+    /**/
+  };
 };
 type CleanupFunction = () => void;
 type PositionCallback = (element: Element) => void;

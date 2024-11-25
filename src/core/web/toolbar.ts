@@ -17,7 +17,7 @@ export const createToolbar = () => {
 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off"><path d="M10.733 5.076a10.744 10.744 0 0 1 11.205 6.575 1 1 0 0 1 0 .696 10.747 10.747 0 0 1-1.444 2.49"/><path d="M14.084 14.158a3 3 0 0 1-4.242-4.242"/><path d="M17.479 17.499a10.75 10.75 0 0 1-15.417-5.151 1 1 0 0 1 0-.696 10.75 10.75 0 0 1 4.446-5.143"/><path d="m2 2 20 20"/></svg>
   `;
   const PAUSE_SVG = `
- <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg> 
+ <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>
   `;
   const INSPECTING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dashed-mouse-pointer"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h2"/><path d="M14 3h1"/><path d="M3 9v1"/><path d="M21 9v2"/><path d="M3 14v1"/></svg>`;
   const FOCUSING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-mouse-pointer"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`;
@@ -343,8 +343,8 @@ export const createToolbar = () => {
   }
 
   ::-webkit-scrollbar {
-  width: 4px; 
-  height: 4px; 
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -370,26 +370,24 @@ export const createToolbar = () => {
 
   document.head.appendChild(styleElement);
 
-  const inspectBtn = toolbar.querySelector(
+  const inspectBtn = toolbar.querySelector<HTMLButtonElement>(
     `#${INSPECT_TOGGLE_ID}`,
-  ) as HTMLButtonElement;
-  const powerBtn = toolbar.querySelector(
-    '#react-scan-power',
-  ) as HTMLButtonElement;
-  const parentFocusBtn = toolbar.querySelector(
+  )!;
+  const powerBtn =
+    toolbar.querySelector<HTMLButtonElement>('#react-scan-power')!;
+  const parentFocusBtn = toolbar.querySelector<HTMLButtonElement>(
     '#react-scan-parent-focus',
-  ) as HTMLButtonElement;
-  const previousFocusBtn = toolbar.querySelector(
+  )!;
+  const previousFocusBtn = toolbar.querySelector<HTMLButtonElement>(
     '#react-scan-previous-focus',
-  ) as HTMLButtonElement;
+  )!;
 
-  let focusHistory: Array<HTMLElement> = [];
-  const propContainer = toolbar.querySelector(
-    '#react-scan-props',
-  ) as HTMLDivElement;
-  const toolbarContent = toolbar.querySelector(
+  const focusHistory: HTMLElement[] = [];
+  const propContainer =
+    toolbar.querySelector<HTMLDivElement>('#react-scan-props')!;
+  const toolbarContent = toolbar.querySelector<HTMLElement>(
     '#react-scan-toolbar-content',
-  ) as HTMLDivElement;
+  )!;
 
   let isActive = !ReactScanInternals.isPaused;
 
@@ -406,11 +404,11 @@ export const createToolbar = () => {
 
   updateToolbarPosition(0, 0);
 
-  toolbarContent.addEventListener('mousedown', (e) => {
+  toolbarContent.addEventListener('mousedown', (event: any) => {
     if (
-      e.target === inspectBtn ||
-      e.target === powerBtn ||
-      e.target === parentFocusBtn
+      event.target === inspectBtn ||
+      event.target === powerBtn ||
+      event.target === parentFocusBtn
     )
       return;
 
@@ -419,11 +417,11 @@ export const createToolbar = () => {
     currentX = transform.m41;
     currentY = transform.m42;
 
-    initialX = e.clientX - currentX;
-    initialY = e.clientY - currentY;
+    initialX = event.clientX - currentX;
+    initialY = event.clientY - currentY;
 
     toolbar.style.transition = 'none';
-    e.preventDefault();
+    event.preventDefault();
   });
 
   document.addEventListener('mousemove', (e) => {
@@ -500,8 +498,8 @@ export const createToolbar = () => {
     localStorage.setItem(
       'react-scan-paused',
       String(ReactScanInternals.isPaused),
-    ),
-      updateUI();
+    );
+    updateUI();
   });
 
   inspectBtn.addEventListener('click', (e) => {
@@ -549,6 +547,9 @@ export const createToolbar = () => {
         };
         break;
       }
+      case 'uninitialized': {
+        break;
+      }
     }
     updateUI();
   });
@@ -566,7 +567,7 @@ export const createToolbar = () => {
 
     let nextParent: typeof focusedDomElement.parentElement | null =
       focusedDomElement.parentElement;
-    let currentFiber = getNearestFiberFromElement(focusedDomElement);
+    const currentFiber = getNearestFiberFromElement(focusedDomElement);
 
     while (nextParent) {
       const parentFiber = getNearestFiberFromElement(nextParent);

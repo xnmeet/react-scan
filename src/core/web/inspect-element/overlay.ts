@@ -1,4 +1,4 @@
-import { Fiber } from 'react-reconciler';
+import type { Fiber } from 'react-reconciler';
 import { ReactScanInternals } from '../..';
 import { getDisplayName } from '../../instrumentation/utils';
 import { getCompositeComponentFromElement } from './utils';
@@ -23,6 +23,7 @@ interface PerformanceStats {
 }
 
 let currentRect: Rect | null = null;
+// eslint-disable-next-line import/no-mutable-exports
 export let currentLockIconRect: LockIconRect | null = null;
 export const OVERLAY_DPR: number =
   typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1;
@@ -45,7 +46,7 @@ export const drawHoverOverlay = (
   }
 
   const reportDataFiber =
-    ReactScanInternals.reportDataByFiber.get(parentCompositeFiber) ||
+    ReactScanInternals.reportDataByFiber.get(parentCompositeFiber) ??
     (parentCompositeFiber.alternate
       ? ReactScanInternals.reportDataByFiber.get(parentCompositeFiber.alternate)
       : null);
@@ -161,7 +162,9 @@ export const drawStatsPill = (
 ) => {
   const pillHeight = 24;
   const pillPadding = 8;
-  const componentName = fiber ? getDisplayName(fiber) || 'Unknown' : 'Unknown';
+  const componentName = fiber
+    ? (getDisplayName(fiber) ?? 'Unknown')
+    : 'Unknown';
   const text = `${componentName} • x${stats.count} (${stats.time.toFixed(1)}ms)`;
 
   ctx.save();

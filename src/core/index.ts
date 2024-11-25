@@ -13,7 +13,7 @@ import { createPerfObserver } from './web/perf-observer';
 import { initReactScanOverlay } from './web/overlay';
 import {
   createInspectElementStateMachine,
-  States,
+  type States,
 } from './web/inspect-element/inspect-state-machine';
 import { createToolbar } from './web/toolbar';
 
@@ -112,6 +112,7 @@ export interface Internals {
       count: number;
       time: number;
       badRenders: Render[];
+      displayName: string | null;
     }
   >;
   reportData: Record<
@@ -129,21 +130,24 @@ export interface Internals {
 type Listener<T> = (value: T) => void;
 
 export interface StoreMethods<T extends object> {
-  subscribe<K extends keyof T>(key: K, listener: Listener<T[K]>): () => void;
-  set<K extends keyof T>(key: K, value: T[K]): void;
-  setState(state: Partial<T>): void;
-  emit<K extends keyof T>(key: K, value: T[K]): void;
-  subscribeMultiple(
-    subscribeTo: Array<keyof T>,
+  subscribe: <K extends keyof T>(
+    key: K,
+    listener: Listener<T[K]>,
+  ) => () => void;
+  set: <K extends keyof T>(key: K, value: T[K]) => void;
+  setState: (state: Partial<T>) => void;
+  emit: <K extends keyof T>(key: K, value: T[K]) => void;
+  subscribeMultiple: (
+    subscribeTo: (keyof T)[],
     listener: Listener<T>,
-  ): () => void;
+  ) => () => void;
 }
 
 type Store<T extends object> = T & StoreMethods<T>;
 
 const createStore = <T extends object>(initialData: T): Store<T> => {
   const data: T = { ...initialData };
-  const listeners: { [K in keyof T]?: Array<Listener<T[K]>> } = {};
+  const listeners: { [K in keyof T]?: Listener<T[K]>[] } = {};
 
   const emit = <K extends keyof T>(key: K, value: T[K]): void => {
     listeners[key]?.forEach((listener) => listener(value));
@@ -172,14 +176,14 @@ const createStore = <T extends object>(initialData: T): Store<T> => {
 
   const setState = (state: Partial<T>) => {
     for (const key in state) {
-      if (state.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(state, key)) {
         set(key as keyof T, state[key] as T[keyof T]);
       }
     }
   };
 
   const subscribeMultiple = (
-    subscribeTo: Array<keyof T>,
+    subscribeTo: (keyof T)[],
     listener: (store: typeof data) => void,
   ) => {
     subscribeTo.forEach((key) => {
@@ -191,9 +195,7 @@ const createStore = <T extends object>(initialData: T): Store<T> => {
 
     return () => {
       subscribeTo.forEach((key) => {
-        listeners[key as keyof T] = listeners[key as keyof T]?.filter(
-          (cb) => cb !== listener,
-        );
+        listeners[key] = listeners[key]?.filter((cb) => cb !== listener);
       });
     };
   };
@@ -208,13 +210,12 @@ const createStore = <T extends object>(initialData: T): Store<T> => {
 
       return Reflect.get(target, prop, receiver);
     },
-    set(target, prop, value, receiver) {
+    set(target, prop, value) {
       if (prop in target) {
         set(prop as keyof T, value as T[keyof T]);
         return true;
-      } else {
-        throw new Error(`Property "${String(prop)}" does not exist`);
       }
+      throw new Error(`Property "${String(prop)}" does not exist`);
     },
     deleteProperty(_, prop) {
       throw new Error(`Cannot delete property "${String(prop)}" from store`);

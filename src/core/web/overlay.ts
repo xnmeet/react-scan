@@ -3,7 +3,7 @@ import { recalcOutlines } from './outline';
 export const initReactScanOverlay = () => {
   class ReactScanOverlay extends HTMLElement {
     canvas: HTMLCanvasElement;
-    // @ts-expect-error
+    // @ts-expect-error will be defined
     ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
     constructor() {

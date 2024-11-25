@@ -1,6 +1,5 @@
 import type { Fiber, FiberRoot } from 'react-reconciler';
 import * as React from 'react';
-import { type NO_OP } from '../utils';
 import { ReactScanInternals } from '../index';
 import { getDisplayName, fastSerialize, getType } from './utils';
 import {
@@ -182,8 +181,7 @@ export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
   ReactScanInternals.reportDataByFiber.set(reportFiber, {
     count: (report?.count ?? 0) + 1,
     time: (report?.time ?? 0) + (time !== 0 ? time : 0.1), // .1ms lowest precision
-    badRenders: report?.badRenders || [],
-    // @ts-expect-error
+    badRenders: report?.badRenders ?? [],
     displayName: getDisplayName(fiber.type),
   });
   ReactScanInternals.emit(

@@ -1,6 +1,12 @@
+/* eslint-disable no-var */
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
 type ReactScanInternals = (typeof import('./core/index'))['ReactScanInternals'];
-type scan = (typeof import('./index'))['scan'];
-// @ts-expect-error
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+type Scan = (typeof import('./index'))['scan'];
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error ok
+// eslint-disable-next-line @typescript-eslint/prefer-namespace-keyword
 declare module globalThis {
   var __REACT_DEVTOOLS_GLOBAL_HOOK__: {
     checkDCE: () => void;
@@ -14,7 +20,7 @@ declare module globalThis {
   var __REACT_SCAN__: {
     ReactScanInternals: ReactScanInternals;
   };
-  var reactScan: scan;
+  var reactScan: Scan;
 
   var scheduler: {
     postTask: (cb: any, options: { priority: string }) => void;

@@ -1,4 +1,3 @@
-import { ReactScanInternals } from '../index';
 import type { Render } from './instrumentation/index';
 
 export const NO_OP = () => {

@@ -1,4 +1,4 @@
-import { Fiber, FiberRoot } from 'react-reconciler';
+import type { Fiber } from 'react-reconciler';
 import { ReactScanInternals } from '../../index';
 import {
   FunctionComponentTag,
@@ -11,7 +11,7 @@ import { getRect } from '../outline';
 
 export const getFiberFromElement = (element: HTMLElement): Fiber | null => {
   if ('__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) {
-    const { renderers } = window.__REACT_DEVTOOLS_GLOBAL_HOOK__!;
+    const { renderers } = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
     if (!renderers) return null;
     for (const [_, renderer] of Array.from(renderers)) {
       try {
@@ -56,8 +56,8 @@ export const getFirstStateNode = (fiber: Fiber): HTMLElement | null => {
 
 export const getNearestFiberFromElement = (element: HTMLElement | null) => {
   if (!element) return null;
-  let target: HTMLElement | null = element;
-  let originalFiber = getFiberFromElement(target);
+  const target: HTMLElement | null = element;
+  const originalFiber = getFiberFromElement(target);
   if (!originalFiber) {
     return null;
   }
@@ -119,9 +119,8 @@ export const getStateFromFiber = (fiber: Fiber): any => {
   } else if (fiber.tag === ClassComponentTag) {
     // Class component, memoizedState is the component state
     return fiber.memoizedState || {};
-  } else {
-    return {};
   }
+  return {};
 };
 
 export const getChangedState = (fiber: Fiber): Set<string> => {
@@ -161,7 +160,7 @@ export const isCurrentTree = (fiber: Fiber) => {
     return false;
   }
 
-  const fiberRoot = rootFiber.stateNode as FiberRoot;
+  const fiberRoot = rootFiber.stateNode;
   const currentRootFiber = fiberRoot.current;
 
   return isFiberInTree(fiber, currentRootFiber);
@@ -246,7 +245,7 @@ export const hasValidParent = () => {
 
   let hasValidParent = false;
   if (focusedDomElement.parentElement) {
-    let currentFiber = getNearestFiberFromElement(focusedDomElement);
+    const currentFiber = getNearestFiberFromElement(focusedDomElement);
     let nextParent: typeof focusedDomElement.parentElement | null =
       focusedDomElement.parentElement;
 
