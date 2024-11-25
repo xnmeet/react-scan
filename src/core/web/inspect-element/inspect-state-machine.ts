@@ -33,7 +33,7 @@ export type States =
 
 export const INSPECT_TOGGLE_ID = 'react-scan-inspect-element-toggle';
 export const INSPECT_OVERLAY_CANVAS_ID = 'react-scan-inspect-canvas';
-
+let lastHoveredElement: HTMLElement;
 let animationId: ReturnType<typeof requestAnimationFrame>;
 
 type Kinds = States['kind'];
@@ -168,6 +168,7 @@ export const createInspectElementStateMachine = () => {
               eventCatcher.style.pointerEvents = 'auto';
 
               if (!el) return;
+              lastHoveredElement = el;
 
               currentHoveredElement = el;
               inspectState.hoveredDomElement = el;
@@ -182,7 +183,8 @@ export const createInspectElementStateMachine = () => {
               eventCatcher.style.pointerEvents = 'none';
               const el =
                 currentHoveredElement ??
-                document.elementFromPoint(e.clientX, e.clientY);
+                document.elementFromPoint(e.clientX, e.clientY) ??
+                lastHoveredElement;
               eventCatcher.style.pointerEvents = 'auto';
 
               if (!el) {
