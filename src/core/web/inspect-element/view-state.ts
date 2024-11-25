@@ -62,7 +62,7 @@ export const renderPropsAndState = (
       didRender,
       propsContainer,
       'State',
-      state,
+      Object.values(state),
       changedState,
       prevChangedState,
     ),

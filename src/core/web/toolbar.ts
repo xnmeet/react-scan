@@ -56,7 +56,7 @@ export const createToolbar = () => {
       width: fit-content;
       min-width: min-content;
     ">
-      <div style="display: flex; align-items: center; height: 36px; width: fit-content;">
+      <div style="display: flex; align-items: center; height: 36px; width: 100%;">
         <button id="${INSPECT_TOGGLE_ID}" style="
           padding: 0 12px;
           display: flex;
@@ -97,8 +97,8 @@ export const createToolbar = () => {
           align-items: center;
           height: 100%;
           flex: 1;
+          justify-content: space-evenly;
         ">
-          <span style="font-size: 14px; margin-right: 24px; font-weight: 500;">react-scan</span>
           <div style="display: flex; gap: 8px; align-items: center;">
             <button id="react-scan-parent-focus" style="
               padding: 4px 10px;
@@ -131,6 +131,7 @@ export const createToolbar = () => {
               white-space: nowrap;
             ">${PREVIOUS_SVG}</button>
           </div>
+           <span style="font-size: 14px; font-weight: 500;">react-scan</span>
         </div>
       </div>
       <div id="react-scan-props" style="
