@@ -1,5 +1,5 @@
 import type { Fiber, FiberRoot } from 'react-reconciler';
-import type * as React from 'react';
+import * as React from 'react';
 import { instrument, type Render } from './instrumentation/index';
 import {
   type ActiveOutline,
@@ -10,7 +10,7 @@ import {
 import { logIntro } from './web/log';
 import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
-import { ReactScanOverlay } from './web/custom-element';
+import { initReactScanOverlay } from './web/overlay';
 
 export interface Options {
   /**
@@ -93,7 +93,7 @@ export interface Options {
   onPaintFinish?: (outlines: PendingOutline[]) => void;
 }
 
-interface Internals {
+export interface Internals {
   onCommitFiberRoot: (rendererID: number, root: FiberRoot) => void;
   isInIframe: boolean;
   isPaused: boolean;
@@ -148,10 +148,9 @@ export const start = () => {
   const { options } = ReactScanInternals;
 
   if (document.querySelector('react-scan-overlay')) return;
+  initReactScanOverlay();
 
-  const overlayElement = document.createElement(
-    'react-scan-overlay',
-  ) as ReactScanOverlay;
+  const overlayElement = document.createElement('react-scan-overlay') as any;
   document.body.appendChild(overlayElement);
 
   const toolbar = overlayElement.getToolbar();
@@ -231,4 +230,8 @@ export const scan = (options: Options = {}) => {
   start();
 };
 
-customElements.define('react-scan-overlay', ReactScanOverlay);
+export const useScan = (options: Options) => {
+  React.useEffect(() => {
+    scan(options);
+  }, []);
+};
