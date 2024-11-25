@@ -192,3 +192,46 @@ export const getCompositeComponentFromElement = (element: HTMLElement) => {
     targetRect,
   };
 };
+
+export const getAllFiberContexts = (fiber: Fiber): Map<any, unknown> => {
+  const contexts = new Map<any, unknown>();
+
+  if (!fiber) return contexts;
+
+  let currentFiber: Fiber | null = fiber;
+
+  while (currentFiber) {
+    // Check for context dependencies
+    const dependencies = currentFiber.dependencies;
+    if (dependencies?.firstContext) {
+      let contextItem: any = dependencies.firstContext;
+
+      while (contextItem) {
+        const contextType = contextItem.context;
+        // The actual value is stored in _currentValue or _currentValue2 depending on the thread
+        const contextValue = contextType._currentValue;
+
+        if (!contexts.has(contextType)) {
+          contexts.set(contextType, contextValue);
+        }
+
+        contextItem = contextItem.next;
+      }
+    }
+
+    // Check for context providers
+    if (currentFiber.type?._context) {
+      const providerContext = currentFiber.type._context;
+      const providerValue = currentFiber.memoizedProps?.value;
+
+      if (!contexts.has(providerContext)) {
+        contexts.set(providerContext, providerValue);
+      }
+    }
+
+    // Move up to parent fiber
+    currentFiber = currentFiber.return;
+  }
+
+  return contexts;
+};

@@ -9,7 +9,7 @@ import {
   OVERLAY_DPR,
   updateCanvasSize,
 } from './overlay';
-import { getCompositeComponentFromElement } from './utils';
+import { getAllFiberContexts, getCompositeComponentFromElement } from './utils';
 import { didFiberRender } from '../../instrumentation/fiber';
 
 export type States =
@@ -160,18 +160,20 @@ export const createInspectElementStateMachine = () => {
             };
             window.addEventListener('scroll', scroll);
             const click = (e: MouseEvent) => {
-              e.stopImmediatePropagation();
+              e.stopPropagation();
 
-              // temp hide event catcher to get real target
               eventCatcher.style.pointerEvents = 'none';
               const el =
                 currentHoveredElement ??
                 document.elementFromPoint(e.clientX, e.clientY);
               eventCatcher.style.pointerEvents = 'auto';
 
-              if (!el) return;
+              if (!el) {
+                return;
+              }
 
               drawHoverOverlay(el as HTMLElement, canvas, ctx, 'locked');
+
               ReactScanInternals.inspectState = {
                 kind: 'focused',
                 focusedDomElement: el as HTMLElement,
@@ -204,6 +206,20 @@ export const createInspectElementStateMachine = () => {
               }
             };
             window.addEventListener('keydown', keyDown);
+            let cleanup = () => {};
+            if (inspectState.hoveredDomElement) {
+              cleanup = trackElementPosition(
+                inspectState.hoveredDomElement,
+                () => {
+                  drawHoverOverlay(
+                    inspectState.hoveredDomElement!,
+                    canvas,
+                    ctx,
+                    'inspecting',
+                  );
+                },
+              );
+            }
 
             return () => {
               window.removeEventListener('scroll', scroll);
@@ -212,9 +228,19 @@ export const createInspectElementStateMachine = () => {
               window.removeEventListener('mousemove', mouseMove);
               window.removeEventListener('keydown', keyDown);
               eventCatcher.parentNode?.removeChild(eventCatcher);
+              cleanup();
             };
           }
           case 'focused': {
+            if (!document.contains(inspectState.focusedDomElement)) {
+              clearCanvas();
+              ReactScanInternals.inspectState = {
+                kind: 'inspecting',
+                hoveredDomElement: null,
+                propContainer: inspectState.propContainer,
+              };
+              return;
+            }
             drawHoverOverlay(
               inspectState.focusedDomElement,
               canvas,
@@ -228,6 +254,7 @@ export const createInspectElementStateMachine = () => {
             if (!parentCompositeFiber) {
               return;
             }
+
             const reportDataFiber =
               store.reportDataByFiber.get(parentCompositeFiber) ||
               (parentCompositeFiber.alternate
@@ -304,7 +331,7 @@ export const createInspectElementStateMachine = () => {
             };
             window.addEventListener('click', onClickCanvasLockIcon);
 
-            const scroll = (e: Event) => {
+            const scroll = () => {
               drawHoverOverlay(
                 inspectState.focusedDomElement,
                 canvas,
@@ -312,6 +339,7 @@ export const createInspectElementStateMachine = () => {
                 'locked',
               );
             };
+
             window.addEventListener('scroll', scroll);
             const resize = () => {
               drawHoverOverlay(
@@ -322,7 +350,23 @@ export const createInspectElementStateMachine = () => {
               );
             };
             window.addEventListener('resize', resize);
+
+            window.addEventListener('keydown', keyDown);
+
+            const cleanup = trackElementPosition(
+              inspectState.focusedDomElement,
+              () => {
+                drawHoverOverlay(
+                  inspectState.focusedDomElement,
+                  canvas,
+                  ctx,
+                  'locked',
+                );
+              },
+            );
+
             return () => {
+              cleanup();
               window.removeEventListener('scroll', scroll);
               window.removeEventListener('resize', resize);
               window.removeEventListener('keydown', keyDown);
@@ -340,4 +384,24 @@ export const createInspectElementStateMachine = () => {
   );
 
   return () => {};
+};
+type CleanupFunction = () => void;
+type PositionCallback = (element: Element) => void;
+
+const trackElementPosition = (
+  element: Element,
+  callback: PositionCallback,
+): CleanupFunction => {
+  const handleAnyScroll = () => {
+    callback(element);
+  };
+
+  document.addEventListener('scroll', handleAnyScroll, {
+    passive: true,
+    capture: true, // catch all scroll events
+  });
+
+  return () => {
+    document.removeEventListener('scroll', handleAnyScroll, { capture: true });
+  };
 };

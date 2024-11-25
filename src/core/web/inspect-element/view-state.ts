@@ -1,4 +1,9 @@
-import { getChangedProps, getChangedState, getStateFromFiber } from './utils';
+import {
+  getAllFiberContexts,
+  getChangedProps,
+  getChangedState,
+  getStateFromFiber,
+} from './utils';
 
 let prevChangedProps = new Set<string>();
 let prevChangedState = new Set<string>();
@@ -12,6 +17,10 @@ export const renderPropsAndState = (
   reportDataFiber: any,
   propsContainer: HTMLDivElement,
 ) => {
+  const fiberContext = Array.from(getAllFiberContexts(fiber).entries()).map(
+    (x) => x[1],
+  );
+
   const componentName =
     fiber.type?.displayName || fiber.type?.name || 'Unknown';
   const props = fiber.memoizedProps || {};
@@ -56,6 +65,15 @@ export const renderPropsAndState = (
       state,
       changedState,
       prevChangedState,
+    ),
+  );
+  content.appendChild(
+    renderSection(
+      didRender,
+      propsContainer,
+      'Context',
+      fiberContext,
+      // todo: detect changed context
     ),
   );
 

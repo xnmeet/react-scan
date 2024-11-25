@@ -2,11 +2,7 @@ import { ReactScanInternals } from '../../index';
 import { createElement } from './utils';
 import { MONO_FONT } from './outline';
 import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
-import {
-  getCompositeComponentFromElement,
-  getNearestFiberFromElement,
-  getParentCompositeFiber,
-} from './inspect-element/utils';
+import { getNearestFiberFromElement } from './inspect-element/utils';
 
 let isDragging = false;
 export const createToolbar = () => {
