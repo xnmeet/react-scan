@@ -38,6 +38,9 @@ let animationId: ReturnType<typeof requestAnimationFrame>;
 
 type Kinds = States['kind'];
 export const createInspectElementStateMachine = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   let canvas = document.getElementById(
     INSPECT_OVERLAY_CANVAS_ID,
   ) as HTMLCanvasElement | null;

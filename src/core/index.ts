@@ -241,8 +241,11 @@ export const ReactScanInternals = createStore<Internals>({
   onCommitFiberRoot: (_rendererID: number, _root: FiberRoot): void => {
     /**/
   },
-  isInIframe: window.self !== window.top,
-  isPaused: tryParse(localStorage.getItem('react-scan-paused') ?? 'false'),
+  isInIframe: typeof window !== 'undefined' && window.self !== window.top,
+  isPaused:
+    typeof window === 'undefined'
+      ? true
+      : tryParse(localStorage.getItem('react-scan-paused') ?? 'false'),
   componentAllowList: null,
   options: {
     enabled: true,
@@ -277,6 +280,9 @@ export const setOptions = (options: Options) => {
 export const getOptions = () => ReactScanInternals.options;
 
 export const start = () => {
+  if (typeof window === 'undefined') {
+    return;
+  }
   const { options } = ReactScanInternals;
 
   if (document.querySelector('react-scan-overlay')) return;
