@@ -123,11 +123,9 @@ const renderSection = (
 const getPath = (section: string, parentPath: string, key: string) => {
   return parentPath ? `${parentPath}.${key}` : `${section}.${key}`;
 };
-const flippedAt = new Map<string, number>();
+export const changedAt = new Map<string, number>();
 
-setInterval(() => {
-  flippedAt.clear(); // periodic gc to protect against extreme scenarios of mem leaks
-}, 10000);
+let changedAtInterval: ReturnType<typeof setInterval>;
 
 export const createPropertyElement = (
   didRender: boolean,
@@ -140,6 +138,11 @@ export const createPropertyElement = (
   parentPath = '',
   objectPathMap: WeakMap<object, Set<string>> = new WeakMap(),
 ) => {
+  if (!changedAtInterval) {
+    changedAtInterval = setInterval(() => {
+      changedAt.clear(); // periodic gc to protect against extreme scenarios of mem leaks
+    }, 50000);
+  }
   const container = document.createElement('div');
   container.className = 'react-scan-property';
 
@@ -311,8 +314,8 @@ export const createPropertyElement = (
 
   const isChanged = changedKeys.has(key) && didRender;
 
-  if (isChanged || flippedAt.has(currentPath)) {
-    flippedAt.set(currentPath, Date.now());
+  if (isChanged || Date.now() - (changedAt.get(currentPath) ?? 0) < 350) {
+    changedAt.set(currentPath, Date.now());
     const flashOverlay = document.createElement('div');
     flashOverlay.className = 'react-scan-flash-overlay';
     container.appendChild(flashOverlay);
