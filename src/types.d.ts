@@ -19,6 +19,4 @@ declare module globalThis {
   var scheduler: {
     postTask: (cb: any, options: { priority: string }) => void;
   };
-
-  function myGlobalFunction(message: string): void;
 }

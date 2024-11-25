@@ -62,7 +62,3 @@ export const getLabelText = (renders: Render[]) => {
   }
   return labelText;
 };
-
-export const getCopiedActiveOutlines = () => [
-  ...ReactScanInternals.activeOutlines,
-];
