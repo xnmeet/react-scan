@@ -162,7 +162,7 @@ export const drawStatsPill = (
   const pillHeight = 24;
   const pillPadding = 8;
   const componentName = fiber ? getDisplayName(fiber) || 'Unknown' : 'Unknown';
-  const text = `${componentName} • ${stats.count} renders • ${stats.time.toFixed(1)}ms`;
+  const text = `${componentName} • x${stats.count} (${stats.time.toFixed(1)}ms)`;
 
   ctx.save();
   ctx.font = '12px system-ui, -apple-system, sans-serif';
