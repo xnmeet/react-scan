@@ -9,25 +9,26 @@ import {
   updateCanvasSize,
 } from './overlay';
 import { getCompositeComponentFromElement, hasValidParent } from './utils';
+import { restoreSizeFromLocalStorage } from '../toolbar';
 
 export type States =
   | {
-      kind: 'inspecting';
-      hoveredDomElement: HTMLElement | null;
-      propContainer: HTMLDivElement;
-    }
+    kind: 'inspecting';
+    hoveredDomElement: HTMLElement | null;
+    propContainer: HTMLDivElement;
+  }
   | {
-      kind: 'inspect-off';
-      propContainer: HTMLDivElement;
-    }
+    kind: 'inspect-off';
+    propContainer: HTMLDivElement;
+  }
   | {
-      kind: 'focused';
-      focusedDomElement: HTMLElement;
-      propContainer: HTMLDivElement;
-    }
+    kind: 'focused';
+    focusedDomElement: HTMLElement;
+    propContainer: HTMLDivElement;
+  }
   | {
-      kind: 'uninitialized';
-    };
+    kind: 'uninitialized';
+  };
 
 export const INSPECT_TOGGLE_ID = 'react-scan-inspect-element-toggle';
 export const INSPECT_OVERLAY_CANVAS_ID = 'react-scan-inspect-canvas';
@@ -191,6 +192,7 @@ export const createInspectElementStateMachine = () => {
 
               drawHoverOverlay(el as HTMLElement, canvas, ctx, 'locked');
 
+              restoreSizeFromLocalStorage(inspectState.propContainer)
               ReactScanInternals.inspectState = {
                 kind: 'focused',
                 focusedDomElement: el as HTMLElement,
@@ -255,13 +257,16 @@ export const createInspectElementStateMachine = () => {
               );
             });
             if (!document.contains(inspectState.focusedDomElement)) {
-              clearCanvas();
+              setTimeout(() => {
+
+                // potential race condition solution for some websites 
+                clearCanvas();
+              }, 500)
               inspectState.propContainer.style.maxHeight = '0';
               inspectState.propContainer.style.width = 'fit-content';
               inspectState.propContainer.innerHTML = '';
               ReactScanInternals.inspectState = {
-                kind: 'inspecting',
-                hoveredDomElement: null,
+                kind: 'inspect-off',
                 propContainer: inspectState.propContainer,
               };
               return;
@@ -333,7 +338,7 @@ export const createInspectElementStateMachine = () => {
               if (
                 adjustedX >= currentLockIconRect.x &&
                 adjustedX <=
-                  currentLockIconRect.x + currentLockIconRect.width &&
+                currentLockIconRect.x + currentLockIconRect.width &&
                 adjustedY >= currentLockIconRect.y &&
                 adjustedY <= currentLockIconRect.y + currentLockIconRect.height
               ) {
