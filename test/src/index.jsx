@@ -84,7 +84,7 @@ export const App = () => {
           </nav>
 
           <p>
-            React Scan "scans" your React app for problematic renders. It's just
+            React Scan "scans" your React app for slow renders. It's just
             JavaScript, so you drop it in anywhere – script tag, npm, you name
             it!
           </p>
