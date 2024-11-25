@@ -1,4 +1,4 @@
-import { scan, getReport } from 'react-scan/dist/index.mjs'; // force production build
+import { scan } from 'react-scan/dist/index.mjs'; // force production build
 import React, { useState, createContext } from 'react';
 import ReactDOMClient from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
