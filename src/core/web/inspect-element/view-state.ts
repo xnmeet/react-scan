@@ -14,8 +14,9 @@ export const renderPropsAndState = (
   reportDataFiber: any,
   propsContainer: HTMLDivElement,
 ) => {
-  const fiberContext = Array.from(getAllFiberContexts(fiber).entries()).map(
-    (x) => x[1],
+  const fiberContext = tryOrElse(
+    () => Array.from(getAllFiberContexts(fiber).entries()).map((x) => x[1]),
+    [],
   );
 
   const componentName =
@@ -45,39 +46,48 @@ export const renderPropsAndState = (
   content.className = 'react-scan-content';
 
   if (Object.values(props).length) {
-    content.appendChild(
-      renderSection(
-        componentName,
-        didRender,
-        propsContainer,
-        'Props',
-        props,
-        changedProps,
-      ),
-    );
+    /* Incase we encounter an uncaught getter that throws an error */
+    tryOrElse(() => {
+      content.appendChild(
+        renderSection(
+          componentName,
+          didRender,
+          propsContainer,
+          'Props',
+          props,
+          changedProps,
+        ),
+      );
+    }, null);
   }
+
   if (Object.values(state).length) {
-    content.appendChild(
-      renderSection(
-        componentName,
-        didRender,
-        propsContainer,
-        'State',
-        Object.values(state),
-        changedState,
-      ),
-    );
+    tryOrElse(() => {
+      content.appendChild(
+        renderSection(
+          componentName,
+          didRender,
+          propsContainer,
+          'State',
+          Object.values(state),
+          changedState,
+        ),
+      );
+    }, null);
   }
+
   if (fiberContext.length) {
-    content.appendChild(
-      renderSection(
-        componentName,
-        didRender,
-        propsContainer,
-        'Context',
-        fiberContext,
-      ),
-    );
+    tryOrElse(() => {
+      content.appendChild(
+        renderSection(
+          componentName,
+          didRender,
+          propsContainer,
+          'Context',
+          fiberContext,
+        ),
+      );
+    }, null);
   }
 
   inspector.appendChild(content);
@@ -102,20 +112,22 @@ const renderSection = (
   section.textContent = title;
 
   Object.entries(data).forEach(([key, value]) => {
-    section.appendChild(
-      createPropertyElement(
-        componentName,
-        didRender,
-        propsContainer,
-        key,
-        value,
-        title.toLowerCase(),
-        0,
-        changedKeys,
-        '',
-        new WeakMap(),
-      ),
+    const el = createPropertyElement(
+      componentName,
+      didRender,
+      propsContainer,
+      key,
+      value,
+      title.toLowerCase(),
+      0,
+      changedKeys,
+      '',
+      new WeakMap(),
     );
+    if (!el) {
+      return;
+    }
+    section.appendChild(el);
   });
 
   return section;
@@ -136,6 +148,14 @@ export const changedAt = new Map<string, number>();
 let changedAtInterval: ReturnType<typeof setInterval>;
 const lastRendered = new Map<string, unknown>();
 
+const tryOrElse = <T, E>(cb: () => T, val: E) => {
+  try {
+    return cb();
+  } catch (e) {
+    return val;
+  }
+};
+
 export const createPropertyElement = (
   componentName: string,
   didRender: boolean,
@@ -148,78 +168,78 @@ export const createPropertyElement = (
   parentPath = '',
   objectPathMap: WeakMap<object, Set<string>> = new WeakMap(),
 ) => {
-  if (!changedAtInterval) {
-    changedAtInterval = setInterval(() => {
-      changedAt.forEach((value, key) => {
-        if (Date.now() - value > 450) {
-          // delete old animations
-          changedAt.delete(key);
+  try {
+    if (!changedAtInterval) {
+      changedAtInterval = setInterval(() => {
+        changedAt.forEach((value, key) => {
+          if (Date.now() - value > 450) {
+            // delete old animations
+            changedAt.delete(key);
+          }
+        });
+      }, 200);
+    }
+    const container = document.createElement('div');
+    container.className = 'react-scan-property';
+
+    const isExpandable =
+      (typeof value === 'object' && value !== null) || Array.isArray(value);
+    const currentPath = getPath(componentName, section, parentPath, key);
+    if (isExpandable) {
+      const isExpanded = EXPANDED_PATHS.has(currentPath);
+
+      if (typeof value === 'object' && value !== null) {
+        let paths = objectPathMap.get(value);
+        if (!paths) {
+          paths = new Set();
+          objectPathMap.set(value, paths);
         }
-      });
-    }, 200);
-  }
-  const container = document.createElement('div');
-  container.className = 'react-scan-property';
-
-  const isExpandable =
-    (typeof value === 'object' && value !== null) || Array.isArray(value);
-  const currentPath = getPath(componentName, section, parentPath, key);
-  if (isExpandable) {
-    const isExpanded = EXPANDED_PATHS.has(currentPath);
-
-    if (typeof value === 'object' && value !== null) {
-      let paths = objectPathMap.get(value);
-      if (!paths) {
-        paths = new Set();
-        objectPathMap.set(value, paths);
+        if (paths.has(currentPath)) {
+          // Circular reference detected
+          return createCircularReferenceElement(key);
+        }
+        paths.add(currentPath);
       }
-      if (paths.has(currentPath)) {
-        // Circular reference detected
-        return createCircularReferenceElement(key);
+
+      container.classList.add('react-scan-expandable');
+      if (isExpanded) {
+        container.classList.add('react-scan-expanded');
       }
-      paths.add(currentPath);
-    }
 
-    container.classList.add('react-scan-expandable');
-    if (isExpanded) {
-      container.classList.add('react-scan-expanded');
-    }
+      const arrow = document.createElement('span');
+      arrow.className = 'react-scan-arrow';
+      arrow.textContent = '▶';
+      container.appendChild(arrow);
 
-    const arrow = document.createElement('span');
-    arrow.className = 'react-scan-arrow';
-    arrow.textContent = '▶';
-    container.appendChild(arrow);
+      const contentWrapper = document.createElement('div');
+      contentWrapper.className = 'react-scan-property-content';
 
-    const contentWrapper = document.createElement('div');
-    contentWrapper.className = 'react-scan-property-content';
+      const preview = document.createElement('div');
+      preview.className = 'react-scan-preview-line';
+      preview.dataset.key = key;
+      preview.dataset.section = section;
+      preview.innerHTML = `
+    <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
+      value,
+    )}">${getValuePreview(value)}</span>
+  `;
 
-    const preview = document.createElement('div');
-    preview.className = 'react-scan-preview-line';
-    preview.dataset.key = key;
-    preview.dataset.section = section;
-    preview.innerHTML = `
-      <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
-        value,
-      )}">${getValuePreview(value)}</span>
-    `;
+      const content = document.createElement('div');
+      content.className = isExpanded
+        ? 'react-scan-nested-object'
+        : 'react-scan-nested-object react-scan-hidden';
 
-    const content = document.createElement('div');
-    content.className = isExpanded
-      ? 'react-scan-nested-object'
-      : 'react-scan-nested-object react-scan-hidden';
+      contentWrapper.appendChild(preview);
+      contentWrapper.appendChild(content);
+      container.appendChild(contentWrapper);
 
-    contentWrapper.appendChild(preview);
-    contentWrapper.appendChild(content);
-    container.appendChild(contentWrapper);
-
-    // Only create nested content if expanded
-    if (isExpanded) {
-      if (Array.isArray(value)) {
-        const arrayContainer = document.createElement('div');
-        arrayContainer.className = 'react-scan-array-container';
-        value.forEach((item, index) => {
-          arrayContainer.appendChild(
-            createPropertyElement(
+      // Only create nested content if expanded
+      if (isExpanded) {
+        if (Array.isArray(value)) {
+          const arrayContainer = document.createElement('div');
+          arrayContainer.className = 'react-scan-array-container';
+          value.forEach((item, index) => {
+            const el = createPropertyElement(
               componentName,
               didRender,
               propsContainer,
@@ -230,14 +250,16 @@ export const createPropertyElement = (
               changedKeys,
               currentPath,
               objectPathMap,
-            ),
-          );
-        });
-        content.appendChild(arrayContainer);
-      } else {
-        Object.entries(value).forEach(([k, v]) => {
-          content.appendChild(
-            createPropertyElement(
+            );
+            if (!el) {
+              return;
+            }
+            arrayContainer.appendChild(el);
+          });
+          content.appendChild(arrayContainer);
+        } else {
+          Object.entries(value).forEach(([k, v]) => {
+            const el = createPropertyElement(
               componentName,
               didRender,
               propsContainer,
@@ -248,28 +270,32 @@ export const createPropertyElement = (
               changedKeys,
               currentPath,
               objectPathMap,
-            ),
-          );
-        });
+            );
+            if (!el) {
+              return;
+            }
+            content.appendChild(el);
+          });
+        }
       }
-    }
 
-    arrow.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const isExpanding = !container.classList.contains('react-scan-expanded');
+      arrow.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isExpanding = !container.classList.contains(
+          'react-scan-expanded',
+        );
 
-      if (isExpanding) {
-        EXPANDED_PATHS.add(currentPath);
-        container.classList.add('react-scan-expanded');
-        content.classList.remove('react-scan-hidden');
+        if (isExpanding) {
+          EXPANDED_PATHS.add(currentPath);
+          container.classList.add('react-scan-expanded');
+          content.classList.remove('react-scan-hidden');
 
-        if (!content.hasChildNodes()) {
-          if (Array.isArray(value)) {
-            const arrayContainer = document.createElement('div');
-            arrayContainer.className = 'react-scan-array-container';
-            value.forEach((item, index) => {
-              arrayContainer.appendChild(
-                createPropertyElement(
+          if (!content.hasChildNodes()) {
+            if (Array.isArray(value)) {
+              const arrayContainer = document.createElement('div');
+              arrayContainer.className = 'react-scan-array-container';
+              value.forEach((item, index) => {
+                const el = createPropertyElement(
                   componentName,
                   didRender,
                   propsContainer,
@@ -280,14 +306,16 @@ export const createPropertyElement = (
                   changedKeys,
                   currentPath,
                   new WeakMap(),
-                ),
-              );
-            });
-            content.appendChild(arrayContainer);
-          } else {
-            Object.entries(value).forEach(([k, v]) => {
-              content.appendChild(
-                createPropertyElement(
+                );
+                if (!el) {
+                  return;
+                }
+                arrayContainer.appendChild(el);
+              });
+              content.appendChild(arrayContainer);
+            } else {
+              Object.entries(value).forEach(([k, v]) => {
+                const el = createPropertyElement(
                   componentName,
                   didRender,
                   propsContainer,
@@ -298,74 +326,81 @@ export const createPropertyElement = (
                   changedKeys,
                   currentPath,
                   new WeakMap(),
-                ),
-              );
-            });
+                );
+                if (!el) {
+                  return;
+                }
+                content.appendChild(el);
+              });
+            }
           }
+        } else {
+          EXPANDED_PATHS.delete(currentPath);
+          container.classList.remove('react-scan-expanded');
+          content.classList.add('react-scan-hidden');
         }
-      } else {
-        EXPANDED_PATHS.delete(currentPath);
-        container.classList.remove('react-scan-expanded');
-        content.classList.add('react-scan-hidden');
-      }
 
-      requestAnimationFrame(() => {
-        const inspector = propsContainer.firstElementChild as HTMLElement;
-        if (inspector) {
-          const contentHeight = inspector.getBoundingClientRect().height;
-          propsContainer.style.maxHeight = `${contentHeight}px`;
-        }
+        requestAnimationFrame(() => {
+          const inspector = propsContainer.firstElementChild as HTMLElement;
+          if (inspector) {
+            const contentHeight = inspector.getBoundingClientRect().height;
+            propsContainer.style.maxHeight = `${contentHeight}px`;
+          }
+        });
       });
-    });
-  } else {
-    const preview = document.createElement('div');
-    preview.className = 'react-scan-preview-line';
-    preview.dataset.key = key;
-    preview.dataset.section = section;
-    preview.innerHTML = `
-      <span style="width: 8px; display: inline-block"></span>
-      <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
-        value,
-      )}">${getValuePreview(value)}</span>
-    `;
-    container.appendChild(preview);
-  }
-
-  const isChanged =
-    lastRendered.get(currentPath) !== undefined && // using the last rendered value is the most reliable during frequent updates than any fiber tree check
-    lastRendered.get(currentPath) !== value;
-
-  lastRendered.set(currentPath, value);
-
-  if (isChanged) {
-    changedAt.set(currentPath, Date.now());
-  }
-  if (changedKeys.has(key)) {
-    changedAt.set(currentPath, Date.now());
-  }
-  if (changedAt.has(currentPath)) {
-    const flashOverlay = document.createElement('div');
-    flashOverlay.className = 'react-scan-flash-overlay';
-    container.appendChild(flashOverlay);
-
-    // If it's already flashing set opacity back to peak
-    flashOverlay.style.opacity = '.9';
-
-    const existingTimer = fadeOutTimers.get(flashOverlay);
-    if (existingTimer !== undefined) {
-      clearTimeout(existingTimer);
+    } else {
+      const preview = document.createElement('div');
+      preview.className = 'react-scan-preview-line';
+      preview.dataset.key = key;
+      preview.dataset.section = section;
+      preview.innerHTML = `
+    <span style="width: 8px; display: inline-block"></span>
+    <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
+      value,
+    )}">${getValuePreview(value)}</span>
+  `;
+      container.appendChild(preview);
     }
 
-    const timerId = setTimeout(() => {
-      flashOverlay.style.transition = 'opacity 400ms ease-out';
-      flashOverlay.style.opacity = '0';
-      fadeOutTimers.delete(flashOverlay);
-    }, 300);
+    const isChanged =
+      lastRendered.get(currentPath) !== undefined && // using the last rendered value is the most reliable during frequent updates than any fiber tree check
+      lastRendered.get(currentPath) !== value;
 
-    fadeOutTimers.set(flashOverlay, timerId);
+    lastRendered.set(currentPath, value);
+
+    if (isChanged) {
+      changedAt.set(currentPath, Date.now());
+    }
+    if (changedKeys.has(key)) {
+      changedAt.set(currentPath, Date.now());
+    }
+    if (changedAt.has(currentPath)) {
+      const flashOverlay = document.createElement('div');
+      flashOverlay.className = 'react-scan-flash-overlay';
+      container.appendChild(flashOverlay);
+
+      // If it's already flashing set opacity back to peak
+      flashOverlay.style.opacity = '.9';
+
+      const existingTimer = fadeOutTimers.get(flashOverlay);
+      if (existingTimer !== undefined) {
+        clearTimeout(existingTimer);
+      }
+
+      const timerId = setTimeout(() => {
+        flashOverlay.style.transition = 'opacity 400ms ease-out';
+        flashOverlay.style.opacity = '0';
+        fadeOutTimers.delete(flashOverlay);
+      }, 300);
+
+      fadeOutTimers.set(flashOverlay, timerId);
+    }
+
+    return container;
+  } catch {
+    /*We likely read a proxy/getter that threw an error */
+    return null;
   }
-
-  return container;
 };
 
 const createCircularReferenceElement = (key: string) => {
