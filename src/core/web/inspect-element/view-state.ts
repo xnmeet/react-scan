@@ -50,6 +50,7 @@ export const renderPropsAndState = (
   if (Object.values(props).length) {
     content.appendChild(
       renderSection(
+        componentName,
         didRender,
         propsContainer,
         'Props',
@@ -62,6 +63,7 @@ export const renderPropsAndState = (
   if (Object.values(state).length) {
     content.appendChild(
       renderSection(
+        componentName,
         didRender,
         propsContainer,
         'State',
@@ -74,11 +76,11 @@ export const renderPropsAndState = (
   if (fiberContext.length) {
     content.appendChild(
       renderSection(
+        componentName,
         didRender,
         propsContainer,
         'Context',
         fiberContext,
-        // todo: detect changed context
       ),
     );
   }
@@ -96,6 +98,7 @@ export const renderPropsAndState = (
 };
 
 const renderSection = (
+  componentName: string,
   didRender: boolean,
   propsContainer: HTMLDivElement,
   title: string,
@@ -110,6 +113,7 @@ const renderSection = (
   Object.entries(data).forEach(([key, value]) => {
     section.appendChild(
       createPropertyElement(
+        componentName,
         didRender,
         propsContainer,
         key,
@@ -126,8 +130,15 @@ const renderSection = (
   return section;
 };
 
-const getPath = (section: string, parentPath: string, key: string) => {
-  return parentPath ? `${parentPath}.${key}` : `${section}.${key}`;
+const getPath = (
+  componentName: string,
+  section: string,
+  parentPath: string,
+  key: string,
+) => {
+  return parentPath
+    ? `${componentName}.${parentPath}.${key}`
+    : `${componentName}.${section}.${key}`;
 };
 export const changedAt = new Map<string, number>();
 
@@ -135,6 +146,7 @@ let changedAtInterval: ReturnType<typeof setInterval>;
 let lastRendered = new Map<string, unknown>();
 
 export const createPropertyElement = (
+  componentName: string,
   didRender: boolean,
   propsContainer: HTMLDivElement,
   key: string,
@@ -160,7 +172,7 @@ export const createPropertyElement = (
 
   const isExpandable =
     (typeof value === 'object' && value !== null) || Array.isArray(value);
-  const currentPath = getPath(section, parentPath, key);
+  const currentPath = getPath(componentName, section, parentPath, key);
   if (isExpandable) {
     const isExpanded = EXPANDED_PATHS.has(currentPath);
 
@@ -217,6 +229,7 @@ export const createPropertyElement = (
         value.forEach((item, index) => {
           arrayContainer.appendChild(
             createPropertyElement(
+              componentName,
               didRender,
               propsContainer,
               index.toString(),
@@ -234,6 +247,7 @@ export const createPropertyElement = (
         Object.entries(value).forEach(([k, v]) => {
           content.appendChild(
             createPropertyElement(
+              componentName,
               didRender,
               propsContainer,
               k,
@@ -265,6 +279,7 @@ export const createPropertyElement = (
             value.forEach((item, index) => {
               arrayContainer.appendChild(
                 createPropertyElement(
+                  componentName,
                   didRender,
                   propsContainer,
                   index.toString(),
@@ -282,6 +297,7 @@ export const createPropertyElement = (
             Object.entries(value).forEach(([k, v]) => {
               content.appendChild(
                 createPropertyElement(
+                  componentName,
                   didRender,
                   propsContainer,
                   k,
