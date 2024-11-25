@@ -132,6 +132,7 @@ const getPath = (section: string, parentPath: string, key: string) => {
 export const changedAt = new Map<string, number>();
 
 let changedAtInterval: ReturnType<typeof setInterval>;
+let lastRendered = new Map<string, unknown>();
 
 export const createPropertyElement = (
   didRender: boolean,
@@ -146,8 +147,13 @@ export const createPropertyElement = (
 ) => {
   if (!changedAtInterval) {
     changedAtInterval = setInterval(() => {
-      changedAt.clear(); // periodic gc to protect against extreme scenarios of mem leaks
-    }, 50000);
+      changedAt.forEach((value, key) => {
+        if (Date.now() - value > 450) {
+          // delete old animations
+          changedAt.delete(key);
+        }
+      });
+    }, 200);
   }
   const container = document.createElement('div');
   container.className = 'react-scan-property';
@@ -318,10 +324,19 @@ export const createPropertyElement = (
     container.appendChild(preview);
   }
 
-  const isChanged = changedKeys.has(key) && didRender;
+  const isChanged =
+    lastRendered.get(currentPath) !== undefined && // using the last rendered value is the most reliable during frequent updates than any fiber tree check
+    lastRendered.get(currentPath) !== value;
 
-  if (isChanged || Date.now() - (changedAt.get(currentPath) ?? 0) < 350) {
+  lastRendered.set(currentPath, value);
+
+  if (isChanged) {
     changedAt.set(currentPath, Date.now());
+  }
+  if (changedKeys.has(key)) {
+    changedAt.set(currentPath, Date.now());
+  }
+  if (changedAt.has(currentPath)) {
     const flashOverlay = document.createElement('div');
     flashOverlay.className = 'react-scan-flash-overlay';
     container.appendChild(flashOverlay);
