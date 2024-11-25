@@ -176,7 +176,7 @@ export const drawStatsPill = (
   const pillX = rect.left;
   const pillY = rect.top - pillHeight - 4;
 
-  ctx.fillStyle = 'rgb(37, 37, 38, .9)';
+  ctx.fillStyle = 'rgb(37, 37, 38, .75)';
   ctx.beginPath();
   ctx.roundRect(pillX, pillY, pillWidth, pillHeight, 3);
   ctx.fill();
