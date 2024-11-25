@@ -216,11 +216,13 @@ const drawRect = (
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   if (kind === 'locked') {
-    ctx.strokeStyle = 'rgba(130, 255, 170, 0.6)';
-    ctx.fillStyle = 'rgba(130, 255, 170, 0.1)';
+    ctx.strokeStyle = 'rgba(142, 97, 227, 0.5)';
+    ctx.fillStyle = 'rgba(173, 97, 230, 0.10)';
+    ctx.setLineDash([]);
   } else {
-    ctx.strokeStyle = 'rgba(130, 170, 255, 0.6)';
-    ctx.fillStyle = 'rgba(130, 170, 255, 0.1)';
+    ctx.strokeStyle = 'rgba(142, 97, 227, 0.5)';
+    ctx.fillStyle = 'rgba(173, 97, 230, 0.10)';
+    ctx.setLineDash([4]);
   }
 
   ctx.lineWidth = 1;

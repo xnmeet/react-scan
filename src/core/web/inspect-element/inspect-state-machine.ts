@@ -89,7 +89,6 @@ export const createInspectElementStateMachine = () => {
     ['reportDataByFiber', 'inspectState'],
     throttle((store: Internals) => {
       unsubscribeAll(); // potential optimization: only unSub if inspectStateKind transitioned
-
       const unSub = (() => {
         const inspectState = store.inspectState;
         switch (inspectState.kind) {

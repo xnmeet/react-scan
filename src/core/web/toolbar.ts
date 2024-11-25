@@ -10,19 +10,21 @@ export const createToolbar = () => {
     return;
   }
 
-  const PLAY_SVG = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <polygon points="6 3 20 12 6 21 6 3"/>
-    </svg>
-  `;
+  // const PLAY_SVG = `
+  //   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  //     <polygon points="6 3 20 12 6 21 6 3"/>
+  //   </svg>
+  // `;
 
   const PAUSE_SVG = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <rect x="14" y="4" width="4" height="16" rx="1"/>
-      <rect x="6" y="4" width="4" height="16" rx="1"/>
-    </svg>
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-power"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>
   `;
-
+  const PLAY_SVG = `
+  <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-power-off"><path d="M18.36 6.64A9 9 0 0 1 20.77 15"/><path d="M6.16 6.16a9 9 0 1 0 12.68 12.68"/><path d="M12 2v4"/><path d="m2 2 20 20"/></svg>
+  `;
+  const INSPECTING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dashed-mouse-pointer"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h2"/><path d="M14 3h1"/><path d="M3 9v1"/><path d="M21 9v2"/><path d="M3 14v1"/></svg>`;
+  const FOCUSING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-mouse-pointer"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`;
+  const PREVIOUS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-undo-2"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>`;
   const TRANSITION_MS = '150ms';
 
   const toolbar = createElement(`
@@ -69,18 +71,7 @@ export const createToolbar = () => {
           min-width: 36px;
           outline: none;
         " title="Inspect element">
-             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/>
-              <path d="M5 3a2 2 0 0 0-2 2"/>
-              <path d="M19 3a2 2 0 0 1 2 2"/>
-              <path d="M5 21a2 2 0 0 1-2-2"/>
-              <path d="M9 3h1"/>
-              <path d="M9 21h2"/>
-              <path d="M14 3h1"/>
-              <path d="M3 9v1"/>
-              <path d="M21 9v2"/>
-              <path d="M3 14v1"/>
-            </svg>
+          ${INSPECTING_SVG}
         </button>
         <button id="react-scan-power" style="
           padding: 0 12px;
@@ -123,7 +114,7 @@ export const createToolbar = () => {
                border: none;
               font-size: 12px;
               white-space: nowrap;
-            ">parent</button>
+            ">go to parent</button>
             <button id="react-scan-previous-focus" style="
               padding: 4px 10px;
               display: none;
@@ -138,7 +129,7 @@ export const createToolbar = () => {
                border: none;
               font-size: 12px;
               white-space: nowrap;
-            ">previous</button>
+            ">${PREVIOUS_SVG}</button>
           </div>
         </div>
       </div>
@@ -302,7 +293,7 @@ export const createToolbar = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: #F31260;
+  background-color: rgba(142, 97, 227, 1);
   pointer-events: none;
   opacity: 0;
   z-index: 999999;
@@ -476,11 +467,15 @@ export const createToolbar = () => {
     const isInspectActive =
       ReactScanInternals.inspectState.kind === 'inspecting';
 
-    inspectBtn.style.color = isInspectActive
-      ? '#3b82f6'
-      : focusActive
-        ? '#08C21C'
-        : '#999';
+    if (isInspectActive) {
+      inspectBtn.innerHTML = INSPECTING_SVG;
+      inspectBtn.style.color = `rgba(142, 97, 227, 0.7)`;
+    } else if (focusActive) {
+      inspectBtn.innerHTML = FOCUSING_SVG;
+      inspectBtn.style.color = 'rgba(142, 97, 227, 1)';
+    } else {
+      inspectBtn.style.color = '#999';
+    }
 
     if (!isInspectActive && !focusActive) {
       propContainer.style.maxHeight = '0';
