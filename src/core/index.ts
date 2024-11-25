@@ -98,11 +98,6 @@ export interface Options {
   onPaintFinish?: (outlines: PendingOutline[]) => void;
 }
 
-interface ActiveProp {
-  rect: DOMRect;
-  displayName: string;
-  props: Record<string, unknown>;
-}
 export interface Internals {
   onCommitFiberRoot: (rendererID: number, root: FiberRoot) => void;
   isInIframe: boolean;
@@ -127,7 +122,6 @@ export interface Internals {
       badRenders: Render[];
     }
   >;
-  activePropOverlays: Array<ActiveProp>;
   fiberRoots: WeakSet<Fiber>;
   inspectState: States;
 }
@@ -261,7 +255,6 @@ export const ReactScanInternals = createStore<Internals>({
   reportDataByFiber: new WeakMap(),
   scheduledOutlines: [],
   activeOutlines: [],
-  activePropOverlays: [],
   fiberRoots: new WeakSet(),
   inspectState: {
     kind: 'uninitialized',
