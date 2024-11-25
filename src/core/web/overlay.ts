@@ -1,43 +1,26 @@
-import { ReactScanInternals } from '../../index';
-import { MONO_FONT, recalcOutlines } from './outline';
+import { recalcOutlines } from './outline';
 
 export const initReactScanOverlay = () => {
   class ReactScanOverlay extends HTMLElement {
-    private canvas: HTMLCanvasElement;
-    private toolbar: HTMLDivElement;
-    private ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
+    canvas: HTMLCanvasElement;
+    // @ts-expect-error
+    ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D;
 
     constructor() {
       super();
 
       const shadow = this.attachShadow({ mode: 'open' });
-
+      this.canvas = document.createElement('canvas');
       this.setupCanvas();
-      this.setupToolbar();
 
       shadow.appendChild(this.canvas);
-      shadow.appendChild(this.toolbar);
     }
 
     public getContext() {
       return this.ctx;
     }
 
-    public getToolbar() {
-      return this.toolbar;
-    }
-
-    public showToolbar() {
-      this.toolbar.style.display = 'block';
-    }
-
-    public hideToolbar() {
-      this.toolbar.style.display = 'none';
-    }
-
-    private setupCanvas() {
-      this.canvas = document.createElement('canvas');
-
+    setupCanvas() {
       this.canvas.id = 'react-scan-canvas';
       this.canvas.style.position = 'fixed';
       this.canvas.style.top = '0';
@@ -85,58 +68,6 @@ export const initReactScanOverlay = () => {
       });
       window.addEventListener('scroll', () => {
         recalcOutlines();
-      });
-    }
-
-    private setupToolbar() {
-      this.toolbar = document.createElement('div');
-
-      this.toolbar.id = 'react-scan-toolbar';
-      this.toolbar.title = 'Number of unnecessary renders and time elapsed';
-      this.toolbar.style.position = 'fixed';
-      this.toolbar.style.bottom = '3px';
-      this.toolbar.style.right = '3px';
-      this.toolbar.style.background = 'rgba(0,0,0,0.5)';
-      this.toolbar.style.padding = '4px 8px';
-      this.toolbar.style.borderRadius = '4px';
-      this.toolbar.style.color = 'white';
-      this.toolbar.style.zIndex = '2147483647';
-      this.toolbar.style.fontFamily = MONO_FONT;
-      this.toolbar.setAttribute('aria-hidden', 'true');
-      this.toolbar.textContent = 'react-scan';
-
-      let isHidden =
-        // discord doesn't support localStorage
-        'localStorage' in globalThis &&
-        localStorage.getItem('react-scan-hidden') === 'true';
-
-      const updateVisibility = () => {
-        this.canvas.style.display = isHidden ? 'none' : 'block';
-        this.toolbar.textContent = isHidden ? 'start ►' : 'stop ⏹';
-        ReactScanInternals.isPaused = isHidden;
-        if (ReactScanInternals.isPaused) {
-          ReactScanInternals.activeOutlines = [];
-          ReactScanInternals.scheduledOutlines = [];
-        }
-        if ('localStorage' in globalThis) {
-          localStorage.setItem('react-scan-hidden', isHidden.toString());
-        }
-      };
-
-      updateVisibility();
-
-      this.toolbar.addEventListener('click', () => {
-        isHidden = !isHidden;
-        updateVisibility();
-      });
-
-      this.toolbar.addEventListener('mouseenter', () => {
-        this.toolbar.textContent = isHidden ? 'start ►' : 'stop ⏹';
-        this.toolbar.style.backgroundColor = 'rgba(0,0,0,1)';
-      });
-
-      this.toolbar.addEventListener('mouseleave', () => {
-        this.toolbar.style.backgroundColor = 'rgba(0,0,0,0.5)';
       });
     }
   }
