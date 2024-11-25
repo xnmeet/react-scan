@@ -9,7 +9,7 @@ import {
   OVERLAY_DPR,
   updateCanvasSize,
 } from './overlay';
-import { getAllFiberContexts, getCompositeComponentFromElement } from './utils';
+import { getCompositeComponentFromElement } from './utils';
 import { didFiberRender } from '../../instrumentation/fiber';
 
 export type States =
@@ -102,6 +102,7 @@ export const createInspectElementStateMachine = () => {
             // i can't figure out why this happens, so this is an unfortunate hack
             const mouseMove = () => {
               clearCanvas();
+              updateCanvasSize(canvas, ctx);
             };
             window.addEventListener('mousemove', mouseMove);
 
