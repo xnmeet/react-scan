@@ -47,35 +47,41 @@ export const renderPropsAndState = (
   const content = document.createElement('div');
   content.className = 'react-scan-content';
 
-  content.appendChild(
-    renderSection(
-      didRender,
-      propsContainer,
-      'Props',
-      props,
-      changedProps,
-      prevChangedProps,
-    ),
-  );
-  content.appendChild(
-    renderSection(
-      didRender,
-      propsContainer,
-      'State',
-      Object.values(state),
-      changedState,
-      prevChangedState,
-    ),
-  );
-  content.appendChild(
-    renderSection(
-      didRender,
-      propsContainer,
-      'Context',
-      fiberContext,
-      // todo: detect changed context
-    ),
-  );
+  if (Object.values(props).length) {
+    content.appendChild(
+      renderSection(
+        didRender,
+        propsContainer,
+        'Props',
+        props,
+        changedProps,
+        prevChangedProps,
+      ),
+    );
+  }
+  if (Object.values(state).length) {
+    content.appendChild(
+      renderSection(
+        didRender,
+        propsContainer,
+        'State',
+        Object.values(state),
+        changedState,
+        prevChangedState,
+      ),
+    );
+  }
+  if (fiberContext.length) {
+    content.appendChild(
+      renderSection(
+        didRender,
+        propsContainer,
+        'Context',
+        fiberContext,
+        // todo: detect changed context
+      ),
+    );
+  }
 
   inspector.appendChild(content);
   propsContainer.appendChild(inspector);

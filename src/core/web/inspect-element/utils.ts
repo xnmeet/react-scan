@@ -233,3 +233,31 @@ export const getAllFiberContexts = (fiber: Fiber): Map<any, unknown> => {
 
   return contexts;
 };
+
+export const hasValidParent = () => {
+  if (ReactScanInternals.inspectState.kind !== 'focused') {
+    return false;
+  }
+
+  const { focusedDomElement } = ReactScanInternals.inspectState;
+  if (!focusedDomElement) {
+    return false;
+  }
+
+  let hasValidParent = false;
+  if (focusedDomElement.parentElement) {
+    let currentFiber = getNearestFiberFromElement(focusedDomElement);
+    let nextParent: typeof focusedDomElement.parentElement | null =
+      focusedDomElement.parentElement;
+
+    while (nextParent) {
+      const parentFiber = getNearestFiberFromElement(nextParent);
+      if (!parentFiber || parentFiber !== currentFiber) {
+        hasValidParent = true;
+        break;
+      }
+      nextParent = nextParent.parentElement;
+    }
+  }
+  return hasValidParent;
+};

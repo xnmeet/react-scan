@@ -177,11 +177,11 @@ export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
       }
     }
   }
-  const time = getSelfTime(fiber) ?? 0.1; // .1ms lowest precision
+  const time = getSelfTime(fiber);
 
   ReactScanInternals.reportDataByFiber.set(reportFiber, {
     count: (report?.count ?? 0) + 1,
-    time: (report?.time ?? 0) + time,
+    time: (report?.time ?? 0) + (time !== 0 ? time : 0.1), // .1ms lowest precision
     badRenders: report?.badRenders || [],
     // @ts-expect-error
     displayName: getDisplayName(fiber.type),

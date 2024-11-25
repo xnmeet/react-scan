@@ -2,7 +2,10 @@ import { ReactScanInternals } from '../../index';
 import { createElement } from './utils';
 import { MONO_FONT } from './outline';
 import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
-import { getNearestFiberFromElement } from './inspect-element/utils';
+import {
+  getNearestFiberFromElement,
+  hasValidParent,
+} from './inspect-element/utils';
 
 let isDragging = false;
 export const createToolbar = () => {
@@ -114,6 +117,7 @@ export const createToolbar = () => {
                border: none;
               font-size: 12px;
               white-space: nowrap;
+               font-family: ${MONO_FONT};
             ">go to parent</button>
             <button id="react-scan-previous-focus" style="
               padding: 4px 10px;
@@ -287,6 +291,8 @@ export const createToolbar = () => {
   padding: 3px 6px;
   border-radius: 4px;
   font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+  display: flex;
+  align-items: center;
 }
 .react-scan-flash-overlay {
   position: absolute;
@@ -341,6 +347,31 @@ export const createToolbar = () => {
   .react-scan-props::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 255, 255, 0.3);
   }
+
+  ::-webkit-scrollbar {
+  width: 4px; 
+  height: 4px; 
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+}
   `;
 
   document.head.appendChild(styleElement);
@@ -418,36 +449,17 @@ export const createToolbar = () => {
     toolbar.style.transition = '';
   });
 
-  const updateNavigationButtons = (
-    state: typeof ReactScanInternals.inspectState,
-  ) => {
-    if (state.kind === 'focused') {
-      const { focusedDomElement } = state;
-      if (!focusedDomElement) {
+  const updateNavigationButtons = () => {
+    if (ReactScanInternals.inspectState.kind === 'focused') {
+      const validParent = hasValidParent();
+      if (!ReactScanInternals.inspectState.focusedDomElement) {
         parentFocusBtn.style.display = 'none';
         previousFocusBtn.style.display = 'none';
-        return;
-      }
-
-      let hasValidParent = false;
-      if (focusedDomElement.parentElement) {
-        let currentFiber = getNearestFiberFromElement(focusedDomElement);
-        let nextParent: typeof focusedDomElement.parentElement | null =
-          focusedDomElement.parentElement;
-
-        while (nextParent) {
-          const parentFiber = getNearestFiberFromElement(nextParent);
-          if (!parentFiber || parentFiber !== currentFiber) {
-            hasValidParent = true;
-            break;
-          }
-          nextParent = nextParent.parentElement;
-        }
       }
 
       parentFocusBtn.style.display = 'flex';
-      parentFocusBtn.style.color = hasValidParent ? '#999' : '#444';
-      parentFocusBtn.style.cursor = hasValidParent ? 'pointer' : 'not-allowed';
+      parentFocusBtn.style.color = validParent ? '#999' : '#444';
+      parentFocusBtn.style.cursor = validParent ? 'pointer' : 'not-allowed';
 
       previousFocusBtn.style.display = 'flex';
       previousFocusBtn.style.color = focusHistory.length > 0 ? '#999' : '#444';
@@ -470,7 +482,7 @@ export const createToolbar = () => {
 
     if (isInspectActive) {
       inspectBtn.innerHTML = INSPECTING_SVG;
-      inspectBtn.style.color = `rgba(142, 97, 227, 0.7)`;
+      inspectBtn.style.color = 'rgba(142, 97, 227, 1)';
     } else if (focusActive) {
       inspectBtn.innerHTML = FOCUSING_SVG;
       inspectBtn.style.color = 'rgba(142, 97, 227, 1)';
@@ -484,7 +496,7 @@ export const createToolbar = () => {
       propContainer.innerHTML = '';
     }
 
-    updateNavigationButtons(ReactScanInternals.inspectState);
+    updateNavigationButtons();
   };
 
   powerBtn.addEventListener('click', (e) => {
