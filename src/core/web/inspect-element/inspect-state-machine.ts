@@ -9,6 +9,7 @@ import {
   updateCanvasSize,
 } from './overlay';
 import { getCompositeComponentFromElement, hasValidParent } from './utils';
+import { restoreSizeFromLocalStorage } from '../toolbar';
 
 export type States =
   | {
@@ -192,6 +193,7 @@ export const createInspectElementStateMachine = () => {
 
               drawHoverOverlay(el as HTMLElement, canvas, ctx, 'locked');
 
+              restoreSizeFromLocalStorage(inspectState.propContainer)
               ReactScanInternals.inspectState = {
                 kind: 'focused',
                 focusedDomElement: el as HTMLElement,
@@ -256,13 +258,16 @@ export const createInspectElementStateMachine = () => {
               );
             });
             if (!document.contains(inspectState.focusedDomElement)) {
-              clearCanvas();
+              setTimeout(() => {
+
+                // potential race condition solution for some websites 
+                clearCanvas();
+              }, 500)
               inspectState.propContainer.style.maxHeight = '0';
               inspectState.propContainer.style.width = 'fit-content';
               inspectState.propContainer.innerHTML = '';
               ReactScanInternals.inspectState = {
-                kind: 'inspecting',
-                hoveredDomElement: null,
+                kind: 'inspect-off',
                 propContainer: inspectState.propContainer,
               };
               return;
