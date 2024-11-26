@@ -227,6 +227,7 @@ export const instrument = ({
         }
       }
       const name = getDisplayName(type);
+      if (name === 'Million(Profiler)') return;
       if (name) {
         reportRenderFiber(fiber, [propsRender, contextRender]); // back compat
         reportRender(name, fiber, [propsRender, contextRender]);
