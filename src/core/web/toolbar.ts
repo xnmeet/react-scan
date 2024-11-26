@@ -1,5 +1,5 @@
 import { ReactScanInternals } from '../../index';
-import { createElement } from './utils';
+import { createElement, throttle } from './utils';
 import { MONO_FONT } from './outline';
 import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
 import {
@@ -8,6 +8,21 @@ import {
 } from './inspect-element/utils';
 
 let isDragging = false;
+let isResizing = false;
+let initialWidth = 0;
+let initialMouseX = 0;
+
+export const persistSizeToLocalStorage = throttle((width: number) => {
+  localStorage.setItem('react-scan-toolbar-width', String(width));
+}, 100);
+
+
+export const restoreSizeFromLocalStorage = (el: HTMLDivElement) => {
+  const width = localStorage.getItem('react-scan-toolbar-width');
+  el.style.width = `${width ?? 360}px`;
+
+};
+
 export const createToolbar = () => {
   if (typeof window === 'undefined') {
     return;
@@ -52,6 +67,7 @@ export const createToolbar = () => {
       overflow: hidden;
       width: fit-content;
       min-width: min-content;
+      position: relative;
     ">
       <div style="display: flex; align-items: center; height: 36px; width: 100%;">
         <button id="${INSPECT_TOGGLE_ID}" style="
@@ -136,6 +152,7 @@ export const createToolbar = () => {
         pointer-events: auto;
         background: #000;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
+        min-width: 100%;
         width: 360px;
         overflow: auto;
         max-height: 0;
@@ -143,6 +160,15 @@ export const createToolbar = () => {
       ">
         <!-- Props content will be injected here -->
       </div>
+      <div id="react-scan-resize-handle" style="
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        cursor: ew-resize;
+        dis
+      "></div>
     </div>
   </div>
 `) as HTMLDivElement;
@@ -153,10 +179,12 @@ export const createToolbar = () => {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   }
 
+
   .react-scan-inspector {
     font-size: 13px;
     width: 360px;
     color: #fff;
+    width: 100%;
   }
 
   .react-scan-header {
@@ -388,6 +416,11 @@ export const createToolbar = () => {
   const toolbarContent = toolbar.querySelector<HTMLElement>(
     '#react-scan-toolbar-content',
   )!;
+  const resizeHandle = toolbar.querySelector<HTMLElement>(
+    '#react-scan-resize-handle',
+  )!;
+
+
 
   let isActive = !ReactScanInternals.isPaused;
 
@@ -408,7 +441,8 @@ export const createToolbar = () => {
     if (
       event.target === inspectBtn ||
       event.target === powerBtn ||
-      event.target === parentFocusBtn
+      event.target === parentFocusBtn ||
+      event.target === resizeHandle
     )
       return;
 
@@ -424,21 +458,38 @@ export const createToolbar = () => {
     event.preventDefault();
   });
 
+  resizeHandle.addEventListener('mousedown', (e) => {
+    isResizing = true;
+    initialWidth = propContainer.offsetWidth;
+    initialMouseX = e.clientX;
+    e.preventDefault();
+  });
+
   document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
+    if (isDragging) {
+      const x = e.clientX - initialX;
+      const y = e.clientY - initialY;
 
-    const x = e.clientX - initialX;
-    const y = e.clientY - initialY;
+      currentX = x;
+      currentY = y;
+      updateToolbarPosition(x, y);
+    }
 
-    currentX = x;
-    currentY = y;
-    updateToolbarPosition(x, y);
+    if (isResizing) {
+      const width = initialWidth - (e.clientX - initialMouseX);
+      propContainer.style.width = `${Math.max(360, width)}px`;
+      persistSizeToLocalStorage(width);
+    }
   });
 
   document.addEventListener('mouseup', () => {
-    if (!isDragging) return;
-    isDragging = false;
-    toolbar.style.transition = '';
+    if (isDragging) {
+      isDragging = false;
+      toolbar.style.transition = '';
+    }
+    if (isResizing) {
+      isResizing = false;
+    }
   });
 
   const updateNavigationButtons = () => {
@@ -486,6 +537,9 @@ export const createToolbar = () => {
       propContainer.style.maxHeight = '0';
       propContainer.style.width = 'fit-content';
       propContainer.innerHTML = '';
+      resizeHandle.style.display = 'none';
+    } else if (focusActive) {
+      resizeHandle.style.display = 'block';
     }
 
     updateNavigationButtons();
