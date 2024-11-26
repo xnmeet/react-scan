@@ -1,9 +1,5 @@
 import type { Render } from './instrumentation/index';
 
-export const NO_OP = () => {
-  /**/
-};
-
 export const getLabelText = (renders: Render[]) => {
   let labelText = '';
 

@@ -165,7 +165,13 @@ export const drawStatsPill = (
   const componentName = fiber
     ? (getDisplayName(fiber) ?? 'Unknown')
     : 'Unknown';
-  const text = `${componentName} • x${stats.count} (${stats.time.toFixed(1)}ms)`;
+  let text = componentName;
+  if (stats.count) {
+    text += ` • ×${stats.count}`;
+    if (stats.time) {
+      text += ` (${stats.time.toFixed(1)}ms)`;
+    }
+  }
 
   ctx.save();
   ctx.font = '12px system-ui, -apple-system, sans-serif';

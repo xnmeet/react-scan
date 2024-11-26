@@ -1,4 +1,4 @@
-import { ReactScanInternals } from '../../index';
+import { ReactScanInternals, setOptions } from '../../index';
 import { createElement, throttle } from './utils';
 import { MONO_FONT } from './outline';
 import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
@@ -12,20 +12,23 @@ let isResizing = false;
 let initialWidth = 0;
 let initialMouseX = 0;
 
+const EDGE_PADDING = 15;
+const ANIMATION_DURATION = 300; // milliseconds
+
 export const persistSizeToLocalStorage = throttle((width: number) => {
   localStorage.setItem('react-scan-toolbar-width', String(width));
 }, 100);
 
-
 export const restoreSizeFromLocalStorage = (el: HTMLDivElement) => {
   const width = localStorage.getItem('react-scan-toolbar-width');
   el.style.width = `${width ?? 360}px`;
-
 };
 
-export const createToolbar = () => {
+export const createToolbar = (): () => void => {
   if (typeof window === 'undefined') {
-    return;
+    return () => {
+      /**/
+    };
   }
 
   const PLAY_SVG = `
@@ -38,6 +41,14 @@ export const createToolbar = () => {
   const FOCUSING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-mouse-pointer"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`;
   const PREVIOUS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-undo-2"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>`;
   const TRANSITION_MS = '150ms';
+
+  const SOUND_ON_SVG = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-2"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><path d="M16 9a5 5 0 0 1 0 6"/><path d="M19.364 18.364a9 9 0 0 0 0-12.728"/></svg>
+  `;
+
+  const SOUND_OFF_SVG = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-volume-x"><path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/></svg>
+  `;
 
   const toolbar = createElement(`
   <div id="react-scan-toolbar" style="
@@ -102,6 +113,22 @@ export const createToolbar = () => {
         " title="Start">
           ${PLAY_SVG}
         </button>
+        <button id="react-scan-sound-toggle" style="
+          padding: 0 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: none;
+          border: none;
+          color: #fff;
+          cursor: pointer;
+          transition: all ${TRANSITION_MS} ease;
+          height: 100%;
+          min-width: 36px;
+          outline: none;
+        " title="Sound On">
+          ${SOUND_ON_SVG}
+        </button>
         <div style="
           padding: 0 12px;
           color: #fff;
@@ -128,7 +155,7 @@ export const createToolbar = () => {
               font-size: 12px;
               white-space: nowrap;
                font-family: ${MONO_FONT};
-            ">go to parent</button>
+            ">jump to parent</button>
             <button id="react-scan-previous-focus" style="
               padding: 4px 10px;
               display: none;
@@ -409,6 +436,9 @@ export const createToolbar = () => {
   const previousFocusBtn = toolbar.querySelector<HTMLButtonElement>(
     '#react-scan-previous-focus',
   )!;
+  const soundToggleBtn = toolbar.querySelector<HTMLButtonElement>(
+    '#react-scan-sound-toggle',
+  )!;
 
   const focusHistory: HTMLElement[] = [];
   const propContainer =
@@ -420,9 +450,8 @@ export const createToolbar = () => {
     '#react-scan-resize-handle',
   )!;
 
-
-
   let isActive = !ReactScanInternals.isPaused;
+  let isSoundOn = false;
 
   document.documentElement.appendChild(toolbar);
 
@@ -436,6 +465,53 @@ export const createToolbar = () => {
   };
 
   updateToolbarPosition(0, 0);
+
+  const ensureToolbarInBounds = () => {
+    const toolbarRect = toolbar.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    const edges = [
+      {
+        edge: 'left',
+        distance: Math.abs(toolbarRect.left - EDGE_PADDING),
+        deltaX: EDGE_PADDING - toolbarRect.left,
+        deltaY: 0,
+      },
+      {
+        edge: 'right',
+        distance: Math.abs(viewportWidth - EDGE_PADDING - toolbarRect.right),
+        deltaX: viewportWidth - EDGE_PADDING - toolbarRect.right,
+        deltaY: 0,
+      },
+      {
+        edge: 'top',
+        distance: Math.abs(toolbarRect.top - EDGE_PADDING),
+        deltaX: 0,
+        deltaY: EDGE_PADDING - toolbarRect.top,
+      },
+      {
+        edge: 'bottom',
+        distance: Math.abs(viewportHeight - EDGE_PADDING - toolbarRect.bottom),
+        deltaX: 0,
+        deltaY: viewportHeight - EDGE_PADDING - toolbarRect.bottom,
+      },
+    ];
+
+    const closestEdge = edges.reduce((prev, curr) =>
+      curr.distance < prev.distance ? curr : prev
+    );
+
+    currentX += closestEdge.deltaX;
+    currentY += closestEdge.deltaY;
+
+    toolbar.style.transition = `transform ${ANIMATION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+    updateToolbarPosition(currentX, currentY);
+
+    setTimeout(() => {
+      toolbar.style.transition = '';
+    }, ANIMATION_DURATION);
+  };
 
   toolbarContent.addEventListener('mousedown', (event: any) => {
     if (
@@ -485,7 +561,7 @@ export const createToolbar = () => {
   document.addEventListener('mouseup', () => {
     if (isDragging) {
       isDragging = false;
-      toolbar.style.transition = '';
+      ensureToolbarInBounds();
     }
     if (isResizing) {
       isResizing = false;
@@ -498,16 +574,16 @@ export const createToolbar = () => {
       if (!ReactScanInternals.inspectState.focusedDomElement) {
         parentFocusBtn.style.display = 'none';
         previousFocusBtn.style.display = 'none';
+        return;
       }
 
       parentFocusBtn.style.display = 'flex';
       parentFocusBtn.style.color = validParent ? '#999' : '#444';
       parentFocusBtn.style.cursor = validParent ? 'pointer' : 'not-allowed';
 
-      previousFocusBtn.style.display = 'flex';
-      previousFocusBtn.style.color = focusHistory.length > 0 ? '#999' : '#444';
-      previousFocusBtn.style.cursor =
-        focusHistory.length > 0 ? 'pointer' : 'not-allowed';
+      previousFocusBtn.style.display = focusHistory.length > 0 ? 'flex' : 'none';
+      previousFocusBtn.style.color = '#999';
+      previousFocusBtn.style.cursor = 'pointer';
     } else {
       parentFocusBtn.style.display = 'none';
       previousFocusBtn.style.display = 'none';
@@ -541,6 +617,10 @@ export const createToolbar = () => {
     } else if (focusActive) {
       resizeHandle.style.display = 'block';
     }
+
+    soundToggleBtn.innerHTML = isSoundOn ? SOUND_ON_SVG : SOUND_OFF_SVG;
+    soundToggleBtn.style.color = isSoundOn ? '#fff' : '#999';
+    soundToggleBtn.title = isSoundOn ? 'Sound On' : 'Sound Off';
 
     updateNavigationButtons();
   };
@@ -661,6 +741,13 @@ export const createToolbar = () => {
     };
   });
 
+  soundToggleBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isSoundOn = !isSoundOn;
+    setOptions({ playSound: isSoundOn });
+    updateUI();
+  });
+
   updateUI();
 
   const existing = document.getElementById('react-scan-toolbar');
@@ -678,4 +765,20 @@ export const createToolbar = () => {
   ReactScanInternals.subscribe('inspectState', () => {
     updateUI();
   });
+
+  const handleViewportChange = throttle(() => {
+    if (!isDragging && !isResizing) {
+      ensureToolbarInBounds();
+    }
+  }, 100);
+
+  window.addEventListener('resize', handleViewportChange);
+  window.addEventListener('scroll', handleViewportChange);
+
+  const cleanup = () => {
+    window.removeEventListener('resize', handleViewportChange);
+    window.removeEventListener('scroll', handleViewportChange);
+  };
+
+  return cleanup;
 };

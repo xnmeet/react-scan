@@ -11,7 +11,7 @@ import {
   traverseFiber,
   traverseState,
 } from './fiber';
-import { registerDevtoolsHook } from './placeholder';
+import { registerDevtoolsHook } from './init';
 
 export interface Change {
   name: string;
@@ -150,6 +150,7 @@ export const reportRender = (
     count: (report?.count ?? 0) + 1,
     time: (report?.time ?? 0) + time,
     badRenders: report?.badRenders || [],
+    type: getType(fiber.type) || fiber.type,
   };
 };
 export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {

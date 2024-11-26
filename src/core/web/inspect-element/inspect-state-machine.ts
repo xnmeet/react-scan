@@ -1,6 +1,7 @@
 import { type Internals, ReactScanInternals } from '../../index';
 import { throttle } from '../utils';
 import { didFiberRender } from '../../instrumentation/fiber';
+import { restoreSizeFromLocalStorage } from '../toolbar';
 import { renderPropsAndState } from './view-state';
 import {
   currentLockIconRect,
@@ -9,7 +10,6 @@ import {
   updateCanvasSize,
 } from './overlay';
 import { getCompositeComponentFromElement, hasValidParent } from './utils';
-import { restoreSizeFromLocalStorage } from '../toolbar';
 
 export type States =
   | {
@@ -260,7 +260,7 @@ export const createInspectElementStateMachine = () => {
             if (!document.contains(inspectState.focusedDomElement)) {
               setTimeout(() => {
 
-                // potential race condition solution for some websites 
+                // potential race condition solution for some websites
                 clearCanvas();
               }, 500)
               inspectState.propContainer.style.maxHeight = '0';
