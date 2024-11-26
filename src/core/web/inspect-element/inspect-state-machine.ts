@@ -12,22 +12,22 @@ import { getCompositeComponentFromElement, hasValidParent } from './utils';
 
 export type States =
   | {
-      kind: 'inspecting';
-      hoveredDomElement: HTMLElement | null;
-      propContainer: HTMLDivElement;
-    }
+    kind: 'inspecting';
+    hoveredDomElement: HTMLElement | null;
+    propContainer: HTMLDivElement;
+  }
   | {
-      kind: 'inspect-off';
-      propContainer: HTMLDivElement;
-    }
+    kind: 'inspect-off';
+    propContainer: HTMLDivElement;
+  }
   | {
-      kind: 'focused';
-      focusedDomElement: HTMLElement;
-      propContainer: HTMLDivElement;
-    }
+    kind: 'focused';
+    focusedDomElement: HTMLElement;
+    propContainer: HTMLDivElement;
+  }
   | {
-      kind: 'uninitialized';
-    };
+    kind: 'uninitialized';
+  };
 
 export const INSPECT_TOGGLE_ID = 'react-scan-inspect-element-toggle';
 export const INSPECT_OVERLAY_CANVAS_ID = 'react-scan-inspect-canvas';
@@ -73,6 +73,7 @@ export const createInspectElementStateMachine = () => {
   }
 
   const clearCanvas = () => {
+    cancelAnimationFrame(animationId)
     ctx.save();
 
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -333,7 +334,7 @@ export const createInspectElementStateMachine = () => {
               if (
                 adjustedX >= currentLockIconRect.x &&
                 adjustedX <=
-                  currentLockIconRect.x + currentLockIconRect.width &&
+                currentLockIconRect.x + currentLockIconRect.width &&
                 adjustedY >= currentLockIconRect.y &&
                 adjustedY <= currentLockIconRect.y + currentLockIconRect.height
               ) {
