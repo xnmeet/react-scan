@@ -344,7 +344,7 @@ export const withScan = <T>(
 ) => {
   setOptions(options);
   const { isInIframe, componentAllowList } = ReactScanInternals;
-  if (isInIframe || options.enabled === false) return component;
+  if (isInIframe) return component;
   if (!componentAllowList) {
     ReactScanInternals.componentAllowList = new WeakMap<
       React.ComponentType<any>,
@@ -363,7 +363,7 @@ export const withScan = <T>(
 export const scan = (options: Options = {}) => {
   setOptions(options);
   const { isInIframe } = ReactScanInternals;
-  if (isInIframe || options.enabled === false) return;
+  if (isInIframe) return;
 
   start();
 };
