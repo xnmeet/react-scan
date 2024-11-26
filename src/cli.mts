@@ -14,7 +14,6 @@ import {
   isCancel,
   cancel,
   spinner,
-  outro,
 } from '@clack/prompts';
 import { bgMagenta, dim, red } from 'kleur';
 import fs from 'node:fs';
