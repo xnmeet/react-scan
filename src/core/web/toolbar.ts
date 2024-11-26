@@ -397,30 +397,30 @@ export const createToolbar = (): () => void => {
     background: rgba(255, 255, 255, 0.3);
   }
 
-  ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-/* For Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
-}
+  #react-scan-toolbar::-webkit-scrollbar {
+	  width: 4px;
+	  height: 4px;
+	}
+	
+	#react-scan-toolbar::-webkit-scrollbar-track {
+	  background: rgba(255, 255, 255, 0.1);
+	  border-radius: 4px;
+	}
+	
+	#react-scan-toolbar::-webkit-scrollbar-thumb {
+	  background: rgba(255, 255, 255, 0.3);
+	  border-radius: 4px;
+	}
+	
+	#react-scan-toolbar::-webkit-scrollbar-thumb:hover {
+	  background: rgba(255, 255, 255, 0.4);
+	}
+	
+	/* For Firefox */
+	#react-scan-toolbar * {
+	  scrollbar-width: thin;
+	  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
+	}
   `;
 
   if (document.head) document.head.appendChild(styleElement);
