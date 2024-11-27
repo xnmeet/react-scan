@@ -99,7 +99,7 @@ export const renderPropsAndState = (
           delete contextObj[key];
           const newKey = `⚠️ ${key}`;
           contextObj[newKey] = value;
-          changedAt.set(`${componentName}.context.${newKey}`, Date.now());
+          changedAt.set(`${componentName}.context.${key}`, Date.now());
         }
 
         lastRendered.set(path, value);
@@ -477,7 +477,7 @@ export const createPropertyElement = (
         const valueElement = preview.querySelector('.react-scan-value');
         if (
           valueElement &&
-          (typeof value === 'string' || typeof value === 'number')
+          (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
         ) {
           valueElement.classList.add('react-scan-editable');
           valueElement.addEventListener('click', (e) => {
