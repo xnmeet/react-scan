@@ -4,8 +4,9 @@ import {
   FunctionComponentTag,
   ClassComponentTag,
   isHostComponent,
-  ForwardRefTag,
   traverseFiber,
+  MemoComponentTag,
+  SimpleMemoComponentTag,
 } from '../../instrumentation/fiber';
 import { getRect } from '../outline';
 
@@ -74,7 +75,7 @@ export const getParentCompositeFiber = (fiber: Fiber) => {
   let prevNonHost = null;
 
   while (curr) {
-    if (curr.tag === FunctionComponentTag || curr.tag === ClassComponentTag) {
+    if (isCompositeComponent(curr)) {
       return [curr, prevNonHost] as const;
     }
     if (isHostComponent(curr)) {
@@ -101,7 +102,7 @@ export const getChangedProps = (fiber: Fiber): Set<string> => {
 export const getStateFromFiber = (fiber: Fiber): any => {
   if (!fiber) return {};
 
-  if (fiber.tag === FunctionComponentTag || fiber.tag === ForwardRefTag) {
+  if (isCompositeComponent(fiber)) {
     // Functional component, need to traverse hooks
     let memoizedState = fiber.memoizedState;
     const state: any = {};
@@ -259,4 +260,13 @@ export const hasValidParent = () => {
     }
   }
   return hasValidParent;
+};
+
+export const isCompositeComponent = (fiber: Fiber) => {
+  return (
+    fiber.tag === FunctionComponentTag ||
+    fiber.tag === ClassComponentTag ||
+    fiber.tag === SimpleMemoComponentTag ||
+    fiber.tag === MemoComponentTag
+  );
 };

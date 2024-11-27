@@ -1,6 +1,6 @@
 import type { Fiber } from 'react-reconciler';
 import { ReactScanInternals } from '../..';
-import { getDisplayName } from '../../instrumentation/utils';
+import { getDisplayNameFromFiber } from '../../instrumentation/utils';
 import { getCompositeComponentFromElement } from './utils';
 
 interface Rect {
@@ -162,9 +162,7 @@ export const drawStatsPill = (
 ) => {
   const pillHeight = 24;
   const pillPadding = 8;
-  const componentName = fiber
-    ? (getDisplayName(fiber) ?? 'Unknown')
-    : 'Unknown';
+  const componentName = fiber ? getDisplayNameFromFiber(fiber) : 'Unknown';
   let text = componentName;
   if (stats.count) {
     text += ` • ×${stats.count}`;
