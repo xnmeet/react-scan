@@ -92,6 +92,13 @@ export interface Options {
    */
   alwaysShowLabels?: boolean;
 
+  /**
+   * Animation speed
+   *
+   * @default "fast"
+   */
+  animationSpeed?: 'slow' | 'fast' | 'off';
+
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
@@ -254,6 +261,7 @@ export const ReactScanInternals = createStore<Internals>({
     renderCountThreshold: 0,
     report: undefined,
     alwaysShowLabels: false,
+    animationSpeed: 'fast',
   },
   onRender: null,
   reportData: {},
