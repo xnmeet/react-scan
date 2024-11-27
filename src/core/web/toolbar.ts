@@ -2,10 +2,7 @@ import { ReactScanInternals, setOptions } from '../../index';
 import { createElement, throttle } from './utils';
 import { MONO_FONT } from './outline';
 import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
-import {
-  getNearestFiberFromElement,
-  hasValidParent,
-} from './inspect-element/utils';
+import { getNearestFiberFromElement } from './inspect-element/utils';
 
 let isDragging = false;
 let isResizing = false;
@@ -24,7 +21,7 @@ export const restoreSizeFromLocalStorage = (el: HTMLDivElement) => {
   el.style.width = `${width ?? 360}px`;
 };
 
-export const createToolbar = (): () => void => {
+export const createToolbar = (): (() => void) => {
   if (typeof window === 'undefined') {
     return () => {
       /**/
@@ -503,7 +500,7 @@ export const createToolbar = (): () => void => {
     ];
 
     const closestEdge = edges.reduce((prev, curr) =>
-      curr.distance < prev.distance ? curr : prev
+      curr.distance < prev.distance ? curr : prev,
     );
 
     currentX += closestEdge.deltaX;
@@ -690,17 +687,25 @@ export const createToolbar = (): () => void => {
       }
     }
 
-    if (nextElement) {
+    const prevFiber = getNearestFiberFromElement(focusedDomElement);
+    const nextFiber = nextElement
+      ? getNearestFiberFromElement(nextElement)
+      : null;
+
+    if (nextElement && nextFiber !== prevFiber) {
       ReactScanInternals.inspectState = {
         kind: 'focused',
         focusedDomElement: nextElement,
         propContainer: currentState.propContainer,
       };
       nextFocusBtn.style.setProperty('--nav-opacity', '1');
+      nextFocusBtn.disabled = false;
     } else {
-      // No next element; keep the focus unchanged
       nextFocusBtn.style.setProperty('--nav-opacity', '0.5');
+      nextFocusBtn.disabled = true;
     }
+    previousFocusBtn.style.setProperty('--nav-opacity', '1');
+    previousFocusBtn.disabled = false;
   });
 
   previousFocusBtn.addEventListener('click', (e) => {
@@ -716,7 +721,6 @@ export const createToolbar = (): () => void => {
 
     if (focusedDomElement.previousElementSibling) {
       prevElement = focusedDomElement.previousElementSibling as HTMLElement;
-      // Navigate to the deepest child of the previous sibling
       while (prevElement.lastElementChild) {
         prevElement = prevElement.lastElementChild as HTMLElement;
       }
@@ -727,16 +731,25 @@ export const createToolbar = (): () => void => {
       prevElement = focusedDomElement.parentElement;
     }
 
-    if (prevElement) {
+    const prevFiber = getNearestFiberFromElement(focusedDomElement);
+    const nextFiber = prevElement
+      ? getNearestFiberFromElement(prevElement)
+      : null;
+
+    if (prevElement && prevFiber !== nextFiber) {
       ReactScanInternals.inspectState = {
         kind: 'focused',
         focusedDomElement: prevElement,
         propContainer: currentState.propContainer,
       };
       previousFocusBtn.style.setProperty('--nav-opacity', '1');
+      previousFocusBtn.disabled = false;
     } else {
       previousFocusBtn.style.setProperty('--nav-opacity', '0.5');
+      previousFocusBtn.disabled = true;
     }
+    nextFocusBtn.style.setProperty('--nav-opacity', '1');
+    nextFocusBtn.disabled = false;
   });
 
   soundToggleBtn.addEventListener('click', (e) => {
