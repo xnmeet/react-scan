@@ -7,6 +7,7 @@ import {
   traverseFiber,
   MemoComponentTag,
   SimpleMemoComponentTag,
+  ForwardRefTag,
 } from '../../instrumentation/fiber';
 import { getRect } from '../outline';
 
@@ -101,8 +102,13 @@ export const getChangedProps = (fiber: Fiber): Set<string> => {
 
 export const getStateFromFiber = (fiber: Fiber): any => {
   if (!fiber) return {};
-
-  if (isCompositeComponent(fiber)) {
+  // only funtional components have memo tags,
+  if (
+    fiber.tag === FunctionComponentTag ||
+    fiber.tag === ForwardRefTag ||
+    fiber.tag === SimpleMemoComponentTag ||
+    fiber.tag === MemoComponentTag
+  ) {
     // Functional component, need to traverse hooks
     let memoizedState = fiber.memoizedState;
     const state: any = {};
