@@ -66,11 +66,71 @@ export const renderPropsAndState = (
     }, null);
   }
 
+  if (fiberContext.length) {
+    tryOrElse(() => {
+      const changedKeys = new Set<string>();
+
+      const contextObj = Object.fromEntries(
+        fiberContext.map((val, idx) => {
+          const key = idx.toString();
+          return [key, val];
+        }),
+      );
+
+      for (const [key, value] of Object.entries(contextObj)) {
+        const path = `${componentName}.context.${key}`;
+        const lastValue = lastRendered.get(path);
+        const isChanged =
+          lastValue !== undefined && lastValue !== contextObj[key];
+        const isBadRender =
+          isChanged &&
+          ['object', 'function'].includes(typeof lastValue) &&
+          fastSerialize(lastValue) === fastSerialize(contextObj[key]);
+
+        if (isChanged) {
+          changedKeys.add(key);
+          changedAt.set(path, Date.now());
+        }
+
+        if (isBadRender) {
+          // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+          delete contextObj[key];
+          const newKey = `⚠️ ${key}`;
+          contextObj[newKey] = value;
+          changedAt.set(`${componentName}.context.${newKey}`, Date.now());
+        }
+
+        lastRendered.set(path, value);
+      }
+
+      sections.push({
+        element: renderSection(
+          componentName,
+          didRender,
+          propsContainer,
+          'Context',
+          contextObj,
+          changedKeys,
+        ),
+        hasChanges: changedKeys.size > 0,
+      });
+    }, null);
+  }
+
   if (Object.values(state).length) {
     tryOrElse(() => {
       const stateObj = Array.isArray(state)
         ? Object.fromEntries(state.map((val, idx) => [idx.toString(), val]))
         : state;
+
+      for (const [key, value] of Object.entries(stateObj)) {
+        const path = `${componentName}.state.${key}`;
+        const lastValue = lastRendered.get(path);
+        if (lastValue !== undefined && lastValue !== value) {
+          changedAt.set(path, Date.now());
+        }
+        lastRendered.set(path, value);
+      }
 
       sections.push({
         element: renderSection(
@@ -82,36 +142,6 @@ export const renderPropsAndState = (
           changedState,
         ),
         hasChanges: changedState.size > 0,
-      });
-    }, null);
-  }
-
-  if (fiberContext.length) {
-    tryOrElse(() => {
-      const contextObj = Array.isArray(fiberContext)
-        ? Object.fromEntries(
-            fiberContext.map((val, idx) => [idx.toString(), val]),
-          )
-        : fiberContext;
-
-      const changedContext = new Set(
-        Object.keys(contextObj).filter((key) => {
-          const path = `${componentName}.context.${key}`;
-          const lastValue = lastRendered.get(path);
-          return lastValue !== undefined && lastValue !== contextObj[key];
-        }),
-      );
-
-      sections.push({
-        element: renderSection(
-          componentName,
-          didRender,
-          propsContainer,
-          'Context',
-          contextObj,
-          changedContext,
-        ),
-        hasChanges: changedContext.size > 0,
       });
     }, null);
   }
