@@ -687,22 +687,31 @@ export const createToolbar = (): (() => void) => {
     const { focusedDomElement } = currentState;
     if (!focusedDomElement) return;
 
-    let nextElement = focusedDomElement.firstElementChild as HTMLElement | null;
+    // Get all tabbable elements in document order
+    const allElements = document.querySelectorAll('*');
+    const elements = Array.from(allElements).filter((el): el is HTMLElement => {
+      return el instanceof HTMLElement;
+    });
 
-    if (!nextElement) {
-      let current: HTMLElement | null = focusedDomElement;
-      while (current && !nextElement) {
-        nextElement = current.nextElementSibling as HTMLElement | null;
-        current = current.parentElement;
+    // Find current element index
+    const currentIndex = elements.indexOf(focusedDomElement);
+    if (currentIndex === -1) return;
+
+    // Find next valid element
+    let nextElement: HTMLElement | null = null;
+    let nextIndex = currentIndex + 1;
+    const prevFiber = getNearestFiberFromElement(focusedDomElement);
+
+    while (nextIndex < elements.length) {
+      const fiber = getNearestFiberFromElement(elements[nextIndex]);
+      if (fiber && fiber !== prevFiber) {
+        nextElement = elements[nextIndex];
+        break;
       }
+      nextIndex++;
     }
 
-    const prevFiber = getNearestFiberFromElement(focusedDomElement);
-    const nextFiber = nextElement
-      ? getNearestFiberFromElement(nextElement)
-      : null;
-
-    if (nextElement && nextFiber !== prevFiber) {
+    if (nextElement) {
       ReactScanInternals.inspectState = {
         kind: 'focused',
         focusedDomElement: nextElement,
@@ -727,26 +736,31 @@ export const createToolbar = (): (() => void) => {
     const { focusedDomElement } = currentState;
     if (!focusedDomElement) return;
 
-    let prevElement: HTMLElement | null = null;
+    // Get all tabbable elements in document order
+    const allElements = document.querySelectorAll('*');
+    const elements = Array.from(allElements).filter((el): el is HTMLElement => {
+      return el instanceof HTMLElement;
+    });
 
-    if (focusedDomElement.previousElementSibling) {
-      prevElement = focusedDomElement.previousElementSibling as HTMLElement;
-      while (prevElement.lastElementChild) {
-        prevElement = prevElement.lastElementChild as HTMLElement;
+    // Find current element index
+    const currentIndex = elements.indexOf(focusedDomElement);
+    if (currentIndex === -1) return;
+
+    // Find previous valid element
+    let prevElement: HTMLElement | null = null;
+    let prevIndex = currentIndex - 1;
+    const currentFiber = getNearestFiberFromElement(focusedDomElement);
+
+    while (prevIndex >= 0) {
+      const fiber = getNearestFiberFromElement(elements[prevIndex]);
+      if (fiber && fiber !== currentFiber) {
+        prevElement = elements[prevIndex];
+        break;
       }
-    } else if (
-      focusedDomElement.parentElement &&
-      focusedDomElement.parentElement !== document.body
-    ) {
-      prevElement = focusedDomElement.parentElement;
+      prevIndex--;
     }
 
-    const prevFiber = getNearestFiberFromElement(focusedDomElement);
-    const nextFiber = prevElement
-      ? getNearestFiberFromElement(prevElement)
-      : null;
-
-    if (prevElement && prevFiber !== nextFiber) {
+    if (prevElement) {
       ReactScanInternals.inspectState = {
         kind: 'focused',
         focusedDomElement: prevElement,
