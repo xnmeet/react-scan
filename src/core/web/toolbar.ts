@@ -260,6 +260,10 @@ export const createToolbar = (): (() => void) => {
     color: #fff;
   }
 
+  .react-scan-warning {
+    padding-right: 4px;
+  }
+
   .react-scan-string {
     color: #9ECBFF;
   }

@@ -1,3 +1,4 @@
+import { fastSerialize } from '../../instrumentation/utils';
 import {
   getAllFiberContexts,
   getChangedProps,
@@ -14,6 +15,8 @@ export const renderPropsAndState = (
   reportDataFiber: any,
   propsContainer: HTMLDivElement,
 ) => {
+  const scrollTop = propsContainer.scrollTop;
+
   const fiberContext = tryOrElse(
     () => Array.from(getAllFiberContexts(fiber).entries()).map((x) => x[1]),
     [],
@@ -45,11 +48,12 @@ export const renderPropsAndState = (
   const content = document.createElement('div');
   content.className = 'react-scan-content';
 
+  const sections: { element: HTMLElement; hasChanges: boolean }[] = [];
+
   if (Object.values(props).length) {
-    /* Incase we encounter an uncaught getter that throws an error */
     tryOrElse(() => {
-      content.appendChild(
-        renderSection(
+      sections.push({
+        element: renderSection(
           componentName,
           didRender,
           propsContainer,
@@ -57,38 +61,68 @@ export const renderPropsAndState = (
           props,
           changedProps,
         ),
-      );
+        hasChanges: changedProps.size > 0,
+      });
     }, null);
   }
 
   if (Object.values(state).length) {
     tryOrElse(() => {
-      content.appendChild(
-        renderSection(
+      const stateObj = Array.isArray(state)
+        ? Object.fromEntries(state.map((val, idx) => [idx.toString(), val]))
+        : state;
+
+      sections.push({
+        element: renderSection(
           componentName,
           didRender,
           propsContainer,
           'State',
-          Object.values(state),
+          stateObj,
           changedState,
         ),
-      );
+        hasChanges: changedState.size > 0,
+      });
     }, null);
   }
 
   if (fiberContext.length) {
     tryOrElse(() => {
-      content.appendChild(
-        renderSection(
+      const contextObj = Array.isArray(fiberContext)
+        ? Object.fromEntries(
+            fiberContext.map((val, idx) => [idx.toString(), val]),
+          )
+        : fiberContext;
+
+      const changedContext = new Set(
+        Object.keys(contextObj).filter((key) => {
+          const path = `${componentName}.context.${key}`;
+          const lastValue = lastRendered.get(path);
+          return lastValue !== undefined && lastValue !== contextObj[key];
+        }),
+      );
+
+      sections.push({
+        element: renderSection(
           componentName,
           didRender,
           propsContainer,
           'Context',
-          fiberContext,
+          contextObj,
+          changedContext,
         ),
-      );
+        hasChanges: changedContext.size > 0,
+      });
     }, null);
   }
+
+  sections.sort((a, b) => {
+    if (a.hasChanges && !b.hasChanges) return -1;
+    if (!a.hasChanges && b.hasChanges) return 1;
+    return 0;
+  });
+
+  sections.forEach((section) => content.appendChild(section.element));
 
   inspector.appendChild(content);
   propsContainer.appendChild(inspector);
@@ -96,8 +130,11 @@ export const renderPropsAndState = (
   requestAnimationFrame(() => {
     const contentHeight = inspector.getBoundingClientRect().height;
     propsContainer.style.maxHeight = `${contentHeight}px`;
+    propsContainer.scrollTop = scrollTop;
   });
 };
+
+const lastChangedAt = new Map<string, number>();
 
 const renderSection = (
   componentName: string,
@@ -111,7 +148,30 @@ const renderSection = (
   section.className = 'react-scan-section';
   section.textContent = title;
 
-  Object.entries(data).forEach(([key, value]) => {
+  const entries = Object.entries(data).sort(([keyA], [keyB]) => {
+    const pathA = getPath(componentName, title.toLowerCase(), '', keyA);
+    const pathB = getPath(componentName, title.toLowerCase(), '', keyB);
+
+    if (
+      changedKeys.has(keyA) ||
+      (changedAt.has(pathA) && Date.now() - changedAt.get(pathA)! < 450)
+    ) {
+      lastChangedAt.set(pathA, Date.now());
+    }
+    if (
+      changedKeys.has(keyB) ||
+      (changedAt.has(pathB) && Date.now() - changedAt.get(pathB)! < 450)
+    ) {
+      lastChangedAt.set(pathB, Date.now());
+    }
+
+    const aLastChanged = lastChangedAt.get(pathA) ?? 0;
+    const bLastChanged = lastChangedAt.get(pathB) ?? 0;
+
+    return bLastChanged - aLastChanged;
+  });
+
+  entries.forEach(([key, value]) => {
     const el = createPropertyElement(
       componentName,
       didRender,
@@ -185,6 +245,17 @@ export const createPropertyElement = (
     const isExpandable =
       (typeof value === 'object' && value !== null) || Array.isArray(value);
     const currentPath = getPath(componentName, section, parentPath, key);
+    const prevValue = lastRendered.get(currentPath);
+    const isChanged = prevValue !== undefined && prevValue !== value;
+
+    const isBadRender =
+      value &&
+      ['object', 'function'].includes(typeof value) &&
+      fastSerialize(value) === fastSerialize(prevValue) &&
+      isChanged;
+
+    lastRendered.set(currentPath, value);
+
     if (isExpandable) {
       const isExpanded = EXPANDED_PATHS.has(currentPath);
 
@@ -195,7 +266,6 @@ export const createPropertyElement = (
           objectPathMap.set(value, paths);
         }
         if (paths.has(currentPath)) {
-          // Circular reference detected
           return createCircularReferenceElement(key);
         }
         paths.add(currentPath);
@@ -219,10 +289,11 @@ export const createPropertyElement = (
       preview.dataset.key = key;
       preview.dataset.section = section;
       preview.innerHTML = `
-    <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
-      value,
-    )}">${getValuePreview(value)}</span>
-  `;
+        ${isBadRender ? '<span class="react-scan-warning">⚠️</span>' : ''}
+        <span class="react-scan-key">${key}:&nbsp;</span><span class="${getValueClassName(
+          value,
+        )}">${getValuePreview(value)}</span>
+      `;
 
       const content = document.createElement('div');
       content.className = isExpanded
@@ -354,23 +425,15 @@ export const createPropertyElement = (
       preview.dataset.key = key;
       preview.dataset.section = section;
       preview.innerHTML = `
-    <span style="width: 8px; display: inline-block"></span>
-    <span class="react-scan-key">${key}:&nbsp;</span><span class="${getValueClassName(
-      value,
-    )}">${getValuePreview(value)}</span>
-  `;
+        <span style="width: 8px; display: inline-block"></span>
+        ${isBadRender ? '<span class="react-scan-warning">⚠️</span>' : ''}
+        <span class="react-scan-key">${key}:&nbsp;</span><span class="${getValueClassName(
+          value,
+        )}">${getValuePreview(value)}</span>
+      `;
       container.appendChild(preview);
     }
 
-    const isChanged =
-      lastRendered.get(currentPath) !== undefined && // using the last rendered value is the most reliable during frequent updates than any fiber tree check
-      lastRendered.get(currentPath) !== value;
-
-    lastRendered.set(currentPath, value);
-
-    if (isChanged) {
-      changedAt.set(currentPath, Date.now());
-    }
     if (changedKeys.has(key)) {
       changedAt.set(currentPath, Date.now());
     }
@@ -379,7 +442,6 @@ export const createPropertyElement = (
       flashOverlay.className = 'react-scan-flash-overlay';
       container.appendChild(flashOverlay);
 
-      // If it's already flashing set opacity back to peak
       flashOverlay.style.opacity = '.9';
 
       const existingTimer = fadeOutTimers.get(flashOverlay);
@@ -411,7 +473,7 @@ const createCircularReferenceElement = (key: string) => {
   preview.className = 'react-scan-preview-line';
   preview.innerHTML = `
     <span style="width: 8px; display: inline-block"></span>
-    <span class="react-scan-key">${key}</span>: <span class="react-scan-circular">[Circular Reference]</span>
+    <span class="react-scan-key">${key}:&nbsp;</span><span class="react-scan-circular">[Circular Reference]</span>
   `;
   container.appendChild(preview);
   return container;
