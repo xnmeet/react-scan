@@ -1,6 +1,4 @@
 import * as React from 'react';
-import { Fiber } from 'react-reconciler';
-import { MemoComponentTag, SimpleMemoComponentTag } from './fiber';
 
 export const fastSerialize = (value: unknown) => {
   switch (typeof value) {
@@ -65,14 +63,9 @@ export const getType = (type: any): any => {
 };
 
 export const getDisplayName = (type: any): string | null => {
+  const name = type.displayName || type.name || null;
+  if (name) return name;
   type = getType(type);
   if (!type) return null;
   return type.displayName || type.name || null;
-};
-
-export const getDisplayNameFromFiber = (fiber: Fiber): string | null => {
-  if (fiber.tag === MemoComponentTag || fiber.tag === SimpleMemoComponentTag) {
-    return 'Anonymous';
-  }
-  return getDisplayName(fiber.type);
 };
