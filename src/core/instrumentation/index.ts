@@ -1,12 +1,8 @@
 import type { Fiber, FiberRoot } from 'react-reconciler';
 import * as React from 'react';
 import { ReactScanInternals } from '../index';
-import {
-  getDisplayName,
-  fastSerialize,
-  getType,
-  getDisplayNameFromFiber,
-} from './utils';
+import { isCompositeComponent } from '../web/inspect-element/utils';
+import { getDisplayName, fastSerialize, getType } from './utils';
 import {
   didFiberRender,
   getSelfTime,
@@ -17,7 +13,6 @@ import {
   traverseState,
 } from './fiber';
 import { registerDevtoolsHook } from './init';
-import { isCompositeComponent } from '../web/inspect-element/utils';
 
 export interface Change {
   name: string;
@@ -189,7 +184,7 @@ export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
     count: (report?.count ?? 0) + 1,
     time: (report?.time ?? 0) + (time !== 0 ? time : 0.1), // .1ms lowest precision
     badRenders: report?.badRenders ?? [],
-    displayName: getDisplayNameFromFiber(fiber),
+    displayName: getDisplayName(fiber),
   });
   ReactScanInternals.emit(
     'reportDataByFiber',

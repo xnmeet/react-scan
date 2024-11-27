@@ -163,8 +163,8 @@ if (typeof window !== 'undefined') {
 
 <br />
 
-```jsx
-{
+```tsx
+export interface Options {
   /**
    * Enable/disable scanning
    *
@@ -237,6 +237,13 @@ if (typeof window !== 'undefined') {
    * @default false
    */
   alwaysShowLabels?: boolean;
+
+  /**
+   * Animation speed
+   *
+   * @default "fast"
+   */
+  animationSpeed?: 'slow' | 'fast' | 'off';
 
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;

@@ -355,7 +355,7 @@ export const createPropertyElement = (
       preview.dataset.section = section;
       preview.innerHTML = `
     <span style="width: 8px; display: inline-block"></span>
-    <span class="react-scan-key">${key}</span>: <span class="${getValueClassName(
+    <span class="react-scan-key">${key}:&nbsp;</span><span class="${getValueClassName(
       value,
     )}">${getValuePreview(value)}</span>
   `;
