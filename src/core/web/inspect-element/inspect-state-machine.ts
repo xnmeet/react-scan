@@ -204,7 +204,7 @@ export const createInspectElementStateMachine = () => {
                   'react-scan-previous-focus',
                 )!;
                 const parentFocusBtn = document.getElementById(
-                  'react-scan-parent-focus',
+                  'react-scan-next-focus',
                 )!;
 
                 previousFocusBtn.style.display = 'none';

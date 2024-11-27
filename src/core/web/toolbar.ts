@@ -39,7 +39,8 @@ export const createToolbar = (): () => void => {
   `;
   const INSPECTING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-dashed-mouse-pointer"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M5 3a2 2 0 0 0-2 2"/><path d="M19 3a2 2 0 0 1 2 2"/><path d="M5 21a2 2 0 0 1-2-2"/><path d="M9 3h1"/><path d="M9 21h2"/><path d="M14 3h1"/><path d="M3 9v1"/><path d="M21 9v2"/><path d="M3 14v1"/></svg>`;
   const FOCUSING_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-mouse-pointer"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>`;
-  const PREVIOUS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-undo-2"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>`;
+  const NEXT_SVG = `<svg class="nav-button" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9h6V5l7 7-7 7v-4H6V9z"/></svg>`;
+  const PREVIOUS_SVG = `<svg class="nav-button" xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15h-6v4l-7-7 7-7v4h6v6z"/></svg>`;
   const TRANSITION_MS = '150ms';
 
   const SOUND_ON_SVG = `
@@ -140,29 +141,13 @@ export const createToolbar = (): () => void => {
           justify-content: space-evenly;
         ">
           <div style="display: flex; gap: 8px; align-items: center;">
-            <button id="react-scan-parent-focus" style="
+          <button id="react-scan-previous-focus" style="
               padding: 4px 10px;
-              display: none;
+              display: flex;
               align-items: center;
               justify-content: center;
               background: none;
-              color: #fff;
-              cursor: pointer;
-              transition: all ${TRANSITION_MS} ease;
-              height: 26px;
-              outline: none;
-               border: none;
-              font-size: 12px;
-              white-space: nowrap;
-               font-family: ${MONO_FONT};
-            ">jump to parent</button>
-            <button id="react-scan-previous-focus" style="
-              padding: 4px 10px;
-              display: none;
-              align-items: center;
-              justify-content: center;
-              background: none;
-              color: #fff;
+              color: #999;
               cursor: pointer;
               transition: all ${TRANSITION_MS} ease;
               height: 26px;
@@ -171,6 +156,22 @@ export const createToolbar = (): () => void => {
               font-size: 12px;
               white-space: nowrap;
             ">${PREVIOUS_SVG}</button>
+            <button id="react-scan-next-focus" style="
+              padding: 4px 10px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: none;
+              color: #999;
+              cursor: pointer;
+              transition: all ${TRANSITION_MS} ease;
+              height: 26px;
+              outline: none;
+               border: none;
+              font-size: 12px;
+              white-space: nowrap;
+               font-family: ${MONO_FONT};
+            ">${NEXT_SVG}</button>
           </div>
            <span style="font-size: 14px; font-weight: 500;">react-scan</span>
         </div>
@@ -401,26 +402,30 @@ export const createToolbar = (): () => void => {
 	  width: 4px;
 	  height: 4px;
 	}
-	
+
 	#react-scan-toolbar::-webkit-scrollbar-track {
 	  background: rgba(255, 255, 255, 0.1);
 	  border-radius: 4px;
 	}
-	
+
 	#react-scan-toolbar::-webkit-scrollbar-thumb {
 	  background: rgba(255, 255, 255, 0.3);
 	  border-radius: 4px;
 	}
-	
+
 	#react-scan-toolbar::-webkit-scrollbar-thumb:hover {
 	  background: rgba(255, 255, 255, 0.4);
 	}
-	
+
 	/* For Firefox */
 	#react-scan-toolbar * {
 	  scrollbar-width: thin;
 	  scrollbar-color: rgba(255, 255, 255, 0.3) rgba(255, 255, 255, 0.1);
 	}
+
+  .nav-button {
+    opacity: var(--nav-opacity, 1);
+  }
   `;
 
   if (document.head) document.head.appendChild(styleElement);
@@ -430,8 +435,8 @@ export const createToolbar = (): () => void => {
   )!;
   const powerBtn =
     toolbar.querySelector<HTMLButtonElement>('#react-scan-power')!;
-  const parentFocusBtn = toolbar.querySelector<HTMLButtonElement>(
-    '#react-scan-parent-focus',
+  const nextFocusBtn = toolbar.querySelector<HTMLButtonElement>(
+    '#react-scan-next-focus',
   )!;
   const previousFocusBtn = toolbar.querySelector<HTMLButtonElement>(
     '#react-scan-previous-focus',
@@ -440,7 +445,6 @@ export const createToolbar = (): () => void => {
     '#react-scan-sound-toggle',
   )!;
 
-  const focusHistory: HTMLElement[] = [];
   const propContainer =
     toolbar.querySelector<HTMLDivElement>('#react-scan-props')!;
   const toolbarContent = toolbar.querySelector<HTMLElement>(
@@ -517,7 +521,7 @@ export const createToolbar = (): () => void => {
     if (
       event.target === inspectBtn ||
       event.target === powerBtn ||
-      event.target === parentFocusBtn ||
+      event.target === nextFocusBtn ||
       event.target === resizeHandle
     )
       return;
@@ -568,28 +572,6 @@ export const createToolbar = (): () => void => {
     }
   });
 
-  const updateNavigationButtons = () => {
-    if (ReactScanInternals.inspectState.kind === 'focused') {
-      const validParent = hasValidParent();
-      if (!ReactScanInternals.inspectState.focusedDomElement) {
-        parentFocusBtn.style.display = 'none';
-        previousFocusBtn.style.display = 'none';
-        return;
-      }
-
-      parentFocusBtn.style.display = 'flex';
-      parentFocusBtn.style.color = validParent ? '#999' : '#444';
-      parentFocusBtn.style.cursor = validParent ? 'pointer' : 'not-allowed';
-
-      previousFocusBtn.style.display = focusHistory.length > 0 ? 'flex' : 'none';
-      previousFocusBtn.style.color = '#999';
-      previousFocusBtn.style.cursor = 'pointer';
-    } else {
-      parentFocusBtn.style.display = 'none';
-      previousFocusBtn.style.display = 'none';
-    }
-  };
-
   const updateUI = () => {
     powerBtn.innerHTML = isActive ? PAUSE_SVG : PLAY_SVG;
     powerBtn.title = isActive ? 'Stop' : 'Start';
@@ -598,6 +580,9 @@ export const createToolbar = (): () => void => {
 
     const isInspectActive =
       ReactScanInternals.inspectState.kind === 'inspecting';
+
+    nextFocusBtn.style.display = focusActive ? 'flex' : 'none';
+    previousFocusBtn.style.display = focusActive ? 'flex' : 'none';
 
     if (isInspectActive) {
       inspectBtn.innerHTML = INSPECTING_SVG;
@@ -621,8 +606,6 @@ export const createToolbar = (): () => void => {
     soundToggleBtn.innerHTML = isSoundOn ? SOUND_ON_SVG : SOUND_OFF_SVG;
     soundToggleBtn.style.color = isSoundOn ? '#fff' : '#999';
     soundToggleBtn.title = isSoundOn ? 'Sound On' : 'Sound Off';
-
-    updateNavigationButtons();
   };
 
   powerBtn.addEventListener('click', (e) => {
@@ -688,57 +671,72 @@ export const createToolbar = (): () => void => {
     updateUI();
   });
 
-  parentFocusBtn.addEventListener('click', (e) => {
+  nextFocusBtn.addEventListener('click', (e) => {
     e.stopPropagation();
 
     const currentState = ReactScanInternals.inspectState;
     if (currentState.kind !== 'focused') return;
 
     const { focusedDomElement } = currentState;
-    if (!focusedDomElement || !focusedDomElement.parentElement) return;
+    if (!focusedDomElement) return;
 
-    focusHistory.push(focusedDomElement);
+    let nextElement = focusedDomElement.firstElementChild as HTMLElement | null;
 
-    let nextParent: typeof focusedDomElement.parentElement | null =
-      focusedDomElement.parentElement;
-    const currentFiber = getNearestFiberFromElement(focusedDomElement);
-
-    while (nextParent) {
-      const parentFiber = getNearestFiberFromElement(nextParent);
-      if (
-        !parentFiber ||
-        parentFiber.memoizedProps !== currentFiber?.memoizedProps
-      ) {
-        break;
+    if (!nextElement) {
+      let current: HTMLElement | null = focusedDomElement;
+      while (current && !nextElement) {
+        nextElement = current.nextElementSibling as HTMLElement | null;
+        current = current.parentElement;
       }
-      nextParent = nextParent.parentElement;
     }
 
-    if (!nextParent) return;
-
-    ReactScanInternals.inspectState = {
-      kind: 'focused',
-      focusedDomElement: nextParent,
-      propContainer: currentState.propContainer,
-    };
+    if (nextElement) {
+      ReactScanInternals.inspectState = {
+        kind: 'focused',
+        focusedDomElement: nextElement,
+        propContainer: currentState.propContainer,
+      };
+      nextFocusBtn.style.setProperty('--nav-opacity', '1');
+    } else {
+      // No next element; keep the focus unchanged
+      nextFocusBtn.style.setProperty('--nav-opacity', '0.5');
+    }
   });
 
   previousFocusBtn.addEventListener('click', (e) => {
     e.stopPropagation();
 
     const currentState = ReactScanInternals.inspectState;
-    if (currentState.kind !== 'focused' || focusHistory.length === 0) return;
+    if (currentState.kind !== 'focused') return;
 
-    const previousElement = focusHistory.pop();
-    if (!previousElement) {
-      return; // invariant this exists
+    const { focusedDomElement } = currentState;
+    if (!focusedDomElement) return;
+
+    let prevElement: HTMLElement | null = null;
+
+    if (focusedDomElement.previousElementSibling) {
+      prevElement = focusedDomElement.previousElementSibling as HTMLElement;
+      // Navigate to the deepest child of the previous sibling
+      while (prevElement.lastElementChild) {
+        prevElement = prevElement.lastElementChild as HTMLElement;
+      }
+    } else if (
+      focusedDomElement.parentElement &&
+      focusedDomElement.parentElement !== document.body
+    ) {
+      prevElement = focusedDomElement.parentElement;
     }
 
-    ReactScanInternals.inspectState = {
-      kind: 'focused',
-      focusedDomElement: previousElement,
-      propContainer: currentState.propContainer,
-    };
+    if (prevElement) {
+      ReactScanInternals.inspectState = {
+        kind: 'focused',
+        focusedDomElement: prevElement,
+        propContainer: currentState.propContainer,
+      };
+      previousFocusBtn.style.setProperty('--nav-opacity', '1');
+    } else {
+      previousFocusBtn.style.setProperty('--nav-opacity', '0.5');
+    }
   });
 
   soundToggleBtn.addEventListener('click', (e) => {
