@@ -276,3 +276,27 @@ export const isCompositeComponent = (fiber: Fiber) => {
     fiber.tag === MemoComponentTag
   );
 };
+
+export const getOverrideProps = () => {
+  let overrideProps = null;
+  if ('__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) {
+    const { renderers } = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    if (!renderers) return null;
+    for (const [_, renderer] of Array.from(renderers)) {
+      try {
+        if (overrideProps) {
+          const prevOverrideProps = overrideProps;
+          overrideProps = (fiber: Fiber, key: string, value: any) => {
+            prevOverrideProps(fiber, key, value);
+            renderer.overrideProps(fiber, key, value);
+          };
+        } else {
+          overrideProps = renderer.overrideProps;
+        }
+      } catch (e) {
+        /**/
+      }
+    }
+  }
+  return overrideProps;
+};

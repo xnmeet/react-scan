@@ -276,6 +276,12 @@ export const createToolbar = (): (() => void) => {
     color: #56B6C2;
   }
 
+  .react-scan-input {
+    background: #000;
+    border: none;
+    color: #fff;
+  }
+
   .react-scan-object-key {
     color: #fff;
   }

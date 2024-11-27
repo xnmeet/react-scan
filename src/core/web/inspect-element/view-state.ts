@@ -4,6 +4,7 @@ import {
   getChangedProps,
   getChangedState,
   getStateFromFiber,
+  getOverrideProps,
 } from './utils';
 
 const EXPANDED_PATHS = new Set<string>();
@@ -56,6 +57,7 @@ export const renderPropsAndState = (
         element: renderSection(
           componentName,
           didRender,
+          fiber,
           propsContainer,
           'Props',
           props,
@@ -107,6 +109,7 @@ export const renderPropsAndState = (
         element: renderSection(
           componentName,
           didRender,
+          fiber,
           propsContainer,
           'Context',
           contextObj,
@@ -136,6 +139,7 @@ export const renderPropsAndState = (
         element: renderSection(
           componentName,
           didRender,
+          fiber,
           propsContainer,
           'State',
           stateObj,
@@ -169,6 +173,7 @@ const lastChangedAt = new Map<string, number>();
 const renderSection = (
   componentName: string,
   didRender: boolean,
+  fiber: any,
   propsContainer: HTMLDivElement,
   title: string,
   data: any,
@@ -206,6 +211,7 @@ const renderSection = (
       componentName,
       didRender,
       propsContainer,
+      fiber,
       key,
       value,
       title.toLowerCase(),
@@ -250,6 +256,7 @@ export const createPropertyElement = (
   componentName: string,
   didRender: boolean,
   propsContainer: HTMLDivElement,
+  fiber: any,
   key: string,
   value: any,
   section = '',
@@ -334,7 +341,6 @@ export const createPropertyElement = (
       contentWrapper.appendChild(content);
       container.appendChild(contentWrapper);
 
-      // Only create nested content if expanded
       if (isExpanded) {
         if (Array.isArray(value)) {
           const arrayContainer = document.createElement('div');
@@ -344,6 +350,7 @@ export const createPropertyElement = (
               componentName,
               didRender,
               propsContainer,
+              fiber,
               index.toString(),
               item,
               section,
@@ -364,6 +371,7 @@ export const createPropertyElement = (
               componentName,
               didRender,
               propsContainer,
+              fiber,
               k,
               v,
               section,
@@ -400,6 +408,7 @@ export const createPropertyElement = (
                   componentName,
                   didRender,
                   propsContainer,
+                  fiber,
                   index.toString(),
                   item,
                   section,
@@ -420,6 +429,7 @@ export const createPropertyElement = (
                   componentName,
                   didRender,
                   propsContainer,
+                  fiber,
                   k,
                   v,
                   section,
@@ -459,9 +469,54 @@ export const createPropertyElement = (
         ${isBadRender ? '<span class="react-scan-warning">⚠️</span>' : ''}
         <span class="react-scan-key">${key}:&nbsp;</span><span class="${getValueClassName(
           value,
-        )}">${getValuePreview(value)}</span>
+        )} react-scan-value">${getValuePreview(value)}</span>
       `;
       container.appendChild(preview);
+
+      if (section === 'props') {
+        const valueElement = preview.querySelector('.react-scan-value');
+        if (
+          valueElement &&
+          (typeof value === 'string' || typeof value === 'number')
+        ) {
+          valueElement.classList.add('react-scan-editable');
+          valueElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = value.toString();
+            input.className = 'react-scan-input';
+
+            const updateValue = () => {
+              const newValue = input.value;
+              value = typeof value === 'number' ? Number(newValue) : newValue;
+              valueElement.textContent = getValuePreview(value);
+
+              tryOrElse(() => {
+                input.replaceWith(valueElement);
+              }, null);
+
+              tryOrElse(() => {
+                const overrideProps = getOverrideProps();
+                if (overrideProps) {
+                  overrideProps(fiber, [key], value);
+                }
+              }, null);
+            };
+
+            input.addEventListener('blur', updateValue);
+            input.addEventListener('keydown', (event) => {
+              if (event.key === 'Enter') {
+                updateValue();
+              }
+            });
+
+            valueElement.replaceWith(input);
+            input.focus();
+          });
+        }
+      }
     }
 
     if (changedKeys.has(key)) {
