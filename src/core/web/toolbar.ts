@@ -138,7 +138,7 @@ export const createToolbar = (): (() => void) => {
           justify-content: space-evenly;
         ">
           <div style="display: flex; gap: 8px; align-items: center;">
-          <button id="react-scan-previous-focus" style="
+            <button id="react-scan-previous-focus" style="
               padding: 4px 10px;
               display: flex;
               align-items: center;
@@ -149,7 +149,7 @@ export const createToolbar = (): (() => void) => {
               transition: all ${TRANSITION_MS} ease;
               height: 26px;
               outline: none;
-               border: none;
+              border: none;
               font-size: 12px;
               white-space: nowrap;
             ">${PREVIOUS_SVG}</button>
@@ -164,13 +164,12 @@ export const createToolbar = (): (() => void) => {
               transition: all ${TRANSITION_MS} ease;
               height: 26px;
               outline: none;
-               border: none;
+              border: none;
               font-size: 12px;
               white-space: nowrap;
-               font-family: ${MONO_FONT};
             ">${NEXT_SVG}</button>
+            <span style="font-size: 14px; font-weight: 500;">react-scan</span>
           </div>
-           <span style="font-size: 14px; font-weight: 500;">react-scan</span>
         </div>
       </div>
       <div id="react-scan-props" style="
@@ -192,7 +191,7 @@ export const createToolbar = (): (() => void) => {
         bottom: 0;
         width: 4px;
         cursor: ew-resize;
-        dis
+        display: none;
       "></div>
     </div>
   </div>
@@ -218,7 +217,38 @@ export const createToolbar = (): (() => void) => {
     display: flex;
     gap: 8px;
     align-items: center;
+    justify-content: space-between;
     background: #000;
+  }
+
+  .react-scan-header-left {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .react-scan-header-right {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .react-scan-replay-button {
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    cursor: pointer;
+    transition: all ${TRANSITION_MS} ease;
+    outline: none;
+  }
+
+  .react-scan-replay-button:hover {
+    background: rgba(255, 255, 255, 0.15);
   }
 
   .react-scan-component-name {
@@ -687,17 +717,14 @@ export const createToolbar = (): (() => void) => {
     const { focusedDomElement } = currentState;
     if (!focusedDomElement) return;
 
-    // Get all tabbable elements in document order
     const allElements = document.querySelectorAll('*');
     const elements = Array.from(allElements).filter((el): el is HTMLElement => {
       return el instanceof HTMLElement;
     });
 
-    // Find current element index
     const currentIndex = elements.indexOf(focusedDomElement);
     if (currentIndex === -1) return;
 
-    // Find next valid element
     let nextElement: HTMLElement | null = null;
     let nextIndex = currentIndex + 1;
     const prevFiber = getNearestFiberFromElement(focusedDomElement);
@@ -736,17 +763,13 @@ export const createToolbar = (): (() => void) => {
     const { focusedDomElement } = currentState;
     if (!focusedDomElement) return;
 
-    // Get all tabbable elements in document order
     const allElements = document.querySelectorAll('*');
     const elements = Array.from(allElements).filter((el): el is HTMLElement => {
       return el instanceof HTMLElement;
     });
-
-    // Find current element index
     const currentIndex = elements.indexOf(focusedDomElement);
     if (currentIndex === -1) return;
 
-    // Find previous valid element
     let prevElement: HTMLElement | null = null;
     let prevIndex = currentIndex - 1;
     const currentFiber = getNearestFiberFromElement(focusedDomElement);
