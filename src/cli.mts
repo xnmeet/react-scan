@@ -120,6 +120,7 @@ const init = async () => {
     userAgent:
       userAgentStrings[Math.floor(Math.random() * userAgentStrings.length)],
     bypassCSP: true,
+    ignoreHTTPSErrors: true,
   };
 
   try {
