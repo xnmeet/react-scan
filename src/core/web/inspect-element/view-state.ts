@@ -4,7 +4,7 @@ import {
   getChangedProps,
   getChangedState,
   getStateFromFiber,
-  getOverrideProps,
+  getOverrideMethods,
 } from './utils';
 
 const EXPANDED_PATHS = new Set<string>();
@@ -473,11 +473,13 @@ export const createPropertyElement = (
       `;
       container.appendChild(preview);
 
-      if (section === 'props') {
+      if (section === 'props' || section === 'state') {
         const valueElement = preview.querySelector('.react-scan-value');
         if (
           valueElement &&
-          (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
+          (typeof value === 'string' ||
+            typeof value === 'number' ||
+            typeof value === 'boolean')
         ) {
           valueElement.classList.add('react-scan-editable');
           valueElement.addEventListener('click', (e) => {
@@ -498,9 +500,13 @@ export const createPropertyElement = (
               }, null);
 
               tryOrElse(() => {
-                const overrideProps = getOverrideProps();
-                if (overrideProps) {
+                const { overrideProps, overrideHookState } =
+                  getOverrideMethods();
+                if (overrideProps && section === 'props') {
                   overrideProps(fiber, [key], value);
+                }
+                if (overrideHookState && section === 'state') {
+                  overrideHookState(fiber, key, [], value);
                 }
               }, null);
             };
