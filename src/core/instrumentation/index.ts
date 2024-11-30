@@ -48,8 +48,7 @@ export const getPropsRender = (fiber: Fiber, type: Function): Render | null => {
     if (
       Object.is(prevValue, nextValue) ||
       React.isValidElement(prevValue) ||
-      React.isValidElement(nextValue) ||
-      propName === 'children'
+      React.isValidElement(nextValue)
     ) {
       continue;
     }
