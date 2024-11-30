@@ -782,6 +782,7 @@ export const createToolbar = (): (() => void) => {
   soundToggleBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     isSoundOn = !isSoundOn;
+    // todo: never set options for users, in the future this should be reactive to user changes
     setOptions({ playSound: isSoundOn });
     updateUI();
   });

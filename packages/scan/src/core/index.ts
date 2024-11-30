@@ -1,6 +1,6 @@
 import type { Fiber, FiberRoot } from 'react-reconciler';
 import * as React from 'react';
-import { instrument, type Render } from './instrumentation/index';
+import { instrument, Render } from './instrumentation/index';
 import {
   type ActiveOutline,
   flushOutlines,
@@ -17,6 +17,7 @@ import {
 } from './web/inspect-element/inspect-state-machine';
 import { createToolbar } from './web/toolbar';
 import { getType } from './instrumentation/utils';
+import { debouncedFlush } from './web/monitor/network';
 
 export interface Options {
   /**
@@ -99,11 +100,26 @@ export interface Options {
    */
   animationSpeed?: 'slow' | 'fast' | 'off';
 
+  monitor?: {
+    url: string;
+  };
+
   onCommitStart?: () => void;
   onRender?: (fiber: Fiber, render: Render) => void;
   onCommitFinish?: () => void;
   onPaintStart?: (outlines: Array<PendingOutline>) => void;
   onPaintFinish?: (outlines: Array<PendingOutline>) => void;
+}
+
+interface Event {
+  componentPath: Array<string>;
+  renders: Array<Render>;
+}
+
+interface Monitor {
+  pendingRequests: number;
+  batch: Array<Event>;
+  url: string | null;
 }
 
 export interface Internals {
@@ -135,6 +151,7 @@ export interface Internals {
   >;
   fiberRoots: WeakSet<Fiber>;
   inspectState: States;
+  monitor: Monitor | null;
 }
 
 type Listener<T> = (value: T) => void;
@@ -272,6 +289,11 @@ export const ReactScanInternals = createStore<Internals>({
   inspectState: {
     kind: 'uninitialized',
   },
+  monitor: {
+    pendingRequests: 0,
+    batch: [],
+    url: null,
+  },
 });
 
 export const getReport = () => ReactScanInternals.reportData;
@@ -339,6 +361,7 @@ export const start = () => {
         playGeigerClickSound(audioContext, amplitude);
       }
       flushOutlines(ctx, new Map());
+      debouncedFlush();
     },
     onCommitFinish() {
       ReactScanInternals.options.onCommitFinish?.();
@@ -363,6 +386,14 @@ export const withScan = <T>(
     componentAllowList.set(component, { ...options });
   }
 
+  if (options.monitor) {
+    ReactScanInternals.monitor = {
+      batch: [],
+      pendingRequests: 0,
+      url: options.monitor.url,
+    };
+  }
+
   start();
 
   return component;
@@ -372,6 +403,13 @@ export const scan = (options: Options = {}) => {
   setOptions(options);
   const { isInIframe } = ReactScanInternals;
   if (isInIframe || options.enabled === false) return;
+  if (options.monitor) {
+    ReactScanInternals.monitor = {
+      batch: [],
+      pendingRequests: 0,
+      url: options.monitor.url,
+    };
+  }
 
   start();
 };

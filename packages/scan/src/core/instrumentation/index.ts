@@ -153,6 +153,35 @@ export const reportRender = (
     type: getType(fiber.type) || fiber.type,
   };
 };
+
+const getFiberPath = (fiber: Fiber) => {
+  const path: Array<string> = [];
+  const helper = (pathFiber: Fiber | null) => {
+    if (!pathFiber) {
+      return;
+    }
+    if (isCompositeComponent(pathFiber))
+      [path.push(getDisplayName(pathFiber.type) ?? 'Unknown')];
+    helper(pathFiber.return);
+  };
+
+  helper(fiber);
+  return path;
+};
+
+export const reportMonitoringRender = (
+  fiber: Fiber,
+  renders: Array<Render | null>,
+  monitor: typeof ReactScanInternals.monitor & {}
+) => {
+
+  const fiberPath = getFiberPath(fiber);
+
+  monitor.batch.push({
+    renders: renders.filter((render) => render !== null),
+    componentPath: fiberPath,
+  });
+};
 export const reportRenderFiber = (fiber: Fiber, renders: Array<Render | null>) => {
   const [reportFiber, report] = (() => {
     const currentFiberData = ReactScanInternals.reportDataByFiber.get(fiber);
@@ -236,6 +265,9 @@ export const instrument = ({
         isCompositeComponent(fiber) // since we key on the fiber we don't need a display name (ex. memo compoenents are anonymous and dont have names)
       ) {
         reportRenderFiber(fiber, [propsRender, contextRender]);
+        if (ReactScanInternals.monitor) {
+          reportMonitoringRender(fiber, [propsRender, contextRender], ReactScanInternals.monitor);
+        }
       }
 
       if (!propsRender && !contextRender) return null;
