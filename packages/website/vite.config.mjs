@@ -17,12 +17,12 @@ export default defineConfig({
       ? {}
       : {
           alias: {
-            'react-scan/auto': path.resolve(__dirname, '../dist/auto.mjs'),
-            'react-scan/dist/index.mjs': path.resolve(
+            'react-scan/auto': path.resolve(__dirname, '../scan/dist/auto.mjs'),
+            'react-scan/packages/dist/index.mjs': path.resolve(
               __dirname,
-              '../dist/index.mjs',
+              '../scan/dist/index.mjs',
             ),
-            'react-scan': path.resolve(__dirname, '../dist/index.mjs'),
+            'react-scan': path.resolve(__dirname, '../scan'),
           },
         },
 });
