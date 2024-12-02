@@ -273,7 +273,8 @@ export const isCompositeComponent = (fiber: Fiber) => {
     fiber.tag === FunctionComponentTag ||
     fiber.tag === ClassComponentTag ||
     fiber.tag === SimpleMemoComponentTag ||
-    fiber.tag === MemoComponentTag
+    fiber.tag === MemoComponentTag ||
+    fiber.tag === ForwardRefTag
   );
 };
 
