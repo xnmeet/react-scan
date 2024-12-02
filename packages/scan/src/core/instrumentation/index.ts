@@ -28,7 +28,7 @@ export interface Render {
   count: number;
   trigger: boolean;
   forget: boolean;
-  changes: Change[] | null;
+  changes: Array<Change> | null;
   label?: string;
 }
 
@@ -36,7 +36,7 @@ const unstableTypes = ['function', 'object'];
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const getPropsRender = (fiber: Fiber, type: Function): Render | null => {
-  const changes: Change[] = [];
+  const changes: Array<Change> = [];
 
   const prevProps = fiber.alternate?.memoizedProps;
   const nextProps = fiber.memoizedProps;
@@ -90,7 +90,7 @@ export const getContextRender = (
   // eslint-disable-next-line @typescript-eslint/ban-types
   type: Function,
 ): Render | null => {
-  const changes: Change[] = [];
+  const changes: Array<Change> = [];
 
   const result = traverseContexts(fiber, (prevContext, nextContext) => {
     const prevValue = prevContext.memoizedValue;
@@ -132,7 +132,7 @@ export const getContextRender = (
 export const reportRender = (
   name: string,
   fiber: Fiber,
-  renders: (Render | null)[],
+  renders: Array<Render | null>,
 ) => {
   if (ReactScanInternals.options.report === false) return;
   const report = ReactScanInternals.reportData[name];
@@ -153,7 +153,7 @@ export const reportRender = (
     type: getType(fiber.type) || fiber.type,
   };
 };
-export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
+export const reportRenderFiber = (fiber: Fiber, renders: Array<Render | null>) => {
   const [reportFiber, report] = (() => {
     const currentFiberData = ReactScanInternals.reportDataByFiber.get(fiber);
     if (currentFiberData) {
