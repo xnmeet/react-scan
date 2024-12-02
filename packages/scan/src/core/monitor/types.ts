@@ -1,4 +1,4 @@
-const enum Device {
+export enum Device {
   DESKTOP = 0,
   TABLET = 1,
   MOBILE = 2,

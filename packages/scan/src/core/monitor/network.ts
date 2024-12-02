@@ -1,4 +1,3 @@
-import React from 'react';
 import { ReactScanInternals } from '../..';
 import {
   FLOAT_MAX_LEN,
@@ -6,14 +5,8 @@ import {
   GZIP_MAX_LEN,
   MAX_PENDING_REQUESTS,
 } from './constants';
-import { debounce, getSession, type Session } from './utils';
-
-interface Payload {
-  session: Session;
-  data: unknown;
-  react: string | null;
-  date: number;
-}
+import { debounce, getSession } from './utils';
+import { type IngestRequest, type Session } from './types';
 
 let session: Session | null = null;
 export const flush = (): void => {
@@ -36,14 +29,12 @@ export const flush = (): void => {
   if (!session) {
     session = getSession();
   }
-  const date = Date.now();
 
   // we copy the batch incase we have to retry (we clear the batch immediately/optimistically)
-  const payload: Payload = {
-    data: readStatsFromIndexDB(),
+  const payload: IngestRequest = {
+    interactions: readStatsFromIndexDB(),
+    components: [],
     session: session!,
-    react: React.version || null,
-    date,
   };
 
   const batch = ReactScanInternals.monitor.batch;
@@ -91,7 +82,7 @@ export const compress = async (payload: string): Promise<ArrayBuffer> => {
  */
 export const transport = async (
   url: string,
-  payload: Payload,
+  payload: IngestRequest,
 ): Promise<{ ok: boolean }> => {
   if (!ReactScanInternals.monitor) {
     throw new Error(

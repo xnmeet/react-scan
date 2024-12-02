@@ -1,5 +1,21 @@
-import { onIdle } from "../utils";
-import { isSSR } from "./constants";
+import { onIdle } from '../web/utils';
+import { isSSR } from './constants';
+import { Device, Session } from './types';
+
+const getDeviceType = () => {
+  const userAgent = navigator.userAgent;
+
+  if (
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      userAgent,
+    )
+  ) {
+    return Device.MOBILE;
+  } else if (/iPad|Tablet/i.test(userAgent)) {
+    return Device.TABLET;
+  }
+  return Device.DESKTOP;
+};
 
 /**
  * Measure layout time
@@ -10,17 +26,10 @@ export const doubleRAF = (callback: (...args: Array<any>) => void) => {
   });
 };
 
-
-
-/**
- * Modified version of nanoid (prevent collisions)
- *
- * @see https://github.com/ai/nanoid/blob/main/nanoid.js
- */
 export const generateId = () => {
   const alphabet =
-    "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";
-  let id = "";
+    'useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict';
+  let id = '';
   const randomValues = crypto.getRandomValues(new Uint8Array(21));
   for (let i = 0; i < 21; i++) {
     id += alphabet[63 & randomValues[i]];
@@ -43,15 +52,6 @@ const getGpuRenderer = () => {
   const ext = gl.getExtension('WEBGL_debug_renderer_info');
   return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : '';
 };
-
-export interface Session {
-  id: string;
-  url: string;
-  wifi: string;
-  cpu: number;
-  gpu: string | null;
-  mem: number;
-}
 
 /**
  * Session is a loose way to fingerprint / identify a session.
@@ -91,10 +91,12 @@ export const getSession = (): Session | null => {
   const session = {
     id,
     url,
+    device: getDeviceType(),
     wifi,
     cpu,
     mem,
     gpu: null,
+    agent: navigator.userAgent,
   };
 
   /**
@@ -108,8 +110,6 @@ export const getSession = (): Session | null => {
 
   return session;
 };
-
-
 
 /**
  * Modified from @palette.dev/browser:
@@ -128,6 +128,7 @@ export const debounce = <T extends (...args: Array<any>) => any>(
     }
 
     timeoutId = setTimeout(() => {
+      // eslint-disable-next-line prefer-rest-params
       callback.apply(this, arguments as any);
       timeoutId = undefined;
     }, timeout);
