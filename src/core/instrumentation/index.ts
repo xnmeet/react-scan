@@ -183,7 +183,7 @@ export const reportRenderFiber = (fiber: Fiber, renders: (Render | null)[]) => {
     count: (report?.count ?? 0) + 1,
     time: (report?.time ?? 0) + (time !== 0 ? time : 0.1), // .1ms lowest precision
     badRenders: report?.badRenders ?? [],
-    displayName: getDisplayName(fiber),
+    displayName: getDisplayName(fiber.type),
   });
   ReactScanInternals.emit(
     'reportDataByFiber',
