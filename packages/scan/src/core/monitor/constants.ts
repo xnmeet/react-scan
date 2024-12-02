@@ -10,7 +10,6 @@
 
 /* eslint-disable prefer-const */
 /* eslint-disable import/no-mutable-exports */
-/* eslint-disable @typescript-eslint/unbound-method */
 
 /**
  * Do not destructure exports or import React from "react" here.

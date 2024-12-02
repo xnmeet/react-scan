@@ -1,12 +1,12 @@
 import React from 'react';
+import { ReactScanInternals } from '../..';
 import {
   FLOAT_MAX_LEN,
   GZIP_MIN_LEN,
   GZIP_MAX_LEN,
   MAX_PENDING_REQUESTS,
 } from './constants';
-import { debounce, getSession, Session } from './utils';
-import { ReactScanInternals } from '../..';
+import { debounce, getSession, type Session } from './utils';
 
 interface Payload {
   session: Session;
@@ -16,7 +16,7 @@ interface Payload {
 }
 
 let session: Session | null = null;
-export let flush = (): void => {
+export const flush = (): void => {
   if (!ReactScanInternals.monitor) {
     throw new Error(
       'Invariant: Monitoring object must be not null when flushing',
@@ -25,21 +25,21 @@ export let flush = (): void => {
   if (!ReactScanInternals.monitor.url) {
     throw new Error('Invariant: URL must be defined when flushing');
   }
-  let derefMonitor = ReactScanInternals.monitor;
-  let derefUrl = ReactScanInternals.monitor.url;
+  const derefMonitor = ReactScanInternals.monitor;
+  const derefUrl = ReactScanInternals.monitor.url;
   if (!navigator.onLine) return;
 
-  let nothingToFlush = ReactScanInternals.monitor.batch.length === 0; // determine later
+  const nothingToFlush = ReactScanInternals.monitor.batch.length === 0; // determine later
   if (nothingToFlush) {
     return;
   }
   if (!session) {
     session = getSession();
   }
-  let date = Date.now();
+  const date = Date.now();
 
   // we copy the batch incase we have to retry (we clear the batch immediately/optimistically)
-  let payload: Payload = {
+  const payload: Payload = {
     data: readStatsFromIndexDB(),
     session: session!,
     react: React.version || null,
@@ -68,17 +68,17 @@ export let flush = (): void => {
   setTimeout(reset, 0);
 };
 
-export let debouncedFlush = debounce(flush, 5000);
-let CONTENT_TYPE = 'application/json';
-let supportsCompression = typeof CompressionStream === 'function';
+export const debouncedFlush = debounce(flush, 5000);
+const CONTENT_TYPE = 'application/json';
+const supportsCompression = typeof CompressionStream === 'function';
 
 /**
  * Modified from @palette.dev/browser:
  *
  * @see https://gist.github.com/aidenybai/473689493f2d5d01bbc52e2da5950b45#file-palette-dev-browser-dist-palette-dev-mjs-L357
  */
-export let compress = async (payload: string): Promise<ArrayBuffer> => {
-  let stream = new Blob([payload], { type: CONTENT_TYPE })
+export const compress = async (payload: string): Promise<ArrayBuffer> => {
+  const stream = new Blob([payload], { type: CONTENT_TYPE })
     .stream()
     .pipeThrough(new CompressionStream('gzip'));
   return new Response(stream).arrayBuffer();
@@ -89,7 +89,7 @@ export let compress = async (payload: string): Promise<ArrayBuffer> => {
  *
  * @see https://gist.github.com/aidenybai/473689493f2d5d01bbc52e2da5950b45#file-palette-dev-browser-dist-palette-dev-mjs-L365
  */
-export let transport = async (
+export const transport = async (
   url: string,
   payload: Payload,
 ): Promise<{ ok: boolean }> => {
@@ -98,13 +98,13 @@ export let transport = async (
       'Invariant: Monitoring object must be not null when transporting',
     );
   }
-  let fail = { ok: false };
+  const fail = { ok: false };
   /**
    * JSON.stringify replacer function is ~60-80% slower than JSON.stringify
    *
    * Perflink: https://dub.sh/json-replacer-fn
    */
-  let json = JSON.stringify(payload, (key, value) => {
+  const json = JSON.stringify(payload, (key, value) => {
     // Truncate floats to 5 decimal places (long floats cause error in ClickHouse)
     if (
       typeof value === 'number' &&
@@ -127,17 +127,17 @@ export let transport = async (
   });
   // gzip may not be worth it for small payloads,
   // only use it if the payload is large enough
-  let shouldCompress = json.length > GZIP_MIN_LEN;
-  let body =
+  const shouldCompress = json.length > GZIP_MIN_LEN;
+  const body =
     shouldCompress && supportsCompression ? await compress(json) : json;
 
   if (!navigator.onLine) return fail;
-  let headers: any = {
+  const headers: any = {
     'Content-Type': CONTENT_TYPE,
     'Content-Encoding': shouldCompress ? 'gzip' : undefined,
   };
   if (shouldCompress) url += '?z=1';
-  let size = typeof body === 'string' ? body.length : body.byteLength;
+  const size = typeof body === 'string' ? body.length : body.byteLength;
   return fetch(url, {
     body,
     method: 'POST',
@@ -171,16 +171,16 @@ export let transport = async (
     headers,
   });
 };
-let readStatsFromIndexDB = () => {
+const readStatsFromIndexDB = () => {
   /* TODO*/
   return null!;
 };
 
-let clearStatsFromIndexDB = () => {
+const clearStatsFromIndexDB = () => {
   /* TODO*/
   return;
 };
 
-let reset = () => {
+const reset = () => {
   clearStatsFromIndexDB();
 };

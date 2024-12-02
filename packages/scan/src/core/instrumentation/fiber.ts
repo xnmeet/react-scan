@@ -186,7 +186,7 @@ export const traverseFiber = (
   return null;
 };
 
-export const getSelfTime = (fiber?: Fiber | null | undefined) => {
+export const getTimings = (fiber?: Fiber | null | undefined) => {
   const totalTime = fiber?.actualDuration ?? 0;
   let selfTime = totalTime;
   let child = fiber?.child ?? null;
@@ -195,6 +195,7 @@ export const getSelfTime = (fiber?: Fiber | null | undefined) => {
     selfTime -= child.actualDuration ?? 0;
     child = child.sibling;
   }
+  console.log(fiber);
   return selfTime;
 };
 

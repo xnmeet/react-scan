@@ -4,7 +4,7 @@ import { isSSR } from "./constants";
 /**
  * Measure layout time
  */
-export let doubleRAF = (callback: (...args: Array<any>) => void) => {
+export const doubleRAF = (callback: (...args: Array<any>) => void) => {
   return requestAnimationFrame(() => {
     requestAnimationFrame(callback);
   });
@@ -17,11 +17,11 @@ export let doubleRAF = (callback: (...args: Array<any>) => void) => {
  *
  * @see https://github.com/ai/nanoid/blob/main/nanoid.js
  */
-export let generateId = () => {
-  let alphabet =
+export const generateId = () => {
+  const alphabet =
     "useandom-26T198340PX75pxJACKVERYMINDBUSHWOLF_GQZbfghjklqvwyzrict";
   let id = "";
-  let randomValues = crypto.getRandomValues(new Uint8Array(21));
+  const randomValues = crypto.getRandomValues(new Uint8Array(21));
   for (let i = 0; i < 21; i++) {
     id += alphabet[63 & randomValues[i]];
   }
@@ -31,16 +31,16 @@ export let generateId = () => {
 /**
  * @see https://deviceandbrowserinfo.com/learning_zone/articles/webgl_renderer_values
  */
-let getGpuRenderer = () => {
+const getGpuRenderer = () => {
   // Prevent WEBGL_debug_renderer_info deprecation warnings in firefox
   if (!('chrome' in window)) return '';
-  let gl = document!
+  const gl = document
     .createElement('canvas')
     // Get the specs for the fastest GPU available. This helps provide a better
     // picture of the device's capabilities.
     .getContext('webgl', { powerPreference: 'high-performance' });
   if (!gl) return '';
-  let ext = gl.getExtension('WEBGL_debug_renderer_info');
+  const ext = gl.getExtension('WEBGL_debug_renderer_info');
   return ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : '';
 };
 
@@ -59,10 +59,10 @@ export interface Session {
  * Modified from @palette.dev/browser:
  * @see https://gist.github.com/aidenybai/473689493f2d5d01bbc52e2da5950b45#file-palette-dev-browser-dist-palette-dev-mjs-L554
  */
-export let getSession = (): Session | null => {
+export const getSession = (): Session | null => {
   if (isSSR) return null;
-  let id = generateId();
-  let url = window.location.toString();
+  const id = generateId();
+  const url = window.location.toString();
   /**
    * WiFi connection strength
    *
@@ -70,14 +70,14 @@ export let getSession = (): Session | null => {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/NetworkInformation/effectiveType
    */
-  let connection = (navigator as any).connection;
-  let wifi = (connection && connection.effectiveType) || null;
+  const connection = (navigator as any).connection;
+  const wifi = (connection && connection.effectiveType) || null;
   /**
    * Number of CPU threads
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/hardwareConcurrency
    */
-  let cpu = navigator.hardwareConcurrency;
+  const cpu = navigator.hardwareConcurrency;
   /**
    * Device memory (GiB)
    *
@@ -86,9 +86,9 @@ export let getSession = (): Session | null => {
    * @see https://developer.mozilla.org/en-US/docs/Web/API/Navigator/deviceMemory
    */
   // @ts-expect-error - deviceMemory is still experimental
-  let mem = navigator.deviceMemory; // GiB ram
+  const mem = navigator.deviceMemory; // GiB ram
 
-  let session = {
+  const session = {
     id,
     url,
     wifi,
@@ -116,7 +116,7 @@ export let getSession = (): Session | null => {
  *
  * @see https://gist.github.com/aidenybai/473689493f2d5d01bbc52e2da5950b45#file-palette-dev-browser-dist-palette-dev-mjs-L334
  */
-export let debounce = <T extends (...args: Array<any>) => any>(
+export const debounce = <T extends (...args: Array<any>) => any>(
   callback: T,
   timeout = 1000,
 ): ((...args: Parameters<T>) => void) => {

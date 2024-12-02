@@ -1,6 +1,6 @@
 import type { Fiber, FiberRoot } from 'react-reconciler';
 import * as React from 'react';
-import { instrument, Render } from './instrumentation/index';
+import { instrument, type Render } from './instrumentation/index';
 import {
   type ActiveOutline,
   flushOutlines,
@@ -17,7 +17,7 @@ import {
 } from './web/inspect-element/inspect-state-machine';
 import { createToolbar } from './web/toolbar';
 import { getType } from './instrumentation/utils';
-import { debouncedFlush } from './web/monitor/network';
+import { debouncedFlush } from './monitor/network';
 
 export interface Options {
   /**

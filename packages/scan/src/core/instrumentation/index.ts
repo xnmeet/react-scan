@@ -5,7 +5,7 @@ import { isCompositeComponent } from '../web/inspect-element/utils';
 import { getDisplayName, fastSerialize, getType } from './utils';
 import {
   didFiberRender,
-  getSelfTime,
+  getTimings,
   hasMemoCache,
   shouldFilterFiber,
   traverseContexts,
@@ -80,7 +80,7 @@ export const getPropsRender = (fiber: Fiber, type: Function): Render | null => {
     trigger: false,
     changes,
     name: getDisplayName(type),
-    time: getSelfTime(fiber),
+    time: getTimings(fiber),
     forget: hasMemoCache(fiber),
   };
 };
@@ -124,10 +124,11 @@ export const getContextRender = (
     trigger: false,
     changes,
     name: getDisplayName(type),
-    time: getSelfTime(fiber),
+    time: getTimings(fiber),
     forget: hasMemoCache(fiber),
   };
 };
+
 // back compat
 export const reportRender = (
   name: string,
@@ -144,7 +145,7 @@ export const reportRender = (
       }
     }
   }
-  const time = getSelfTime(fiber) ?? 0;
+  const time = getTimings(fiber) ?? 0;
 
   ReactScanInternals.reportData[name] = {
     count: (report?.count ?? 0) + 1,
@@ -172,9 +173,8 @@ const getFiberPath = (fiber: Fiber) => {
 export const reportMonitoringRender = (
   fiber: Fiber,
   renders: Array<Render | null>,
-  monitor: typeof ReactScanInternals.monitor & {}
+  monitor: typeof ReactScanInternals.monitor & object,
 ) => {
-
   const fiberPath = getFiberPath(fiber);
 
   monitor.batch.push({
@@ -182,7 +182,11 @@ export const reportMonitoringRender = (
     componentPath: fiberPath,
   });
 };
-export const reportRenderFiber = (fiber: Fiber, renders: Array<Render | null>) => {
+
+export const reportRenderFiber = (
+  fiber: Fiber,
+  renders: Array<Render | null>,
+) => {
   const [reportFiber, report] = (() => {
     const currentFiberData = ReactScanInternals.reportDataByFiber.get(fiber);
     if (currentFiberData) {
@@ -206,7 +210,7 @@ export const reportRenderFiber = (fiber: Fiber, renders: Array<Render | null>) =
       }
     }
   }
-  const time = getSelfTime(fiber);
+  const time = getTimings(fiber);
 
   ReactScanInternals.reportDataByFiber.set(reportFiber, {
     count: (report?.count ?? 0) + 1,
@@ -266,7 +270,11 @@ export const instrument = ({
       ) {
         reportRenderFiber(fiber, [propsRender, contextRender]);
         if (ReactScanInternals.monitor) {
-          reportMonitoringRender(fiber, [propsRender, contextRender], ReactScanInternals.monitor);
+          reportMonitoringRender(
+            fiber,
+            [propsRender, contextRender],
+            ReactScanInternals.monitor,
+          );
         }
       }
 
@@ -304,7 +312,7 @@ export const instrument = ({
           trigger,
           changes: [],
           name: getDisplayName(type),
-          time: getSelfTime(fiber),
+          time: getTimings(fiber),
           forget: hasMemoCache(fiber),
         });
       }
@@ -315,7 +323,7 @@ export const instrument = ({
           trigger,
           changes: [],
           name: getDisplayName(type),
-          time: getSelfTime(fiber),
+          time: getTimings(fiber),
           forget: hasMemoCache(fiber),
         });
       }
