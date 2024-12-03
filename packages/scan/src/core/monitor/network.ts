@@ -17,7 +17,7 @@ export const flush = (): void => {
 
   if (!navigator.onLine) return;
 
-  if (!monitor.batch.length || !monitor.url) {
+  if (!monitor.components.length || !monitor.url) {
     return;
   }
   if (!session) {
@@ -25,27 +25,23 @@ export const flush = (): void => {
   }
 
   if (!session) return;
-  // we copy the batch incase we have to retry (we clear the batch immediately/optimistically)
+
   const payload: IngestRequest = {
-    interactions: [],
-    components: [],
+    interactions: monitor.interactions,
+    components: monitor.components,
     session,
   };
 
-  const batch = monitor.batch;
+  const components = monitor.components;
   monitor.pendingRequests++;
 
   try {
     transport(monitor.url, payload)
-      // we do this because react-dev-overlay (also next) will catch
-      // a TypeError: Failed to fetch (CORS error) and crash the app in development
       .then(() => {
         monitor.pendingRequests--;
       })
       .catch(async () => {
-        monitor.batch = monitor.batch.concat(batch);
-
-        // todo: exponential backoff
+        monitor.components = monitor.components.concat(components);
         await transport(monitor.url!, payload);
       });
   } catch {
@@ -54,7 +50,7 @@ export const flush = (): void => {
   setTimeout(() => {
     const monitor = Store.monitor.value;
     if (monitor) {
-      monitor.batch = [];
+      monitor.components = [];
     }
   }, 0);
 };

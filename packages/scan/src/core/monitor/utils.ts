@@ -1,4 +1,6 @@
+import type { Fiber } from 'react-reconciler';
 import { onIdle } from '../web/utils';
+import { getDisplayName } from '../instrumentation/utils';
 import { isSSR } from './constants';
 import { Device, type Session } from './types';
 
@@ -134,3 +136,18 @@ export const debounce = <T extends (...args: Array<any>) => any>(
     }, timeout);
   };
 };
+
+export function getComponentPath(fiber: Fiber): Array<string> {
+  const path: Array<string> = [];
+  let current: Fiber | null = fiber;
+
+  while (current) {
+    const name = getDisplayName(current.type);
+    if (name) {
+      path.unshift(name);
+    }
+    current = current.return;
+  }
+
+  return path;
+}

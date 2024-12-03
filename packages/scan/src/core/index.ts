@@ -24,6 +24,9 @@ import {
   isCompositeComponent,
   traverseFiber,
 } from './instrumentation/fiber';
+import { initPerformanceMonitoring } from './monitor/performance';
+import type { Interaction, Component } from './monitor/types';
+import { getComponentPath } from './monitor/utils';
 
 export interface Options {
   /**
@@ -117,15 +120,11 @@ export interface Options {
   onPaintFinish?: (outlines: Array<PendingOutline>) => void;
 }
 
-interface Event {
-  componentPath: Array<string>;
-  renders: Array<Render>;
-}
-
 interface Monitor {
   pendingRequests: number;
-  batch: Array<Event>;
+  components: Array<Component>;
   url: string | null;
+  interactions: Array<Interaction>;
 }
 
 interface StoreType {
@@ -267,6 +266,26 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
     };
 
     Store.legacyReportData.set(displayName, reportData);
+  }
+
+  const monitor = Store.monitor.value;
+  if (monitor && monitor.interactions && monitor.interactions.length > 0) {
+    const latestInteraction =
+      monitor.interactions[monitor.interactions.length - 1];
+
+    let totalTime = 0;
+    for (const render of renders) {
+      totalTime += render.time;
+    }
+
+    const componentPath = getComponentPath(fiber);
+    monitor.components.push({
+      interactionId: latestInteraction.id,
+      name: componentPath.join(' > '),
+      renders: renders.length,
+      instances: 1,
+      totalTime,
+    });
   }
 };
 
@@ -416,11 +435,17 @@ export const useScan = (options: Options) => {
 
 export const Monitor = ({ url }: { url: string }) => {
   Store.monitor.value = {
-    batch: [],
+    components: [],
     pendingRequests: 0,
     url,
+    interactions: [],
   };
-  return;
+
+  React.useEffect(() => {
+    initPerformanceMonitoring();
+  }, []);
+
+  return null;
 };
 
 export const onRender = (
