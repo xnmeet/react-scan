@@ -28,4 +28,6 @@ export function initPerformanceMonitoring() {
   observer.observe({
     entryTypes: ['interaction'],
   });
+
+  return observer;
 }

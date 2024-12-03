@@ -453,7 +453,8 @@ export const Monitor = ({
   };
 
   React.useEffect(() => {
-    initPerformanceMonitoring();
+    const observer = initPerformanceMonitoring();
+    return () => observer?.disconnect();
   }, []);
 
   return null;
