@@ -698,7 +698,7 @@ export const createToolbar = () => {
     const currentState = Store.inspectState.value;
     if (currentState.kind !== 'focused') return;
 
-    if (currentState.focusedDomElement) return;
+    if (!currentState.focusedDomElement) return;
     const { focusedDomElement } = currentState;
 
     const allElements = document.querySelectorAll('*');
