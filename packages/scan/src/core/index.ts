@@ -203,7 +203,7 @@ export const getReport = (type?: React.ComponentType<any>) => {
 export const setOptions = (options: Options) => {
   const { instrumentation } = ReactScanInternals;
   if (instrumentation) {
-    instrumentation.isPaused = !options.enabled;
+    instrumentation.isPaused = options.enabled === false;
   }
   ReactScanInternals.options = {
     ...ReactScanInternals.options,
@@ -354,7 +354,7 @@ export const start = () => {
       for (let i = 0, len = renders.length; i < len; i++) {
         const render = renders[i];
         const outline = getOutline(fiber, render);
-        if (!outline) return;
+        if (!outline) continue;
         ReactScanInternals.scheduledOutlines.push(outline);
 
         if (ReactScanInternals.options.playSound && audioContext) {

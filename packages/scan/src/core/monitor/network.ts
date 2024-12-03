@@ -1,4 +1,4 @@
-import { ReactScanInternals } from '../..';
+import { Store } from '../..';
 import {
   FLOAT_MAX_LEN,
   GZIP_MIN_LEN,
@@ -10,53 +10,53 @@ import { type IngestRequest, type Session } from './types';
 
 let session: Session | null = null;
 export const flush = (): void => {
-  if (!ReactScanInternals.monitor) {
-    throw new Error(
-      'Invariant: Monitoring object must be not null when flushing',
-    );
+  const monitor = Store.monitor.value;
+  if (!monitor) {
+    return;
   }
-  if (!ReactScanInternals.monitor.url) {
-    throw new Error('Invariant: URL must be defined when flushing');
-  }
-  const derefMonitor = ReactScanInternals.monitor;
-  const derefUrl = ReactScanInternals.monitor.url;
+
   if (!navigator.onLine) return;
 
-  const nothingToFlush = ReactScanInternals.monitor.batch.length === 0; // determine later
-  if (nothingToFlush) {
+  if (!monitor.batch.length || !monitor.url) {
     return;
   }
   if (!session) {
     session = getSession();
   }
 
+  if (!session) return;
   // we copy the batch incase we have to retry (we clear the batch immediately/optimistically)
   const payload: IngestRequest = {
-    interactions: readStatsFromIndexDB(),
+    interactions: [],
     components: [],
-    session: session!,
+    session,
   };
 
-  const batch = ReactScanInternals.monitor.batch;
-  ReactScanInternals.monitor.pendingRequests++;
+  const batch = monitor.batch;
+  monitor.pendingRequests++;
 
   try {
-    transport(derefUrl, payload)
+    transport(monitor.url, payload)
       // we do this because react-dev-overlay (also next) will catch
       // a TypeError: Failed to fetch (CORS error) and crash the app in development
       .then(() => {
-        derefMonitor.pendingRequests--;
+        monitor.pendingRequests--;
       })
       .catch(async () => {
-        derefMonitor.batch = derefMonitor.batch.concat(batch);
+        monitor.batch = monitor.batch.concat(batch);
 
         // todo: exponential backoff
-        await transport(derefUrl, payload);
+        await transport(monitor.url!, payload);
       });
   } catch {
     /* */
   }
-  setTimeout(reset, 0);
+  setTimeout(() => {
+    const monitor = Store.monitor.value;
+    if (monitor) {
+      monitor.batch = [];
+    }
+  }, 0);
 };
 
 export const debouncedFlush = debounce(flush, 5000);
@@ -79,11 +79,6 @@ export const transport = async (
   url: string,
   payload: IngestRequest,
 ): Promise<{ ok: boolean }> => {
-  if (!ReactScanInternals.monitor) {
-    throw new Error(
-      'Invariant: Monitoring object must be not null when transporting',
-    );
-  }
   const fail = { ok: false };
   /**
    * JSON.stringify replacer function is ~60-80% slower than JSON.stringify
@@ -145,22 +140,9 @@ export const transport = async (
      */
     keepalive:
       GZIP_MAX_LEN > size &&
-      MAX_PENDING_REQUESTS > ReactScanInternals.monitor.pendingRequests,
+      MAX_PENDING_REQUESTS > (Store.monitor.value?.pendingRequests ?? 0),
     priority: 'low',
     // mode: 'no-cors',
     headers,
   });
-};
-const readStatsFromIndexDB = () => {
-  /* TODO*/
-  return null!;
-};
-
-const clearStatsFromIndexDB = () => {
-  /* TODO*/
-  return;
-};
-
-const reset = () => {
-  clearStatsFromIndexDB();
 };

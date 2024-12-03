@@ -1,6 +1,6 @@
 import { onIdle } from '../web/utils';
 import { isSSR } from './constants';
-import { Device, Session } from './types';
+import { Device, type Session } from './types';
 
 const getDeviceType = () => {
   const userAgent = navigator.userAgent;
