@@ -109,6 +109,7 @@
   ],
   "scripts": {
     "build": "NODE_ENV=production tsup",
+    "pack": "pnpm build && npm pack",
     "dev": "NODE_ENV=development tsup --watch",
     "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
     "prettier": "prettier --config .prettierrc.mjs -w src",

@@ -436,6 +436,7 @@ export const useScan = (options: Options) => {
   }, []);
 };
 
+"use client";
 export const Monitor = ({
   url,
   apiKey,
