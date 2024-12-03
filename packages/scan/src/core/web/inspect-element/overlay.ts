@@ -1,5 +1,5 @@
 import type { Fiber } from 'react-reconciler';
-import { ReactScanInternals } from '../..';
+import { ReactScanInternals, Store } from '../..';
 import { getDisplayName } from '../../instrumentation/utils';
 import { getCompositeComponentFromElement } from './utils';
 
@@ -46,9 +46,9 @@ export const drawHoverOverlay = (
   }
 
   const reportDataFiber =
-    ReactScanInternals.reportDataByFiber.get(parentCompositeFiber) ??
+    Store.reportData.get(parentCompositeFiber) ??
     (parentCompositeFiber.alternate
-      ? ReactScanInternals.reportDataByFiber.get(parentCompositeFiber.alternate)
+      ? Store.reportData.get(parentCompositeFiber.alternate)
       : null);
 
   const stats: PerformanceStats = {

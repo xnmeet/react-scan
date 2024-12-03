@@ -63,11 +63,6 @@ export const debouncedFlush = debounce(flush, 5000);
 const CONTENT_TYPE = 'application/json';
 const supportsCompression = typeof CompressionStream === 'function';
 
-/**
- * Modified from @palette.dev/browser:
- *
- * @see https://gist.github.com/aidenybai/473689493f2d5d01bbc52e2da5950b45#file-palette-dev-browser-dist-palette-dev-mjs-L357
- */
 export const compress = async (payload: string): Promise<ArrayBuffer> => {
   const stream = new Blob([payload], { type: CONTENT_TYPE })
     .stream()
@@ -107,10 +102,7 @@ export const transport = async (
     // to reduce the size of the payload
     if (
       // eslint-disable-next-line eqeqeq
-      (value != null &&
-        value !== false &&
-        // eslint-disable-next-line @typescript-eslint/prefer-string-starts-ends-with
-        key[0] !== '_') ||
+      (value != null && value !== false) ||
       (Array.isArray(value) && value.length)
     ) {
       return value;
@@ -155,10 +147,7 @@ export const transport = async (
       GZIP_MAX_LEN > size &&
       MAX_PENDING_REQUESTS > ReactScanInternals.monitor.pendingRequests,
     priority: 'low',
-    mode:
-      /* proxySessionId || */ process.env.NODE_ENV === 'production'
-        ? undefined
-        : 'no-cors',
+    // mode: 'no-cors',
     headers,
   });
 };

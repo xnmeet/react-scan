@@ -1,4 +1,4 @@
-import { ReactScanInternals, setOptions } from '../../index';
+import { ReactScanInternals, setOptions, Store } from '../../index';
 import { createElement, throttle } from './utils';
 import { MONO_FONT } from './outline';
 import { INSPECT_TOGGLE_ID } from './inspect-element/inspect-state-machine';
@@ -21,10 +21,12 @@ export const restoreSizeFromLocalStorage = (el: HTMLDivElement) => {
   el.style.width = `${width ?? 360}px`;
 };
 
-export const createToolbar = (): (() => void) => {
+export const createToolbar = () => {
   if (typeof window === 'undefined') {
-    return () => {
-      /**/
+    return {
+      cleanup: () => {
+        /**/
+      },
     };
   }
 
@@ -491,7 +493,7 @@ export const createToolbar = (): (() => void) => {
     '#react-scan-resize-handle',
   )!;
 
-  let isActive = !ReactScanInternals.isPaused;
+  let isActive = !ReactScanInternals.instrumentation?.isPaused;
   let isSoundOn = false;
 
   document.documentElement.appendChild(toolbar);
@@ -593,10 +595,9 @@ export const createToolbar = (): (() => void) => {
     powerBtn.innerHTML = isActive ? PAUSE_SVG : PLAY_SVG;
     powerBtn.title = isActive ? 'Stop' : 'Start';
     powerBtn.style.color = isActive ? '#fff' : '#999';
-    const focusActive = ReactScanInternals.inspectState.kind === 'focused';
+    const focusActive = Store.inspectState.value.kind === 'focused';
 
-    const isInspectActive =
-      ReactScanInternals.inspectState.kind === 'inspecting';
+    const isInspectActive = Store.inspectState.value.kind === 'inspecting';
 
     nextFocusBtn.style.display = focusActive ? 'flex' : 'none';
     previousFocusBtn.style.display = focusActive ? 'flex' : 'none';
@@ -628,17 +629,20 @@ export const createToolbar = (): (() => void) => {
   powerBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     isActive = !isActive;
-    ReactScanInternals.isPaused = !isActive;
+    const instrumentation = ReactScanInternals.instrumentation;
+    if (instrumentation) {
+      instrumentation.isPaused = !isActive;
+    }
     localStorage.setItem(
       'react-scan-paused',
-      String(ReactScanInternals.isPaused),
+      String(Boolean(instrumentation?.isPaused)),
     );
     updateUI();
   });
 
   inspectBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    const currentState = ReactScanInternals.inspectState;
+    const currentState = Store.inspectState.value;
 
     switch (currentState.kind) {
       case 'inspecting': {
@@ -646,15 +650,15 @@ export const createToolbar = (): (() => void) => {
         propContainer.style.maxHeight = '0';
         propContainer.style.width = 'fit-content';
 
-        ReactScanInternals.inspectState = {
+        Store.inspectState.value = {
           kind: 'inspect-off',
           propContainer: currentState.propContainer,
         };
 
         setTimeout(() => {
-          if (ReactScanInternals.inspectState.kind === 'inspect-off') {
+          if (Store.inspectState.value.kind === 'inspect-off') {
             // race condition safety net
-            ReactScanInternals.inspectState = {
+            Store.inspectState.value = {
               kind: 'inspect-off',
               propContainer: currentState.propContainer,
             };
@@ -666,7 +670,7 @@ export const createToolbar = (): (() => void) => {
         propContainer.style.maxHeight = '0';
         propContainer.style.width = 'fit-content';
         propContainer.innerHTML = '';
-        ReactScanInternals.inspectState = {
+        Store.inspectState.value = {
           kind: 'inspecting',
           hoveredDomElement: currentState.focusedDomElement,
           propContainer: currentState.propContainer,
@@ -674,7 +678,7 @@ export const createToolbar = (): (() => void) => {
         break;
       }
       case 'inspect-off': {
-        ReactScanInternals.inspectState = {
+        Store.inspectState.value = {
           kind: 'inspecting',
           hoveredDomElement: null,
           propContainer,
@@ -691,11 +695,11 @@ export const createToolbar = (): (() => void) => {
   nextFocusBtn.addEventListener('click', (e) => {
     e.stopPropagation();
 
-    const currentState = ReactScanInternals.inspectState;
+    const currentState = Store.inspectState.value;
     if (currentState.kind !== 'focused') return;
 
+    if (currentState.focusedDomElement) return;
     const { focusedDomElement } = currentState;
-    if (!focusedDomElement) return;
 
     const allElements = document.querySelectorAll('*');
     const elements = Array.from(allElements).filter((el): el is HTMLElement => {
@@ -719,11 +723,12 @@ export const createToolbar = (): (() => void) => {
     }
 
     if (nextElement) {
-      ReactScanInternals.inspectState = {
+      Store.inspectState.value = {
         kind: 'focused',
         focusedDomElement: nextElement,
         propContainer: currentState.propContainer,
       };
+      updateUI();
       nextFocusBtn.style.setProperty('--nav-opacity', '1');
       nextFocusBtn.disabled = false;
     } else {
@@ -737,11 +742,11 @@ export const createToolbar = (): (() => void) => {
   previousFocusBtn.addEventListener('click', (e) => {
     e.stopPropagation();
 
-    const currentState = ReactScanInternals.inspectState;
+    const currentState = Store.inspectState.value;
     if (currentState.kind !== 'focused') return;
 
+    if (currentState.focusedDomElement) return;
     const { focusedDomElement } = currentState;
-    if (!focusedDomElement) return;
 
     const allElements = document.querySelectorAll('*');
     const elements = Array.from(allElements).filter((el): el is HTMLElement => {
@@ -764,7 +769,7 @@ export const createToolbar = (): (() => void) => {
     }
 
     if (prevElement) {
-      ReactScanInternals.inspectState = {
+      Store.inspectState.value = {
         kind: 'focused',
         focusedDomElement: prevElement,
         propContainer: currentState.propContainer,
@@ -796,12 +801,12 @@ export const createToolbar = (): (() => void) => {
     document.documentElement.appendChild(toolbar);
   }
 
-  ReactScanInternals.inspectState = {
+  Store.inspectState.value = {
     kind: 'inspect-off',
     propContainer,
   };
 
-  ReactScanInternals.subscribe('inspectState', () => {
+  Store.inspectState.subscribe(() => {
     updateUI();
   });
 

@@ -23,7 +23,7 @@ export interface IngestRequest {
 
 export interface Interaction {
   id: string; // a hashed unique id for interaction (groupable across sessions)
-  name: string; // name of interaction (i.e nav#top-menu.sc-601d0142-19.gHiJkL) or something useful
+  name: string; // name of Component
   type: string; // type of interaction i.e pointer
   time: number; // time of interaction in ms
   timestamp: number;

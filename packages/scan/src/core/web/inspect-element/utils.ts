@@ -1,5 +1,5 @@
 import type { Fiber } from 'react-reconciler';
-import { ReactScanInternals } from '../../index';
+import { ReactScanInternals, Store } from '../../index';
 import {
   FunctionComponentTag,
   ClassComponentTag,
@@ -156,7 +156,10 @@ export const isCurrentTree = (fiber: Fiber) => {
   let rootFiber: Fiber | null = null;
 
   while (curr) {
-    if (curr.stateNode && ReactScanInternals.fiberRoots.has(curr.stateNode)) {
+    if (
+      curr.stateNode &&
+      ReactScanInternals.instrumentation?.fiberRoots.has(curr.stateNode)
+    ) {
       rootFiber = curr;
       break;
     }
@@ -241,11 +244,11 @@ export const getAllFiberContexts = (fiber: Fiber): Map<any, unknown> => {
 };
 
 export const hasValidParent = () => {
-  if (ReactScanInternals.inspectState.kind !== 'focused') {
+  if (Store.inspectState.value.kind !== 'focused') {
     return false;
   }
 
-  const { focusedDomElement } = ReactScanInternals.inspectState;
+  const { focusedDomElement } = Store.inspectState.value;
   if (!focusedDomElement) {
     return false;
   }
@@ -268,6 +271,7 @@ export const hasValidParent = () => {
   return hasValidParent;
 };
 
+// what does composite mean? https://github.com/facebook/react/blob/865d2c418d5ba6fb4546e4b58616cd9b7701af85/packages/react/src/jsx/ReactJSXElement.js#L490
 export const isCompositeComponent = (fiber: Fiber) => {
   return (
     fiber.tag === FunctionComponentTag ||
