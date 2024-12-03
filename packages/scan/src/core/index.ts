@@ -1,3 +1,5 @@
+'use client';
+
 import type { Fiber } from 'react-reconciler';
 import * as React from 'react';
 import { type Signal, signal } from '@preact/signals';
@@ -436,21 +438,13 @@ export const useScan = (options: Options) => {
   }, []);
 };
 
-"use client";
-export const Monitor = ({
-  url,
-  apiKey,
-}: {
-  url?: string;
-  apiKey: string;
-}) => {
+('use client');
+export const Monitor = ({ url, apiKey }: { url?: string; apiKey: string }) => {
   if (!apiKey)
-    throw new Error(
-      'Please provide a valid API key for React Scan monitoring',
-    );
+    throw new Error('Please provide a valid API key for React Scan monitoring');
 
   // TODO(nisarg): Fix this default value after we confirm the URL
-  url ??= 'https://monitoring.million.dev/api/v1/ingest'
+  url ??= 'https://monitoring.million.dev/api/v1/ingest';
   Store.monitor.value ??= {
     components: [],
     pendingRequests: 0,
@@ -461,6 +455,10 @@ export const Monitor = ({
 
   React.useEffect(() => {
     const observer = initPerformanceMonitoring();
+    scan({
+      enabled: true,
+      showToolbar: false,
+    });
     return () => observer?.disconnect();
   }, []);
 
