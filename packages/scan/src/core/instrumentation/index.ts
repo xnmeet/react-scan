@@ -161,8 +161,9 @@ const getFiberPath = (fiber: Fiber) => {
     if (!pathFiber) {
       return;
     }
-    if (isCompositeComponent(pathFiber))
-      [path.push(getDisplayName(pathFiber.type) ?? 'Unknown')];
+    if (isCompositeComponent(pathFiber)) {
+      path.push(getDisplayName(pathFiber.type) ?? 'Unknown');
+    }
     helper(pathFiber.return);
   };
 
