@@ -19,7 +19,11 @@ import {
 import { createToolbar } from './web/toolbar';
 import { getDisplayName, getType } from './instrumentation/utils';
 import { debouncedFlush } from './monitor/network';
-import { getTimings, traverseFiber } from './instrumentation/fiber';
+import {
+  getTimings,
+  isCompositeComponent,
+  traverseFiber,
+} from './instrumentation/fiber';
 
 export interface Options {
   /**
@@ -327,6 +331,10 @@ export const start = () => {
         // don't draw if it's paused
         return;
       }
+      if (isCompositeComponent(fiber)) {
+        reportRender(fiber, renders);
+      }
+
       ReactScanInternals.options.onRender?.(fiber, renders);
 
       const type = getType(fiber.type) || fiber.type;

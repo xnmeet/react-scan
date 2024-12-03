@@ -8,6 +8,7 @@ import {
   MemoComponentTag,
   SimpleMemoComponentTag,
   ForwardRefTag,
+  isCompositeComponent,
 } from '../../instrumentation/fiber';
 import { getRect } from '../outline';
 
@@ -269,17 +270,6 @@ export const hasValidParent = () => {
     }
   }
   return hasValidParent;
-};
-
-// what does composite mean? https://github.com/facebook/react/blob/865d2c418d5ba6fb4546e4b58616cd9b7701af85/packages/react/src/jsx/ReactJSXElement.js#L490
-export const isCompositeComponent = (fiber: Fiber) => {
-  return (
-    fiber.tag === FunctionComponentTag ||
-    fiber.tag === ClassComponentTag ||
-    fiber.tag === SimpleMemoComponentTag ||
-    fiber.tag === MemoComponentTag ||
-    fiber.tag === ForwardRefTag
-  );
 };
 
 export const getOverrideMethods = () => {
