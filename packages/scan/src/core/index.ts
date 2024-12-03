@@ -441,10 +441,16 @@ export const Monitor = ({
   url,
   apiKey,
 }: {
-  url: string;
-  apiKey: string | null;
+  url?: string;
+  apiKey: string;
 }) => {
-  if (!apiKey) throw new Error('apiKey is required for React Scan monitoring');
+  if (!apiKey)
+    throw new Error(
+      'Please provide a valid API key for React Scan monitoring',
+    );
+
+  // TODO(nisarg): Fix this default value after we confirm the URL
+  url ??= 'https://monitoring.million.dev/api/v1/ingest'
   Store.monitor.value ??= {
     components: [],
     pendingRequests: 0,
