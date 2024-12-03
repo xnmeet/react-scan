@@ -124,6 +124,7 @@ interface Monitor {
   pendingRequests: number;
   components: Array<Component>;
   url: string | null;
+  apiKey: string | null;
   interactions: Array<Interaction>;
 }
 
@@ -386,7 +387,9 @@ export const start = () => {
         }
       }
       flushOutlines(ctx, new Map());
-      debouncedFlush();
+      if (Store.monitor) {
+        debouncedFlush();
+      }
     },
     onCommitFinish() {
       ReactScanInternals.options.onCommitFinish?.();
@@ -433,11 +436,19 @@ export const useScan = (options: Options) => {
   }, []);
 };
 
-export const Monitor = ({ url }: { url: string }) => {
-  Store.monitor.value = {
+export const Monitor = ({
+  url,
+  apiKey,
+}: {
+  url: string;
+  apiKey: string | null;
+}) => {
+  if (!apiKey) throw new Error('apiKey is required for React Scan monitoring');
+  Store.monitor.value ??= {
     components: [],
     pendingRequests: 0,
     url,
+    apiKey,
     interactions: [],
   };
 

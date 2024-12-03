@@ -109,6 +109,7 @@ export const transport = async (
   const headers: any = {
     'Content-Type': CONTENT_TYPE,
     'Content-Encoding': shouldCompress ? 'gzip' : undefined,
+    'x-api-key': Store.monitor.value?.apiKey,
   };
   if (shouldCompress) url += '?z=1';
   const size = typeof body === 'string' ? body.length : body.byteLength;
