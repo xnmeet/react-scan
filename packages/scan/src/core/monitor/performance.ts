@@ -3,40 +3,83 @@ import type { Interaction } from './types';
 import { generateId } from './utils';
 
 export function initPerformanceMonitoring() {
-  if (!window.PerformanceObserver) return;
+  const monitor = Store.monitor.value;
+  if (!monitor) return;
 
-  const observer = new PerformanceObserver((list) => {
-    const monitor = Store.monitor.value;
-    if (!monitor) return;
+  const createInteraction = (event: Event): Interaction => ({
+    id: generateId(),
+    name: event.type,
+    type: event.type,
+    time: 0, // We'll update this when the interaction "ends"
+    timestamp: performance.now(),
+  });
 
-    const entries = list.getEntries();
-    const interactionIds = new Set<number>();
-    for (let i = 0, len = entries.length; i < len; i++) {
-      const entry = entries[i] as PerformanceEventTiming & {
-        interactionId?: number;
-      };
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-      if (!(entry.interactionId || entry.entryType === 'first-input')) continue;
-      else if (entry.interactionId && interactionIds.has(entry.interactionId))
-        continue;
-      interactionIds.add(entry.interactionId!);
-
-      const interaction: Interaction = {
-        id: generateId(),
-        name: entry.name,
-        type: entry.name,
-        time: entry.duration,
-        timestamp: entry.startTime,
-      };
-
+  const handlers = {
+    click: (event: MouseEvent) => {
+      const interaction = createInteraction(event);
       monitor.interactions.push(interaction);
-    }
-  });
+    },
 
-  observer.observe({
-    entryTypes: ['event', 'first-input'],
-    buffered: true,
-  });
+    scroll: (() => {
+      let scrollTimeout: number;
+      let scrollStart: number;
+      let currentInteraction: Interaction | null = null;
 
-  return observer;
+      return (event: Event) => {
+        if (!currentInteraction) {
+          scrollStart = performance.now();
+          currentInteraction = createInteraction(event);
+          monitor.interactions.push(currentInteraction);
+        }
+
+        // Clear existing timeout
+        window.clearTimeout(scrollTimeout);
+
+        // Set new timeout
+        scrollTimeout = window.setTimeout(() => {
+          if (currentInteraction) {
+            currentInteraction.time = performance.now() - scrollStart;
+            currentInteraction = null;
+          }
+        }, 150); // Debounce scroll end
+      };
+    })(),
+
+    keydown: (() => {
+      let typingTimeout: number;
+      let typingStart: number;
+      let currentInteraction: Interaction | null = null;
+
+      return (event: KeyboardEvent) => {
+        if (!currentInteraction) {
+          typingStart = performance.now();
+          currentInteraction = createInteraction(event);
+          monitor.interactions.push(currentInteraction);
+        }
+
+        // Clear existing timeout
+        window.clearTimeout(typingTimeout);
+
+        // Set new timeout
+        typingTimeout = window.setTimeout(() => {
+          if (currentInteraction) {
+            currentInteraction.time = performance.now() - typingStart;
+            currentInteraction = null;
+          }
+        }, 500); // Debounce typing end
+      };
+    })(),
+  };
+
+  // Add event listeners
+  window.addEventListener('click', handlers.click);
+  window.addEventListener('scroll', handlers.scroll, { passive: true });
+  window.addEventListener('keydown', handlers.keydown);
+
+  // Return cleanup function
+  return () => {
+    window.removeEventListener('click', handlers.click);
+    window.removeEventListener('scroll', handlers.scroll);
+    window.removeEventListener('keydown', handlers.keydown);
+  };
 }
