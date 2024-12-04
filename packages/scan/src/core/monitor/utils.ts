@@ -142,9 +142,11 @@ export function getComponentPath(fiber: Fiber): Array<string> {
   let current: Fiber | null = fiber;
 
   while (current) {
-    const name = getDisplayName(current.type);
-    if (name) {
-      path.unshift(name);
+    if (current.type) {
+      const name = getDisplayName(current.type);
+      if (name) {
+        path.unshift(name);
+      }
     }
     current = current.return;
   }

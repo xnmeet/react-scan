@@ -1,13 +1,16 @@
-import { scan } from 'react-scan/dist/index.mjs'; // force production build
+import { scan, Monitor } from 'react-scan/dist/index.mjs'; // force production build
 import React, { useState, createContext } from 'react';
 import ReactDOMClient from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
 
 import './styles.css';
 
-scan({
-  enabled: true,
-});
+// scan({
+//   enabled: true,
+//   monitor: {
+//     url: 'https://localhost:3000/api/scan',
+//   },
+// });
 
 const TooltipContext = createContext({ tooltip: '' });
 
@@ -193,5 +196,6 @@ ReactDOMClient.createRoot(document.getElementById('root')).render(
   <>
     <Analytics />
     <App />
+    <Monitor apiKey="123" />
   </>,
 );

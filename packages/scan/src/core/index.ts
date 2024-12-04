@@ -251,24 +251,24 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
     Store.reportData.set(reportFiber, reportData);
   }
 
-  if (!displayName || !ReactScanInternals.options.report) return;
+  if (displayName && ReactScanInternals.options.report) {
+    const prevLegacyRenderData = Store.legacyReportData.get(displayName);
 
-  const prevLegacyRenderData = Store.legacyReportData.get(displayName);
+    if (prevLegacyRenderData) {
+      prevLegacyRenderData.renders.push(...renders);
+    } else {
+      const time = getTimings(fiber);
 
-  if (prevLegacyRenderData) {
-    prevLegacyRenderData.renders.push(...renders);
-  } else {
-    const time = getTimings(fiber);
+      const reportData = {
+        count: renders.length,
+        time,
+        renders,
+        displayName: null,
+        type: getType(fiber.type) || fiber.type,
+      };
 
-    const reportData = {
-      count: renders.length,
-      time,
-      renders,
-      displayName: null,
-      type: getType(fiber.type) || fiber.type,
-    };
-
-    Store.legacyReportData.set(displayName, reportData);
+      Store.legacyReportData.set(displayName, reportData);
+    }
   }
 
   const monitor = Store.monitor.value;
@@ -454,12 +454,11 @@ export const Monitor = ({ url, apiKey }: { url?: string; apiKey: string }) => {
   };
 
   React.useEffect(() => {
-    const observer = initPerformanceMonitoring();
     scan({
       enabled: true,
       showToolbar: false,
     });
-    return observer;
+    return initPerformanceMonitoring();
   }, []);
 
   return null;
