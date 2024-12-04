@@ -29,15 +29,37 @@ export interface Interaction {
   sessionId?: string;
 }
 
-// export interface Component {
-//   interactionId: string; // grouping components by interaction
-//   name: string;
-//   renders: number; // how many times it re-rendered / instances (normalized)
-//   instances: number; // instances which will be used to get number of total renders by * by renders
-//   totalTime?: number;
-//   selfTime?: number;
-// }
-interface Component {
+export interface Component {
+  interactionId: string; // grouping components by interaction
+  name: string;
+  renders: number; // how many times it re-rendered / instances (normalized)
+  instances: number; // instances which will be used to get number of total renders by * by renders
+  totalTime?: number;
+  selfTime?: number;
+}
+
+
+// ROB CLEAN UP TYPES AND COMMENTS LATER
+export interface IngestRequest {
+  interactions: Array<Interaction>;
+  components: Array<Component>;
+  session: Session;
+}
+
+// used internally in runtime for interaction tracking. converted to Interaction when flushed
+export interface InternalInteraction {
+  componentName: string;
+  componentPath: string;
+  performanceEntry: PerformanceInteraction;
+  components: Map<
+    string,
+    InternalComponent & {
+      fibers: Set<Fiber>; // no references will exist to this once array is cleared after flush, so we don't have to worry about memory leaks
+      retiresAllowed: number; // if our server is down and we can't collect fibers/ user has no network, it will memory leak. We need to only allow a set amount of retries before it gets gcd
+    }
+  >;
+}
+interface InternalComponent {
   // interactionId: string; // grouping components by interaction
   name: string;
   renders: number; // how many times it re-rendered / instances (normalized)
@@ -45,45 +67,6 @@ interface Component {
   totalTime?: number;
   selfTime?: number;
 }
-
-// ROB CLEAN UP TYPES AND COMMENTS LATER
-export interface IngestRequest {
-  interactions: Array<Interaction>;
-  components: Array<{
-    interactionId: string; // grouping components by interaction
-    name: string;
-    renders: number; // how many times it re-rendered / instances (normalized)
-    instances: number; // instances which will be used to get number of total renders by * by renders
-    totalTime?: number;
-    selfTime?: number;
-  }>;
-  session: Session;
-}
-export interface ScanInteraction {
-  componentName: string;
-  componentPath: string;
-  performanceEntry: PerformanceInteraction;
-  components: Map<
-    string,
-    Component & {
-      fibers: Set<Fiber>; // no references will exist to this once array is cleared after flush, so we don't have to worry about memory leaks
-      retiresAllowed: number; // if our server is down and we can't collect fibers/ user has no network, it will memory leak. We need to only allow a set amount of retries before it gets gcd
-    }
-  >;
-}
-
-// export interface Interaction {
-//   // id: string; // a hashed unique id for interaction (groupable across sessions)
-//   // name: string; // name of Component
-//   // type: string; // type of interaction i.e pointer
-//   // time: number; // time of interaction in ms
-//   componentName: string
-//   componentPath: string, // the unique identifier for the interaction on the website
-//   entry: In
-
-//   // timestamp: number;
-//   // //... anything you might need here
-// }
 
 export interface PerformanceInteractionEntry extends PerformanceEntry {
   interactionId: string;

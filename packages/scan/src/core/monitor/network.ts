@@ -6,76 +6,70 @@ import {
   MAX_PENDING_REQUESTS,
 } from './constants';
 import { getSession } from './utils';
-import { Interaction, type IngestRequest, type Session } from './types';
-import { Fiber } from 'react-reconciler';
-function isFiberUnmounted(fiber: Fiber): boolean {
-  if (!fiber) return true;
-
-  if ((fiber.flags & /*Deletion=*/ 8) !== 0) return true;
-
-  if (!fiber.return && fiber.tag !== /*HostRoot=*/ 3) return true;
-
-  const alternate = fiber.alternate;
-  if (alternate) {
-    if ((alternate.flags & /*Deletion=*/ 8) !== 0) return true;
-  }
-
-  return false;
-}
+import type {
+  Interaction,
+  IngestRequest,
+  Session,
+  InternalInteraction,
+  Component,
+} from './types';
 
 let session: Session | null = null;
 export const flush = (): void => {
-  console.log('flush call');
-
   const monitor = Store.monitor.value;
   if (
     !monitor ||
     !navigator.onLine ||
     !monitor.url ||
     !monitor.interactions.length
-  ) {
+  )
     return;
-  }
 
-  if (!session) {
-    session = getSession();
-  }
-  if (!session) return;
+  // MARK: Sessions
+  if (!session) session = getSession();
+  if (!session) return; // only on SSR (unlikely)
 
+  session.url = window.location.toString();
+  session.route = Store.monitor.value?.route ?? null;
+
+  // MARK: Interactions
   const now = performance.now();
-  const recentInteractions: typeof monitor.interactions = [];
-  const oldInteractions: typeof monitor.interactions = [];
+  const interactions = new Array<Interaction>();
+  const toFlushInteractions = new Array<InternalInteraction>();
+  const toKeepInteractions = new Array<InternalInteraction>();
 
   // Split interactions into recent (< 4s) and old
-  monitor.interactions.forEach((interaction) => {
+  for (let i = 0; i < monitor.interactions.length; i++) {
+    const interaction = monitor.interactions[i];
     if (now - interaction.performanceEntry.startTime <= 4000) {
-      recentInteractions.push(interaction);
+      interactions.push({
+        id: `${interaction.performanceEntry.type}::${interaction.componentPath}::${session?.route}`, //'${event. type}::${normalizePath(path)}::${getSession()?.url}';
+        name: interaction.componentName,
+        time: interaction.performanceEntry.duration,
+        timestamp: interaction.performanceEntry.timestamp,
+        type: interaction.performanceEntry.type,
+      });
+      toFlushInteractions.push(interaction);
     } else {
-      oldInteractions.push(interaction);
+      toKeepInteractions.push(interaction);
     }
-  });
-
-  if (!oldInteractions.length) {
-    return;
   }
 
-  const aggregatedComponents: Array<{
-    interactionId: string;
-    name: string;
-    renders: number;
-    instances: number;
-    totalTime?: number;
-    selfTime?: number;
-  }> = [];
+  if (!toKeepInteractions.length) return;
 
-  for (const interaction of oldInteractions) {
-    for (const [name, component] of Array.from(
-      interaction.components.entries(),
-    )) {
-      aggregatedComponents.push({
+  const components: Array<Component> = [];
+
+  for (let i = 0; i < toFlushInteractions.length; i++) {
+    const interaction = toFlushInteractions[i];
+    const interactionId = interactions[i].id; // indexes should be match, and id already computed
+    const entries = Array.from(interaction.components.entries());
+    for (let j = 0; j < entries.length; j++) {
+      const [name, component] = entries[j];
+
+      components.push({
         name,
+        interactionId,
         instances: component.fibers.size,
-        interactionId: interaction.performanceEntry.id,
         renders: component.renders,
         totalTime: component.totalTime,
       });
@@ -87,62 +81,30 @@ export const flush = (): void => {
         // we decide to skip the collection if this is the case
         interaction.components.delete(name);
       }
-
-      component.retiresAllowed -= 1;
+      component.retiresAllowed--;
     }
   }
 
   const payload: IngestRequest = {
-    interactions: oldInteractions.map(
-      (interaction) =>
-        ({
-          id: `${interaction.performanceEntry.type}::${interaction.componentPath}::${getSession()?.url}`, //'${event. type}::${normalizePath(path)}::${getSession()?.url}';
-          name: interaction.componentName,
-          time: interaction.performanceEntry.duration,
-          timestamp: interaction.performanceEntry.timestamp,
-          type: interaction.performanceEntry.type,
-          // componentName: interaction.componentName,
-          // componentPath: interaction.componentPath,
-          // id: interaction.performanceEntry.id,
-          // latency: interaction.performanceEntry.latency,
-          // type: interaction.performanceEntry.type,
-          // startTime: interaction.performanceEntry.startTime,
-          // processingStart: interaction.performanceEntry.processingStart,
-          // processingEnd: interaction.performanceEntry.processingEnd,
-          // duration: interaction.performanceEntry.duration,
-          // inputDelay: interaction.performanceEntry.inputDelay,
-          // processingDuration: interaction.performanceEntry.processingDuration,
-          // presentationDelay: interaction.performanceEntry.presentationDelay,
-
-          // performanceEntry: interaction.performanceEntry,
-        }) satisfies Interaction,
-    ),
-    components: aggregatedComponents,
+    interactions,
+    components,
     session,
   };
 
-  console.log('attempting to flush', payload);
-
   monitor.pendingRequests++;
+  monitor.interactions = toKeepInteractions;
 
   try {
     transport(monitor.url, payload)
       .then(() => {
         monitor.pendingRequests--;
-        // there may still be renders associated with these interaction, so don't flush just yet
-        monitor.interactions = recentInteractions;
       })
-      .catch(async () => {
-        // On failure, restore old interactions for retry
-        monitor.interactions = monitor.interactions.concat(oldInteractions);
-        await transport(monitor.url!, payload).catch(() => null);
-      });
+      .catch(() => transport(monitor.url!, payload).catch(() => null)); // retry only once
   } catch {
     /* */
   }
 
-  // Keep only recent interactions
-  monitor.interactions = recentInteractions;
+  monitor.interactions = toKeepInteractions;
 };
 
 // export const debouncedFlush = debounce(flush, 5000);
@@ -203,7 +165,6 @@ export const transport = async (
   };
   if (shouldCompress) url += '?z=1';
   const size = typeof body === 'string' ? body.length : body.byteLength;
-  console.log('size', size);
 
   return fetch(url, {
     body,

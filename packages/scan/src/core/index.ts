@@ -11,7 +11,6 @@ import {
   type PendingOutline,
 } from './web/outline';
 import { logIntro } from './web/log';
-import { playGeigerClickSound } from './web/geiger';
 import { createPerfObserver } from './web/perf-observer';
 import { initReactScanOverlay } from './web/overlay';
 import {
@@ -27,12 +26,9 @@ import {
   traverseFiber,
 } from './instrumentation/fiber';
 import {
-  getInteractionPath,
   initPerformanceMonitoring,
 } from './monitor/performance';
-import type { PerformanceInteraction, ScanInteraction } from './monitor/types';
-import { getComponentPath } from './monitor/utils';
-import { ReactNode } from 'react';
+import type { InternalInteraction } from './monitor/types';
 
 export interface Options {
   /**
@@ -131,7 +127,7 @@ interface Monitor {
   // components: Map<string, Component>; // uses the uniqueish component path to group renders
   url: string | null;
   apiKey: string | null;
-  interactions: Array<ScanInteraction>;
+  interactions: Array<InternalInteraction>;
   route: string | null;
   path: string;
 }

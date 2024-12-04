@@ -1,9 +1,9 @@
 import type { Fiber } from 'react-reconciler';
 import { onIdle } from '../web/utils';
 import { getDisplayName } from '../instrumentation/utils';
+import { Store } from '..';
 import { isSSR } from './constants';
 import { Device, type Session } from './types';
-import { Store } from '..';
 
 const getDeviceType = () => {
   const userAgent = navigator.userAgent;
@@ -61,6 +61,7 @@ const getGpuRenderer = () => {
  *
  * Modified from @palette.dev/browser:
  * @see https://gist.github.com/aidenybai/473689493f2d5d01bbc52e2da5950b45#file-palette-dev-browser-dist-palette-dev-mjs-L554
+ * DO NOT CALL THIS EVERYTIME
  */
 export const getSession = (): Session | null => {
   if (isSSR) return null;
