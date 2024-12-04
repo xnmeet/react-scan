@@ -30,11 +30,7 @@ import {
   getInteractionPath,
   initPerformanceMonitoring,
 } from './monitor/performance';
-import type {
-  PerformanceInteraction,
-  Component,
-  ScanInteraction,
-} from './monitor/types';
+import type { PerformanceInteraction, ScanInteraction } from './monitor/types';
 import { getComponentPath } from './monitor/utils';
 import { ReactNode } from 'react';
 
@@ -384,7 +380,6 @@ export const start = () => {
     console.log('setup interval');
 
     flushInterval = setInterval(() => {
-   
       flush();
     }, 2000);
   }

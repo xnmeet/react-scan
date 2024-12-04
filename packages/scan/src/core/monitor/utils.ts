@@ -3,6 +3,7 @@ import { onIdle } from '../web/utils';
 import { getDisplayName } from '../instrumentation/utils';
 import { isSSR } from './constants';
 import { Device, type Session } from './types';
+import { Store } from '..';
 
 const getDeviceType = () => {
   const userAgent = navigator.userAgent;
@@ -99,6 +100,7 @@ export const getSession = (): Session | null => {
     mem,
     gpu: null,
     agent: navigator.userAgent,
+    route: Store.monitor.value?.route ?? null, // may not be smart to read store here, abstraction is bad at the least
   };
 
   /**
@@ -128,7 +130,7 @@ export const debounce = <T extends (...args: Array<any>) => any>(
 
   return function (this: ThisParameterType<T>) {
     const now = Date.now();
-    
+
     if (startTime && now - startTime >= maxTimeout) {
       // Force execution if max timeout exceeded
       // eslint-disable-next-line prefer-rest-params

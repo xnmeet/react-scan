@@ -15,7 +15,7 @@ export interface Session {
   cpu: number;
   gpu: string | null;
   mem: number;
-  route: string;
+  route: string | null;
 }
 
 export interface Interaction {
@@ -29,18 +29,34 @@ export interface Interaction {
   sessionId?: string;
 }
 
-export interface Component {
-  interactionId: string; // grouping components by interaction
+// export interface Component {
+//   interactionId: string; // grouping components by interaction
+//   name: string;
+//   renders: number; // how many times it re-rendered / instances (normalized)
+//   instances: number; // instances which will be used to get number of total renders by * by renders
+//   totalTime?: number;
+//   selfTime?: number;
+// }
+interface Component {
+  // interactionId: string; // grouping components by interaction
   name: string;
   renders: number; // how many times it re-rendered / instances (normalized)
-  instances: number; // instances which will be used to get number of total renders by * by renders
+  // instances: number; // instances which will be used to get number of total renders by * by renders
   totalTime?: number;
   selfTime?: number;
 }
 
+// ROB CLEAN UP TYPES AND COMMENTS LATER
 export interface IngestRequest {
   interactions: Array<Interaction>;
-  components: Array<Component>;
+  components: Array<{
+    interactionId: string; // grouping components by interaction
+    name: string;
+    renders: number; // how many times it re-rendered / instances (normalized)
+    instances: number; // instances which will be used to get number of total renders by * by renders
+    totalTime?: number;
+    selfTime?: number;
+  }>;
   session: Session;
 }
 export interface ScanInteraction {
@@ -84,7 +100,7 @@ export interface PerformanceInteraction {
   latency: number;
   entries: Array<PerformanceInteractionEntry>; // gonna remove this
   target: Element;
-  type: 'pointer' | 'keyboard' 
+  type: 'pointer' | 'keyboard';
   startTime: number;
   processingStart: number;
   processingEnd: number;
@@ -92,5 +108,5 @@ export interface PerformanceInteraction {
   inputDelay: number;
   processingDuration: number;
   presentationDelay: number;
-  timestamp: number
+  timestamp: number;
 }
