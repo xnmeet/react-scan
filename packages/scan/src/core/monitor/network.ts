@@ -5,7 +5,7 @@ import {
   GZIP_MAX_LEN,
   MAX_PENDING_REQUESTS,
 } from './constants';
-import { debounce, getSession } from './utils';
+import { getSession } from './utils';
 import {
   Interaction,
   ScanInteraction,
@@ -74,7 +74,9 @@ export const flush = (): void => {
   }> = [];
 
   for (const interaction of oldInteractions) {
-    for (const [name, component] of interaction.components.entries()) {
+    for (const [name, component] of Array.from(
+      interaction.components.entries(),
+    )) {
       aggregatedComponents.push({
         name,
         instances: component.fibers.size,
@@ -148,7 +150,7 @@ export const flush = (): void => {
   monitor.interactions = recentInteractions;
 };
 
-export const debouncedFlush = debounce(flush, 5000);
+// export const debouncedFlush = debounce(flush, 5000);
 const CONTENT_TYPE = 'application/json';
 const supportsCompression = typeof CompressionStream === 'function';
 

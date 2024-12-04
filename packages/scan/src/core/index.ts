@@ -20,7 +20,7 @@ import {
 } from './web/inspect-element/inspect-state-machine';
 import { createToolbar } from './web/toolbar';
 import { getDisplayName, getType } from './instrumentation/utils';
-import { debouncedFlush, flush } from './monitor/network';
+import {  flush } from './monitor/network';
 import {
   getTimings,
   isCompositeComponent,
