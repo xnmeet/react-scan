@@ -132,7 +132,7 @@ export interface Options {
 
 interface Monitor {
   pendingRequests: number;
-  components: Map<string, Component>; // uses the uniqueish component path to group renders
+  // components: Map<string, Component>; // uses the uniqueish component path to group renders
   url: string | null;
   apiKey: string | null;
   interactions: Array<ScanInteraction>;
@@ -384,8 +384,7 @@ export const start = () => {
     console.log('setup interval');
 
     flushInterval = setInterval(() => {
-      // ez pz, make sure to cleanup
-
+   
       flush();
     }, 2000);
   }
@@ -521,7 +520,7 @@ export const Monitor = ({
   // TODO(nisarg): Fix this default value after we confirm the URL
   url ??= 'https://monitoring.million.dev/api/v1/ingest';
   Store.monitor.value ??= {
-    components: new Map(),
+    // components: new Map(),
     pendingRequests: 0,
     url,
     apiKey,

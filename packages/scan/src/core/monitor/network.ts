@@ -28,37 +28,47 @@ export const flush = (): void => {
   console.log('flush call');
 
   const monitor = Store.monitor.value;
-  if (!monitor) {
+  if (
+    !monitor ||
+    !navigator.onLine ||
+    !monitor.url ||
+    !monitor.interactions.length
+  ) {
     return;
   }
 
-  if (!navigator.onLine) return;
-
-  if (!monitor.url) {
-    return;
-  }
-  if (!monitor.interactions.length) {
-    console.log('no interactions');
-
-    return;
-  }
   if (!session) {
     session = getSession();
   }
-
   if (!session) return;
 
+  const now = performance.now();
+  const recentInteractions: typeof monitor.interactions = [];
+  const oldInteractions: typeof monitor.interactions = [];
+
+  // Split interactions into recent (< 4s) and old
+  monitor.interactions.forEach((interaction) => {
+    if (now - interaction.performanceEntry.startTime <= 4000) {
+      recentInteractions.push(interaction);
+    } else {
+      oldInteractions.push(interaction);
+    }
+  });
+
+  if (!oldInteractions.length) {
+    return;
+  }
+
   const aggregatedComponents: Array<{
-    interactionId: string; // grouping components by interaction
+    interactionId: string;
     name: string;
-    renders: number; // how many times it re-rendered / instances (normalized)
-    instances: number; // instances which will be used to get number of total renders by * by renders
+    renders: number;
+    instances: number;
     totalTime?: number;
     selfTime?: number;
   }> = [];
-  // let comp
-  const copiedInteractions = [...monitor.interactions]; // copy the interactions so we can retry with this set of interactions later
-  for (const interaction of monitor.interactions) {
+
+  for (const interaction of oldInteractions) {
     for (const [name, component] of interaction.components.entries()) {
       aggregatedComponents.push({
         name,
@@ -80,14 +90,10 @@ export const flush = (): void => {
     }
   }
 
-  // onents: Array <
-  // console.log('we have', monitor);
-
-  //
   const payload: IngestRequest = {
     route: monitor.route,
     path: monitor.path,
-    interactions: monitor.interactions.map(
+    interactions: oldInteractions.map(
       (interaction) =>
         ({
           componentName: interaction.componentName,
@@ -127,36 +133,26 @@ export const flush = (): void => {
 
   console.log('attempting to flush', payload);
 
-  // const components = monitor.components;
   monitor.pendingRequests++;
 
   try {
     transport(monitor.url, payload)
       .then(() => {
         monitor.pendingRequests--;
+        // there may still be renders associated with these interaction, so don't flush just yet
+        monitor.interactions = recentInteractions;
       })
       .catch(async () => {
-        // for (interaction of monitor.interactions) {
-
-        // }
-        monitor.interactions = monitor.interactions.concat(copiedInteractions); // the cleared interactions need to be added back
-        // monitor.components = monitor.components.concat(aggregatedComponents);
+        // On failure, restore old interactions for retry
+        monitor.interactions = monitor.interactions.concat(oldInteractions);
         await transport(monitor.url!, payload).catch(() => null);
       });
   } catch {
     /* */
   }
-  // why is this a timeout? Someone document or remove
-  setTimeout(() => {
-    monitor.interactions = [];
-  }, 0);
-  // Store.mo
-  // setTimeout(() => {
-  //   const monitor = Store.monitor.value;
-  //   if (monitor) {
-  //     monitor.components = [];
-  //   }
-  // }, 0);
+
+  // Keep only recent interactions
+  monitor.interactions = recentInteractions;
 };
 
 export const debouncedFlush = debounce(flush, 5000);
@@ -247,3 +243,38 @@ export const transport = async (
     headers,
   });
 };
+
+export function getInteractionPath(
+  fiber: Fiber | null,
+  filters: PathFilters = DEFAULT_FILTERS,
+): string {
+  if (!fiber) return '';
+
+  const fullPath: string[] = [];
+  let current: Fiber | null = fiber;
+
+  // Get the name of the current fiber first
+  if (current.type && typeof current.type === 'function') {
+    const name = getCleanComponentName(current.type);
+    if (name) {
+      fullPath.unshift(name);
+    }
+  }
+
+  // Move to parent fiber
+  current = current.return;
+
+  // Process ancestor fibers
+  while (current) {
+    if (current.type && typeof current.type === 'function') {
+      const name = getCleanComponentName(current.type);
+      if (name && name.length > 2 && shouldIncludeInPath(name, filters)) {
+        fullPath.unshift(name);
+      }
+    }
+    current = current.return;
+  }
+
+  const normalized = normalizePath(fullPath);
+  return normalized;
+}

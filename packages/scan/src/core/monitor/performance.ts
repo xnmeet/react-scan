@@ -105,33 +105,26 @@ export function getInteractionPath(
   filters: PathFilters = DEFAULT_FILTERS,
 ): string {
   if (!fiber) return '';
-  // const cache = interactionPathCache.get(fiber);
-  // if (cache) {
-  //   return cache;
-  // }
 
   const fullPath: string[] = [];
-  let current: Fiber | null = fiber;
+  
+  const currentName = getDisplayName(fiber.type);
+  if (currentName) {
+    fullPath.unshift(currentName);
+  }
 
+  let current = fiber.return;
   while (current) {
     if (current.type && typeof current.type === 'function') {
       const name = getCleanComponentName(current.type);
-      if (name) {
+      if (name && name.length > 2 && shouldIncludeInPath(name, filters)) {
         fullPath.unshift(name);
       }
     }
     current = current.return;
   }
 
-  const filteredPath = fullPath.filter(
-    (name, index) =>
-      index === 0 ||
-      (name.length > 2 && // todo: option for filterMinify
-        shouldIncludeInPath(name, filters)),
-  );
-
-  const normalized = normalizePath(filteredPath);
-  // interactionPathCache.set(fiber, normalized);
+  const normalized = normalizePath(fullPath);
   return normalized;
 }
 
