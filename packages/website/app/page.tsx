@@ -26,7 +26,7 @@ export default function Home() {
       <div className="space-y-4 mt-8">
         <div>
           React Scan automatically detects performance issues in your React app{' '}
-          <div className={`flex ${showDemo ? 'visible' : 'hidden'}`}>
+          <div className={`flex ${isMobile ? 'visible' : 'hidden'}`}>
             <button
               onClick={() => setShowDemo(!showDemo)}
               className="text-neutral-600 underline hover:text-black"
