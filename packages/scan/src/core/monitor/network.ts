@@ -77,7 +77,7 @@ export const flush = (): void => {
         renders: component.renders,
         totalTime: component.totalTime,
       });
-      // @ts-expect-error
+      // @ts-expect-error todo: fix types
       interaction.renders = component.fibers.size;
 
       if (component.retiresAllowed === 0) {
@@ -91,11 +91,10 @@ export const flush = (): void => {
   }
 
   const payload: IngestRequest = {
-    route: monitor.route,
-    path: monitor.path,
     interactions: oldInteractions.map(
       (interaction) =>
         ({
+          id: 
           componentName: interaction.componentName,
           componentPath: interaction.componentPath,
           id: interaction.performanceEntry.id,

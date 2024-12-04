@@ -1,4 +1,4 @@
-import { Fiber } from 'react-reconciler';
+import { type Fiber } from 'react-reconciler';
 
 export enum Device {
   DESKTOP = 0,
@@ -15,35 +15,32 @@ export interface Session {
   cpu: number;
   gpu: string | null;
   mem: number;
+  route: string;
+}
+
+export interface Interaction {
+  id: string; // a hashed unique id for interaction (groupable across sessions)
+  name: string; // name of interaction (i.e nav#top-menu.sc-601d0142-19.gHiJkL) or something useful
+  type: string; // type of interaction i.e pointer
+  time: number; // time of interaction in ms
+  timestamp: number;
+  // clickhouse + ingest specific types
+  projectId?: string;
+  sessionId?: string;
+}
+
+export interface Component {
+  interactionId: string; // grouping components by interaction
+  name: string;
+  renders: number; // how many times it re-rendered / instances (normalized)
+  instances: number; // instances which will be used to get number of total renders by * by renders
+  totalTime?: number;
+  selfTime?: number;
 }
 
 export interface IngestRequest {
-  route: string | null;
-  path: string;
-  interactions: Array<
-    Omit<ScanInteraction, 'components' | 'performanceEntry'> & {
-      // this is so bad, but for the sake of time
-      id: string;
-      latency: number;
-      type: 'pointer' | 'keyboard' | null;
-      startTime: number;
-      processingStart: number;
-      processingEnd: number;
-      duration: number;
-      inputDelay: number;
-      processingDuration: number;
-      presentationDelay: number;
-    }
-  >;
-  components: Array<{
-    // todo: fix types
-    interactionId: string; // grouping components by interaction
-    name: string;
-    renders: number; // how many times it re-rendered / instances (normalized)
-    instances: number; // instances which will be used to get number of total renders by * by renders
-    totalTime?: number;
-    selfTime?: number;
-  }>;
+  interactions: Array<Interaction>;
+  components: Array<Component>;
   session: Session;
 }
 export interface ScanInteraction {
@@ -84,7 +81,7 @@ export interface PerformanceInteractionEntry extends PerformanceEntry {
 export interface PerformanceInteraction {
   id: string;
   latency: number;
-  entries: PerformanceInteractionEntry[]; // gonna remove this
+  entries: Array<PerformanceInteractionEntry>; // gonna remove this
   target: Element;
   type: 'pointer' | 'keyboard' | null;
   startTime: number;
@@ -94,13 +91,4 @@ export interface PerformanceInteraction {
   inputDelay: number;
   processingDuration: number;
   presentationDelay: number;
-}
-
-export interface Component {
-  // interactionId: string; // grouping components by interaction
-  name: string;
-  renders: number; // how many times it re-rendered / instances (normalized)
-  // instances: number; // instances which will be used to get number of total renders by * by renders
-  totalTime?: number;
-  selfTime?: number;
 }
