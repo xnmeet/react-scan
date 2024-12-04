@@ -11,7 +11,7 @@ export function initPerformanceMonitoring() {
     name: event.type,
     type: event.type,
     time: 0, // We'll update this when the interaction "ends"
-    timestamp: performance.now(),
+    timestamp: Date.now(),
   });
 
   const handlers = {
