@@ -12,7 +12,7 @@ import {
 } from '../../instrumentation/fiber';
 import { getRect } from '../outline';
 
-export const getFiberFromElement = (element: HTMLElement): Fiber | null => {
+export const getFiberFromElement = (element: Element): Fiber | null => {
   if ('__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) {
     const { renderers } = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
     if (!renderers) return null;
@@ -36,7 +36,7 @@ export const getFiberFromElement = (element: HTMLElement): Fiber | null => {
       key.startsWith('__reactInternalInstance$') ||
       key.startsWith('__reactFiber')
     ) {
-      return element[key as keyof HTMLElement] as unknown as Fiber;
+      return element[key as keyof Element] as unknown as Fiber;
     }
   }
   return null;
@@ -57,9 +57,9 @@ export const getFirstStateNode = (fiber: Fiber): HTMLElement | null => {
   return null;
 };
 
-export const getNearestFiberFromElement = (element: HTMLElement | null) => {
+export const getNearestFiberFromElement = (element: Element | null) => {
   if (!element) return null;
-  const target: HTMLElement | null = element;
+  const target: Element | null = element;
   const originalFiber = getFiberFromElement(target);
   if (!originalFiber) {
     return null;
@@ -177,7 +177,7 @@ export const isCurrentTree = (fiber: Fiber) => {
   return isFiberInTree(fiber, currentRootFiber);
 };
 
-export const getCompositeComponentFromElement = (element: HTMLElement) => {
+export const getCompositeComponentFromElement = (element: Element) => {
   const associatedFiber = getNearestFiberFromElement(element);
   if (!associatedFiber) return {};
   const currentAssociatedFiber = isCurrentTree(associatedFiber)

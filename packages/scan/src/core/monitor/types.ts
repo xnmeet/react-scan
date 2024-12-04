@@ -16,18 +16,43 @@ export interface Session {
 }
 
 export interface IngestRequest {
-  interactions: Array<Interaction>;
+  interactions: Array<ScanInteraction>;
   components: Array<Component>;
   session: Session;
 }
+export interface ScanInteraction {
+  componentName: string
+  componentPath: string
+  performanceInteraction: PerformanceInteraction
+}
 
-export interface Interaction {
-  id: string; // a hashed unique id for interaction (groupable across sessions)
-  name: string; // name of Component
-  type: string; // type of interaction i.e pointer
-  time: number; // time of interaction in ms
-  timestamp: number;
-  //... anything you might need here
+// export interface Interaction {
+//   // id: string; // a hashed unique id for interaction (groupable across sessions)
+//   // name: string; // name of Component
+//   // type: string; // type of interaction i.e pointer
+//   // time: number; // time of interaction in ms
+//   componentName: string
+//   componentPath: string, // the unique identifier for the interaction on the website
+//   entry: In
+
+//   // timestamp: number;
+//   // //... anything you might need here
+// }
+export interface PerformanceInteraction {
+  id: string;
+  latency: number;
+  entries: PerformanceInteractionEntry[];
+  target: Element;
+  type: 'pointer' | 'keyboard' | null;
+  startTime: number;
+  processingStart: number;
+  processingEnd: number;
+  duration: number;
+  inputDelay: number;
+  processingDuration: number;
+  presentationDelay: number;
+  // componentPath: string, // the unique identifier for the interaction on the website
+  // componentName: string
 }
 
 export interface Component {
