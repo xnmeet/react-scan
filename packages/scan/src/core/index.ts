@@ -20,14 +20,23 @@ import {
 } from './web/inspect-element/inspect-state-machine';
 import { createToolbar } from './web/toolbar';
 import { getDisplayName, getType } from './instrumentation/utils';
-import { debouncedFlush } from './monitor/network';
+import { debouncedFlush, flush } from './monitor/network';
 import {
   getTimings,
   isCompositeComponent,
   traverseFiber,
 } from './instrumentation/fiber';
-import { initPerformanceMonitoring } from './monitor/performance';
-import type { Interaction, Component } from './monitor/types';
+import {
+  getInteractionPath,
+  initPerformanceMonitoring,
+} from './monitor/performance';
+import type {
+  PerformanceInteraction,
+  Component,
+  ScanInteraction,
+} from './monitor/types';
+import { getComponentPath } from './monitor/utils';
+import { ReactNode } from 'react';
 
 export interface Options {
   /**
@@ -123,10 +132,12 @@ export interface Options {
 
 interface Monitor {
   pendingRequests: number;
-  components: Array<Component>;
+  components: Map<string, Component>; // uses the uniqueish component path to group renders
   url: string | null;
   apiKey: string | null;
-  interactions: Array<Interaction>;
+  interactions: Array<ScanInteraction>;
+  route: string | null;
+  path: string;
 }
 
 interface StoreType {
@@ -137,7 +148,31 @@ interface StoreType {
   reportData: WeakMap<Fiber, RenderData>;
   legacyReportData: Map<string, RenderData>;
   lastReportTime: Signal<number>;
+  // instanceTracker: Map<string, Set<Fiber>>; // interaction path-> Fiber, cleanup later, so we know how many instances exist of a component
 }
+function isFiberUnmounted(fiber: Fiber): boolean {
+  if (!fiber) return true;
+
+  if ((fiber.flags & /*Deletion=*/ 8) !== 0) return true;
+
+  if (!fiber.return && fiber.tag !== /*HostRoot=*/ 3) return true;
+
+  const alternate = fiber.alternate;
+  if (alternate) {
+    if ((alternate.flags & /*Deletion=*/ 8) !== 0) return true;
+  }
+
+  return false;
+}
+
+export const addInstance = (fiber: Fiber, set: Set<Fiber>) => {
+  if (fiber.alternate && set.has(fiber.alternate)) {
+    // then the alternate tree fiber exists in the weakset, don't double count the instance
+    return;
+  }
+
+  set.add(fiber);
+};
 
 interface RenderData {
   count: number;
@@ -168,6 +203,7 @@ export const Store: StoreType = {
   reportData: new WeakMap<Fiber, RenderData>(),
   legacyReportData: new Map<string, RenderData>(),
   lastReportTime: signal(0),
+  // instanceTracker: new Map<string, Set<Fiber>>(),
 };
 
 export const ReactScanInternals: Internals = {
@@ -275,22 +311,39 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
     const latestInteraction =
       monitor.interactions[monitor.interactions.length - 1];
 
-    let selfTime = 0;
+    let totalTime = 0;
     for (const render of renders) {
-      selfTime += render.time;
+      totalTime += render.time;
     }
 
-    monitor.components.push({
-      interactionId: latestInteraction.id,
-      name: getDisplayName(fiber.type) ?? 'Unknown', // todo, probably dont send unknown components, probably
-      renders: renders.length,
-      instances: 1,
-      selfTime,
-      totalTime: selfTime, // TODO(aiden): fix total time
-    });
+    const displayName = getDisplayName(fiber);
+    if (!displayName) {
+      console.log(
+        'Dev check: the component should probably always have a display name',
+      );
+      return;
+    }
+    let component = latestInteraction.components.get(displayName);
+    if (!component) {
+      component = {
+        fibers: new Set(),
+        name: displayName,
+        renders: 0,
+        totalTime,
+        retiresAllowed: 7, // allow max 7 retries before this collection gets skipped
+        // todo: selfTime
+      };
+      latestInteraction.components.set(displayName, component);
+    }
+    addInstance(fiber, component.fibers);
+
+    component.renders += renders.length;
+    component.totalTime = component.totalTime
+      ? component.totalTime + totalTime
+      : totalTime;
   }
 };
-
+let flushInterval: ReturnType<typeof setInterval>;
 export const start = () => {
   if (typeof window === 'undefined') {
     return;
@@ -298,8 +351,8 @@ export const start = () => {
 
   if (document.querySelector('react-scan-overlay')) return;
   initReactScanOverlay();
-
   const overlayElement = document.createElement('react-scan-overlay') as any;
+
   document.documentElement.appendChild(overlayElement);
 
   const options = ReactScanInternals.options;
@@ -309,12 +362,12 @@ export const start = () => {
   const ctx = overlayElement.getContext();
   createInspectElementStateMachine();
 
-  const audioContext =
-    typeof window !== 'undefined'
-      ? new (window.AudioContext ||
-          // @ts-expect-error -- This is a fallback for Safari
-          window.webkitAudioContext)()
-      : null;
+  // const audioContext =
+  //   typeof window !== 'undefined'
+  //     ? new (window.AudioContext ||
+  //         // @ts-expect-error -- This is a fallback for Safari
+  //         window.webkitAudioContext)()
+  //     : null;
   createPerfObserver();
 
   logIntro();
@@ -322,6 +375,20 @@ export const start = () => {
   globalThis.__REACT_SCAN__ = {
     ReactScanInternals,
   };
+
+  if (Store.monitor) {
+    clearInterval(flushInterval);
+    // Store.monitor.subscribe((monitor) => {
+
+    // })
+    console.log('setup interval');
+
+    flushInterval = setInterval(() => {
+      // ez pz, make sure to cleanup
+
+      flush();
+    }, 2000);
+  }
 
   // TODO: dynamic enable, and inspect-off check
   const instrumentation = instrument({
@@ -378,18 +445,19 @@ export const start = () => {
         if (!outline) continue;
         ReactScanInternals.scheduledOutlines.push(outline);
 
-        if (ReactScanInternals.options.playSound && audioContext) {
-          const renderTimeThreshold = 10;
-          const amplitude = Math.min(
-            1,
-            (render.time - renderTimeThreshold) / (renderTimeThreshold * 2),
-          );
-          playGeigerClickSound(audioContext, amplitude);
-        }
+        // if (ReactScanInternals.options.playSound && audioContext) {
+        //   const renderTimeThreshold = 10;
+        //   const amplitude = Math.min(
+        //     1,
+        //     (render.time - renderTimeThreshold) / (renderTimeThreshold * 2),
+        //   );
+        //   playGeigerClickSound(audioContext, amplitude);
+        // }
       }
       flushOutlines(ctx, new Map());
       if (Store.monitor) {
-        debouncedFlush();
+        // console.log('debounce flush');
+        // debouncedFlush();
       }
     },
     onCommitFinish() {
@@ -438,22 +506,32 @@ export const useScan = (options: Options) => {
 };
 
 ('use client');
-export const Monitor = ({ url, apiKey }: { url?: string; apiKey: string }) => {
+export const Monitor = ({
+  url,
+  apiKey,
+  path,
+  route,
+}: { url?: string; apiKey: string } & {
+  route: string | null;
+  path: string;
+}) => {
   if (!apiKey)
     throw new Error('Please provide a valid API key for React Scan monitoring');
 
   // TODO(nisarg): Fix this default value after we confirm the URL
   url ??= 'https://monitoring.million.dev/api/v1/ingest';
   Store.monitor.value ??= {
-    components: [],
+    components: new Map(),
     pendingRequests: 0,
     url,
     apiKey,
     interactions: [],
-  };
 
-  // @ts-expect-error -- This is a global
-  globalThis.__REACT_SCAN__.monitor = () => Store.monitor.value;
+    route,
+    path,
+  };
+  Store.monitor.value.route = route;
+  Store.monitor.value.path = path;
 
   React.useEffect(() => {
     scan({

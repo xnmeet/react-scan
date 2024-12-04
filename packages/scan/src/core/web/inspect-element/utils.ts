@@ -179,6 +179,8 @@ export const isCurrentTree = (fiber: Fiber) => {
 
 export const getCompositeComponentFromElement = (element: Element) => {
   const associatedFiber = getNearestFiberFromElement(element);
+  console.log('asscoaited fiber', associatedFiber, element);
+
   if (!associatedFiber) return {};
   const currentAssociatedFiber = isCurrentTree(associatedFiber)
     ? associatedFiber

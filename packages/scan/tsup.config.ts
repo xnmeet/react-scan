@@ -48,7 +48,7 @@ export default defineConfig([
     env: {
       NODE_ENV: process.env.NODE_ENV ?? 'development',
     },
-    external: ['react', 'react-dom', 'react-reconciler'],
+    external: ['react', 'react-dom', 'react-reconciler', 'next'],
   },
   {
     entry: ['./src/cli.mts'],

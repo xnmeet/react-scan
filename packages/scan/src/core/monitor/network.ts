@@ -1,4 +1,4 @@
-import { Store } from '../..';
+import { Monitor, Store } from '../..';
 import {
   FLOAT_MAX_LEN,
   GZIP_MIN_LEN,
@@ -6,10 +6,27 @@ import {
   MAX_PENDING_REQUESTS,
 } from './constants';
 import { debounce, getSession } from './utils';
-import { type IngestRequest, type Session } from './types';
+import { ScanInteraction, type IngestRequest, type Session } from './types';
+import { Fiber } from 'react-reconciler';
+function isFiberUnmounted(fiber: Fiber): boolean {
+  if (!fiber) return true;
+
+  if ((fiber.flags & /*Deletion=*/ 8) !== 0) return true;
+
+  if (!fiber.return && fiber.tag !== /*HostRoot=*/ 3) return true;
+
+  const alternate = fiber.alternate;
+  if (alternate) {
+    if ((alternate.flags & /*Deletion=*/ 8) !== 0) return true;
+  }
+
+  return false;
+}
 
 let session: Session | null = null;
 export const flush = (): void => {
+  console.log('flush call');
+
   const monitor = Store.monitor.value;
   if (!monitor) {
     return;
@@ -17,7 +34,12 @@ export const flush = (): void => {
 
   if (!navigator.onLine) return;
 
-  if (!monitor.components.length || !monitor.url) {
+  if (!monitor.url) {
+    return;
+  }
+  if (!monitor.interactions.length) {
+    console.log('no interactions');
+
     return;
   }
   if (!session) {
@@ -26,13 +48,86 @@ export const flush = (): void => {
 
   if (!session) return;
 
+  const aggregatedComponents: Array<{
+    interactionId: string; // grouping components by interaction
+    name: string;
+    renders: number; // how many times it re-rendered / instances (normalized)
+    instances: number; // instances which will be used to get number of total renders by * by renders
+    totalTime?: number;
+    selfTime?: number;
+  }> = [];
+  // let comp
+  const copiedInteractions = [...monitor.interactions]; // copy the interactions so we can retry with this set of interactions later
+  for (const interaction of monitor.interactions) {
+    for (const [name, component] of interaction.components.entries()) {
+      aggregatedComponents.push({
+        name,
+        instances: component.fibers.size,
+        interactionId: interaction.performanceEntry.id,
+        renders: component.renders,
+        totalTime: component.totalTime,
+      });
+      // @ts-expect-error
+      interaction.renders = component.fibers.size;
+
+      if (component.retiresAllowed === 0) {
+        // otherwise there will be a memory leak if the user loses internet or our server goes down
+        // we decide to skip the collection if this is the case
+        interaction.components.delete(name);
+      }
+
+      component.retiresAllowed -= 1;
+    }
+  }
+
+  // onents: Array <
+  // console.log('we have', monitor);
+
+  //
   const payload: IngestRequest = {
-    interactions: monitor.interactions,
-    components: monitor.components,
+    route: monitor.route,
+    path: monitor.path,
+    interactions: monitor.interactions.map(
+      (interaction) =>
+        ({
+          componentName: interaction.componentName,
+          componentPath: interaction.componentPath,
+          id: interaction.performanceEntry.id,
+          latency: interaction.performanceEntry.latency,
+          type: interaction.performanceEntry.type,
+          startTime: interaction.performanceEntry.startTime,
+          processingStart: interaction.performanceEntry.processingStart,
+          processingEnd: interaction.performanceEntry.processingEnd,
+          duration: interaction.performanceEntry.duration,
+          inputDelay: interaction.performanceEntry.inputDelay,
+          processingDuration: interaction.performanceEntry.processingDuration,
+          presentationDelay: interaction.performanceEntry.presentationDelay,
+
+          // performanceEntry: interaction.performanceEntry,
+        }) satisfies Omit<
+          ScanInteraction,
+          'components' | 'performanceEntry'
+        > & {
+          // this is so bad, but for the sake of time
+          id: string;
+          latency: number;
+          type: 'pointer' | 'keyboard' | null;
+          startTime: number;
+          processingStart: number;
+          processingEnd: number;
+          duration: number;
+          inputDelay: number;
+          processingDuration: number;
+          presentationDelay: number;
+        },
+    ),
+    components: aggregatedComponents,
     session,
   };
 
-  const components = monitor.components;
+  console.log('attempting to flush', payload);
+
+  // const components = monitor.components;
   monitor.pendingRequests++;
 
   try {
@@ -41,21 +136,30 @@ export const flush = (): void => {
         monitor.pendingRequests--;
       })
       .catch(async () => {
-        monitor.components = monitor.components.concat(components);
-        await transport(monitor.url!, payload);
+        // for (interaction of monitor.interactions) {
+
+        // }
+        monitor.interactions = monitor.interactions.concat(copiedInteractions); // the cleared interactions need to be added back
+        // monitor.components = monitor.components.concat(aggregatedComponents);
+        await transport(monitor.url!, payload).catch(() => null);
       });
   } catch {
     /* */
   }
+  // why is this a timeout? Someone document or remove
   setTimeout(() => {
-    const monitor = Store.monitor.value;
-    if (monitor) {
-      monitor.components = [];
-    }
+    monitor.interactions = [];
   }, 0);
+  // Store.mo
+  // setTimeout(() => {
+  //   const monitor = Store.monitor.value;
+  //   if (monitor) {
+  //     monitor.components = [];
+  //   }
+  // }, 0);
 };
 
-export const debouncedFlush = debounce(flush, 1000, 5000);
+export const debouncedFlush = debounce(flush, 5000);
 const CONTENT_TYPE = 'application/json';
 const supportsCompression = typeof CompressionStream === 'function';
 
