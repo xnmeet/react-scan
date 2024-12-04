@@ -40,7 +40,11 @@ export async function POST(request: Request) {
       options,
     );
     const data = await response.json();
-    return NextResponse.json(data);
+
+    if (!data.success) {
+      return NextResponse.json({ error: data.message }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.message }, { status: 400 });

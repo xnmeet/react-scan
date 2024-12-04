@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
+import Waitlist from './(components)/waitlist';
 
 export default function Monitoring() {
   const [sliderPosition, setSliderPosition] = useState(50);
@@ -74,19 +75,7 @@ export default function Monitoring() {
           business. Let{`'`}s make it faster.
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 mt-4 !mb-8 w-full">
-          <input
-            type="email"
-            placeholder="Enter your email"
-            className="border-2 border-black px-2 py-2 w-full"
-          />
-          <Link
-            href="https://github.com/aidenybai/react-scan#install"
-            className="inline-block px-5 py-2 font-medium text-white bg-black text-center whitespace-nowrap"
-          >
-            Join waitlist
-          </Link>
-        </div>
+        <Waitlist />
 
         <div
           ref={sliderRef}
