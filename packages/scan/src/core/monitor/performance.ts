@@ -107,7 +107,7 @@ export function getInteractionPath(
   if (!fiber) return '';
 
   const fullPath: string[] = [];
-  
+
   const currentName = getDisplayName(fiber.type);
   if (currentName) {
     fullPath.unshift(currentName);
@@ -228,12 +228,18 @@ const setupPerformanceListener = (
         existingInteraction.entries.push(entry);
       }
     } else {
+      const interactionType = getInteractionType(entry.name);
+      if (!interactionType) {
+        console.log('dev invariant: invalid interaction type');
+
+        return;
+      }
       const interaction: PerformanceInteraction = {
         id: entry.interactionId,
         latency: entry.duration,
         entries: [entry], // todo: make this a global map: array, dont store on object since we will send this obj through flush
         target: entry.target,
-        type: getInteractionType(entry.name),
+        type: interactionType,
         startTime: entry.startTime,
         processingStart: entry.processingStart,
         processingEnd: entry.processingEnd,
@@ -242,7 +248,7 @@ const setupPerformanceListener = (
         processingDuration: entry.processingEnd - entry.processingStart,
         presentationDelay:
           entry.duration - (entry.processingEnd - entry.startTime),
-          timestamp: Date.now()
+        timestamp: Date.now(),
       };
       longestInteractionMap.set(interaction.id, interaction);
       longestInteractionList.push(interaction);

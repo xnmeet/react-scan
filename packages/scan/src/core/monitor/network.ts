@@ -99,7 +99,7 @@ export const flush = (): void => {
     interactions: oldInteractions.map(
       (interaction) =>
         ({
-          id: `${interaction.performanceEntry.type}::${interaction.componentPath}::${getSession()?.url}`,//'${event. type}::${normalizePath(path)}::${getSession()?.url}';
+          id: `${interaction.performanceEntry.type}::${interaction.componentPath}::${getSession()?.url}`, //'${event. type}::${normalizePath(path)}::${getSession()?.url}';
           name: interaction.componentName,
           time: interaction.performanceEntry.duration,
           timestamp: interaction.performanceEntry.timestamp,
@@ -206,6 +206,8 @@ export const transport = async (
   };
   if (shouldCompress) url += '?z=1';
   const size = typeof body === 'string' ? body.length : body.byteLength;
+  console.log('size', size);
+
   return fetch(url, {
     body,
     method: 'POST',
