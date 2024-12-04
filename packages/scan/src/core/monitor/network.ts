@@ -1,4 +1,4 @@
-import { Monitor, Store } from '../..';
+import { Store } from '../..';
 import {
   FLOAT_MAX_LEN,
   GZIP_MIN_LEN,
@@ -6,12 +6,7 @@ import {
   MAX_PENDING_REQUESTS,
 } from './constants';
 import { getSession } from './utils';
-import {
-  Interaction,
-  ScanInteraction,
-  type IngestRequest,
-  type Session,
-} from './types';
+import { Interaction, type IngestRequest, type Session } from './types';
 import { Fiber } from 'react-reconciler';
 function isFiberUnmounted(fiber: Fiber): boolean {
   if (!fiber) return true;

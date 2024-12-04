@@ -44,11 +44,11 @@ export default defineConfig([
     async onSuccess() {
       await addDirectivesToChunkFiles();
     },
-    minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
+    minify: false,
     env: {
       NODE_ENV: process.env.NODE_ENV ?? 'development',
     },
-    external: ['react', 'react-dom', 'react-reconciler', 'next'],
+    external: ['react', 'react-dom', 'react-reconciler', 'next', 'next/navigation'],
   },
   {
     entry: ['./src/cli.mts'],
@@ -58,7 +58,7 @@ export default defineConfig([
     format: ['cjs'],
     target: 'esnext',
     platform: 'node',
-    minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
+    minify: false,
     env: {
       NODE_ENV: process.env.NODE_ENV ?? 'development',
     },
@@ -73,7 +73,7 @@ export default defineConfig([
       './src/react-component-name/rolldown.ts',
       './src/react-component-name/rollup.ts',
     ],
-    outDir: './dist',
+    outDir: './dist/react-component-name',
     splitting: false,
     sourcemap: false,
     clean: true,

@@ -1,3 +1,5 @@
+'use client';
+
 import { useParams, usePathname, useSearchParams } from 'next/navigation.js';
 import React from 'react';
 import { Monitor } from '../..';
@@ -70,7 +72,6 @@ function escapeRegExp(string: string): string {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-('use client');
 export function MonitorNext(props: { url?: string; apiKey: string }) {
   const { route, path } = useRoute();
 
