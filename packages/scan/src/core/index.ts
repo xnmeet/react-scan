@@ -281,10 +281,8 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
       totalTime += render.time;
     }
 
-    const componentPath = getComponentPath(fiber);
     monitor.components.push({
       interactionId: latestInteraction.id,
-      // name: componentPath.join(' > '),
       name: getDisplayName(fiber.type) ?? 'Unknown', // todo, probably dont send unknown components, probably
       renders: renders.length,
       instances: 1,
