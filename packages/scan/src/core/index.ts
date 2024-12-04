@@ -459,7 +459,7 @@ export const Monitor = ({ url, apiKey }: { url?: string; apiKey: string }) => {
       enabled: true,
       showToolbar: false,
     });
-    return () => observer?.disconnect();
+    return observer;
   }, []);
 
   return null;
