@@ -121,18 +121,34 @@ export const getSession = (): Session | null => {
 export const debounce = <T extends (...args: Array<any>) => any>(
   callback: T,
   timeout = 1000,
+  maxTimeout = 5000,
 ): ((...args: Parameters<T>) => void) => {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  let startTime: number | undefined;
 
   return function (this: ThisParameterType<T>) {
+    const now = Date.now();
+    
+    if (startTime && now - startTime >= maxTimeout) {
+      // Force execution if max timeout exceeded
+      // eslint-disable-next-line prefer-rest-params
+      callback.apply(this, arguments as any);
+      timeoutId = undefined;
+      startTime = undefined;
+      return;
+    }
+
     if (timeoutId !== undefined) {
       clearTimeout(timeoutId);
+    } else {
+      startTime = now;
     }
 
     timeoutId = setTimeout(() => {
       // eslint-disable-next-line prefer-rest-params
       callback.apply(this, arguments as any);
       timeoutId = undefined;
+      startTime = undefined;
     }, timeout);
   };
 };

@@ -55,7 +55,7 @@ export const flush = (): void => {
   }, 0);
 };
 
-export const debouncedFlush = debounce(flush, 5000);
+export const debouncedFlush = debounce(flush, 1000, 5000);
 const CONTENT_TYPE = 'application/json';
 const supportsCompression = typeof CompressionStream === 'function';
 

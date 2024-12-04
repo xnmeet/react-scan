@@ -28,7 +28,6 @@ import {
 } from './instrumentation/fiber';
 import { initPerformanceMonitoring } from './monitor/performance';
 import type { Interaction, Component } from './monitor/types';
-import { getComponentPath } from './monitor/utils';
 
 export interface Options {
   /**
@@ -276,9 +275,9 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
     const latestInteraction =
       monitor.interactions[monitor.interactions.length - 1];
 
-    let totalTime = 0;
+    let selfTime = 0;
     for (const render of renders) {
-      totalTime += render.time;
+      selfTime += render.time;
     }
 
     monitor.components.push({
@@ -286,7 +285,8 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
       name: getDisplayName(fiber.type) ?? 'Unknown', // todo, probably dont send unknown components, probably
       renders: renders.length,
       instances: 1,
-      totalTime,
+      selfTime,
+      totalTime: selfTime, // TODO(aiden): fix total time
     });
   }
 };
@@ -451,6 +451,9 @@ export const Monitor = ({ url, apiKey }: { url?: string; apiKey: string }) => {
     apiKey,
     interactions: [],
   };
+
+  // @ts-expect-error -- This is a global
+  globalThis.__REACT_SCAN__.monitor = () => Store.monitor.value;
 
   React.useEffect(() => {
     scan({

@@ -1,9 +1,9 @@
-import { Fiber } from 'react-reconciler';
+import { type Fiber } from 'react-reconciler';
 import { Store } from '../..';
 import { getDisplayName } from '../instrumentation/utils';
 import { getNearestFiberFromElement } from '../web/inspect-element/utils';
 import type { Interaction } from './types';
-import { generateId } from './utils';
+import { getSession } from './utils';
 
 interface PathFilters {
   skipProviders: boolean;
@@ -60,11 +60,11 @@ const FILTER_PATTERNS = {
   ],
 };
 
-function shouldIncludeInPath(
+const shouldIncludeInPath = (
   name: string,
   filters: PathFilters = DEFAULT_FILTERS,
-): boolean {
-  const patternsToCheck: RegExp[] = [];
+): boolean => {
+  const patternsToCheck: Array<RegExp> = [];
 
   if (filters.skipProviders) patternsToCheck.push(...FILTER_PATTERNS.providers);
   if (filters.skipHocs) patternsToCheck.push(...FILTER_PATTERNS.hocs);
@@ -77,21 +77,19 @@ function shouldIncludeInPath(
   return !patternsToCheck.some((pattern) => pattern.test(name));
 }
 
-function getInteractionPath(
+const getInteractionPath = (
   fiber: Fiber | null,
   filters: PathFilters = DEFAULT_FILTERS,
-): string {
-  if (!fiber) return '';
+): Array<string> => {
+  if (!fiber) return [];
 
-  const fullPath: string[] = [];
+  const fullPath: Array<string> = [];
   let current: Fiber | null = fiber;
 
   while (current) {
     if (current.type && typeof current.type === 'function') {
       const name = getCleanComponentName(current.type);
-      if (name) {
-        fullPath.unshift(name);
-      }
+      if (name) fullPath.unshift(name);
     }
     current = current.return;
   }
@@ -102,23 +100,20 @@ function getInteractionPath(
       shouldIncludeInPath(name, filters),
   );
 
-  return normalizePath(filteredPath);
-}
+  return filteredPath;
+};
 
-function getCleanComponentName(component: any): string {
+const getCleanComponentName = (component: any): string => {
   const name = getDisplayName(component);
   if (!name) return '';
-
   return name.replace(/^(Memo|Forward(Ref)?|With.*?)\((.*?)\)$/, '$3');
-}
+};
 
-function normalizePath(path: string[]): string {
-  const cleaned = path.filter(Boolean);
-
-  const deduped = cleaned.filter((name, i) => name !== cleaned[i - 1]);
-
-  return deduped.join(' → ');
-}
+const normalizePath = (path: Array<string>) =>
+  path
+    .filter(Boolean)
+    .filter((name, i) => name !== path[i - 1])
+    .join(' → ');
 
 export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
   const filters = { ...DEFAULT_FILTERS, ...options };
@@ -143,15 +138,12 @@ export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
     }
 
     const fiber = getNearestFiberFromElement(element);
-    // const path = getInteractionPath(fiber, filters);
+    const path = getInteractionPath(fiber, filters);
+    const id = `${event.type}::${normalizePath(path)}::${getSession()?.url}`;
     return {
-      id: generateId(),
+      id,
       name: event.type,
-      comoponentName: fiber?.type
-        ? (getDisplayName(fiber?.type) ?? 'Unknown')
-        : 'Unknown', // dont send events if we have no name?
       type: event.type,
-      path: getInteractionPath(fiber, filters),
       time: 0,
       timestamp: Date.now(),
     };
