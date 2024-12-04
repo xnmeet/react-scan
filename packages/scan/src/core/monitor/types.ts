@@ -68,6 +68,7 @@ export interface ScanInteraction {
 //   // timestamp: number;
 //   // //... anything you might need here
 // }
+
 export interface PerformanceInteractionEntry extends PerformanceEntry {
   interactionId: string;
   target: Element;
@@ -83,7 +84,7 @@ export interface PerformanceInteraction {
   latency: number;
   entries: Array<PerformanceInteractionEntry>; // gonna remove this
   target: Element;
-  type: 'pointer' | 'keyboard' | null;
+  type: 'pointer' | 'keyboard' 
   startTime: number;
   processingStart: number;
   processingEnd: number;
@@ -91,4 +92,5 @@ export interface PerformanceInteraction {
   inputDelay: number;
   processingDuration: number;
   presentationDelay: number;
+  timestamp: number
 }

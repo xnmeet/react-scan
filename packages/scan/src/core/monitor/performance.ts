@@ -242,6 +242,7 @@ const setupPerformanceListener = (
         processingDuration: entry.processingEnd - entry.processingStart,
         presentationDelay:
           entry.duration - (entry.processingEnd - entry.startTime),
+          timestamp: Date.now()
       };
       longestInteractionMap.set(interaction.id, interaction);
       longestInteractionList.push(interaction);

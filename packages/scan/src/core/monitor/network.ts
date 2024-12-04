@@ -6,7 +6,12 @@ import {
   MAX_PENDING_REQUESTS,
 } from './constants';
 import { debounce, getSession } from './utils';
-import { ScanInteraction, type IngestRequest, type Session } from './types';
+import {
+  Interaction,
+  ScanInteraction,
+  type IngestRequest,
+  type Session,
+} from './types';
 import { Fiber } from 'react-reconciler';
 function isFiberUnmounted(fiber: Fiber): boolean {
   if (!fiber) return true;
@@ -94,37 +99,26 @@ export const flush = (): void => {
     interactions: oldInteractions.map(
       (interaction) =>
         ({
-          id: 
-          componentName: interaction.componentName,
-          componentPath: interaction.componentPath,
-          id: interaction.performanceEntry.id,
-          latency: interaction.performanceEntry.latency,
+          id: interaction.componentPath,
+          name: interaction.componentName,
+          time: interaction.performanceEntry.duration,
+          timestamp: interaction.performanceEntry.timestamp,
           type: interaction.performanceEntry.type,
-          startTime: interaction.performanceEntry.startTime,
-          processingStart: interaction.performanceEntry.processingStart,
-          processingEnd: interaction.performanceEntry.processingEnd,
-          duration: interaction.performanceEntry.duration,
-          inputDelay: interaction.performanceEntry.inputDelay,
-          processingDuration: interaction.performanceEntry.processingDuration,
-          presentationDelay: interaction.performanceEntry.presentationDelay,
+          // componentName: interaction.componentName,
+          // componentPath: interaction.componentPath,
+          // id: interaction.performanceEntry.id,
+          // latency: interaction.performanceEntry.latency,
+          // type: interaction.performanceEntry.type,
+          // startTime: interaction.performanceEntry.startTime,
+          // processingStart: interaction.performanceEntry.processingStart,
+          // processingEnd: interaction.performanceEntry.processingEnd,
+          // duration: interaction.performanceEntry.duration,
+          // inputDelay: interaction.performanceEntry.inputDelay,
+          // processingDuration: interaction.performanceEntry.processingDuration,
+          // presentationDelay: interaction.performanceEntry.presentationDelay,
 
           // performanceEntry: interaction.performanceEntry,
-        }) satisfies Omit<
-          ScanInteraction,
-          'components' | 'performanceEntry'
-        > & {
-          // this is so bad, but for the sake of time
-          id: string;
-          latency: number;
-          type: 'pointer' | 'keyboard' | null;
-          startTime: number;
-          processingStart: number;
-          processingEnd: number;
-          duration: number;
-          inputDelay: number;
-          processingDuration: number;
-          presentationDelay: number;
-        },
+        }) satisfies Interaction,
     ),
     components: aggregatedComponents,
     session,
@@ -242,38 +236,3 @@ export const transport = async (
     headers,
   });
 };
-
-export function getInteractionPath(
-  fiber: Fiber | null,
-  filters: PathFilters = DEFAULT_FILTERS,
-): string {
-  if (!fiber) return '';
-
-  const fullPath: string[] = [];
-  let current: Fiber | null = fiber;
-
-  // Get the name of the current fiber first
-  if (current.type && typeof current.type === 'function') {
-    const name = getCleanComponentName(current.type);
-    if (name) {
-      fullPath.unshift(name);
-    }
-  }
-
-  // Move to parent fiber
-  current = current.return;
-
-  // Process ancestor fibers
-  while (current) {
-    if (current.type && typeof current.type === 'function') {
-      const name = getCleanComponentName(current.type);
-      if (name && name.length > 2 && shouldIncludeInPath(name, filters)) {
-        fullPath.unshift(name);
-      }
-    }
-    current = current.return;
-  }
-
-  const normalized = normalizePath(fullPath);
-  return normalized;
-}
