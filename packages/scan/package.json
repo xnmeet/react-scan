@@ -1,6 +1,6 @@
 {
   "name": "react-scan",
-  "version": "0.0.36",
+  "version": "0.0.60",
   "description": "Scan your React app for renders",
   "keywords": [
     "react",
@@ -113,6 +113,7 @@
     "dev": "NODE_ENV=development tsup --watch",
     "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
     "pack": "npm version patch && pnpm build && npm pack",
+    "pack:bump": "bun scripts/bump-version.js && nr pack && echo $(pwd)/react-scan-$(node -p \"require('./package.json').version\").tgz | pbcopy",
     "prettier": "prettier --config .prettierrc.mjs -w src",
     "publint": "publint"
   },
