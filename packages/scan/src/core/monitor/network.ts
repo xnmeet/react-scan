@@ -99,7 +99,7 @@ export const flush = (): void => {
     interactions: oldInteractions.map(
       (interaction) =>
         ({
-          id: interaction.componentPath,
+          id: `${interaction.performanceEntry.type}::${interaction.componentPath}::${getSession()?.url}`,//'${event. type}::${normalizePath(path)}::${getSession()?.url}';
           name: interaction.componentName,
           time: interaction.performanceEntry.duration,
           timestamp: interaction.performanceEntry.timestamp,
