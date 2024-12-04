@@ -1,102 +1,39 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
-export default function Home() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
+export default function Monitoring() {
   return (
-    <div className="px-8 sm:px-20 pt-20 pb-4 max-w-[700px] mx-auto min-h-screen grid grid-rows-[auto_1fr_auto]">
-      <div className="main-content">
-        <nav className="flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3 no-underline text-inherit">
-            <Image
-              src="/logo.svg"
-              alt="react-scan-logo"
-              width={30}
-              height={30}
-            />
-            <h3>
-              <strong className="font-mono">React Scan</strong>
-            </h3>
+    <div className="max-w-xl mx-auto">
+      <div className="space-y-4 mt-8">
+        <div>
+          <span className="font-bold">React Scan Monitoring</span> &middot;
+          monitor component render performance
+        </div>
+
+        <div>
+          Web performance is a black box. Fixing end user performance issues is
+          often guesswork because it’s unclear what is slow and why. Profile
+          Aggregation ties lines of code to slow user interactions. Session
+          Profiles show user timings, metrics, and profiles of an end user with
+          a slow experience.
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2 mt-4 !mb-8 w-full">
+          <input
+            type="email"
+            placeholder="Enter your email"
+            className="border-2 border-black px-2 py-2 w-full"
+          />
+          <Link
+            href="https://github.com/aidenybai/react-scan#install"
+            className="inline-block px-5 py-2 font-medium text-white bg-black text-center whitespace-nowrap"
+          >
+            Join waitlist
           </Link>
-          <div className="flex gap-4">
-            <a
-              href="https://github.com/aidenybai/react-scan#readme"
-              className="text-neutral-600 underline hover:text-black"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              install
-            </a>
-            <a
-              href="https://github.com/aidenybai/react-scan"
-              className="text-neutral-600 underline hover:text-black"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              github
-            </a>
-          </div>
-        </nav>
+        </div>
 
-        <p className="py-4">
-          React Scan &ldquo;scans&rdquo; your React app for slow renders. It&apos;s just
-          JavaScript, so you drop it in anywhere &ndash; script tag, npm, you name
-          it!
-        </p>
-
-        {isMobile ? (
-          <div className="w-full my-8 flex justify-center">
-            <Image
-              src="/demo.gif"
-              alt="React Scan Demo"
-              className="max-w-full rounded-lg shadow-md"
-              width={500}
-              height={300}
-            />
-          </div>
-        ) : (
-          <div className="min-h-[100px]">
-            <Image
-              src="/demo.gif"
-              alt="React Scan Demo"
-              className="max-w-full rounded-lg shadow-md"
-              width={500}
-              height={300}
-            />
-          </div>
-        )}
-      </div>
-
-      <div className="bg-white border-t border-neutral-100 pb-6">
-        <br />
-        <Link
-          href="https://github.com/aidenybai/react-scan#readme"
-          className="inline-block px-5 py-2 font-medium text-white bg-gradient-to-br from-purple-500 to-indigo-500 rounded-lg transition-all hover:scale-[1.02] hover:brightness-110 active:shadow-md active:shadow-purple-500/25"
-        >
-          Get started →
-        </Link>
-        <p>
-          <small>
-            Psst... need something more advanced? Check out:{' '}
-            <a href="https://million.dev" className="text-neutral-600 underline hover:text-black">
-              Million Lint
-            </a>
-          </small>
-        </p>
+        {/* <Companies /> */}
       </div>
     </div>
   );

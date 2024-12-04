@@ -3,7 +3,7 @@ import Image from 'next/image';
 export default function Companies() {
   return (
     <div>
-      <div className="text-sm text-neutral-500 mt-4 mb-2">
+      <div className="text-sm text-neutral-500 mb-2">
         Trusted by engineering teams at:
       </div>
 

@@ -26,8 +26,49 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <meta name="title" content="React Scan" />
+        <meta
+          name="description"
+          content="React Scan automatically detects and highlights components that cause performance issues in your React app. Drop it in anywhere – script tag, npm, you name it!"
+        />
+
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://react-scan.million.dev" />
+        <meta property="og:title" content="React Scan" />
+        <meta
+          property="og:description"
+          content="React Scan automatically detects and highlights components that cause performance issues in your React app. Drop it in anywhere – script tag, npm, you name it!"
+        />
+        <meta
+          property="og:image"
+          content="https://react-scan.million.dev/banner.png"
+        />
+
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://react-scan.million.dev" />
+        <meta property="twitter:title" content="React Scan" />
+        <meta
+          property="twitter:description"
+          content="React Scan automatically detects and highlights components that cause performance issues in your React app. Drop it in anywhere – script tag, npm, you name it!"
+        />
+        <meta
+          property="twitter:image"
+          content="https://react-scan.million.dev/banner.png"
+        />
+
+        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+
+        <meta
+          name="keywords"
+          content="react, performance, debugging, developer tools, web development, javascript"
+        />
+        <meta name="author" content="Aiden Bai" />
+        <meta name="theme-color" content="#8b5cf6" />
+        <link rel="canonical" href="https://react-scan.million.dev" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased flex flex-col min-h-screen`}
       >
         <div className="px-8 sm:px-20 pt-20 pb-4 max-w-[700px] mx-auto ">
           <Header />
