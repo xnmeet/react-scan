@@ -1,6 +1,5 @@
 'use client';
 
-import './react-scan';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Companies from '@/components/companies';
