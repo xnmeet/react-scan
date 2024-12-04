@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import Waitlist from './(components)/waitlist';
