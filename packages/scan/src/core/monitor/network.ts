@@ -103,8 +103,6 @@ export const flush = (): void => {
   } catch {
     /* */
   }
-
-  monitor.interactions = toKeepInteractions;
 };
 
 // export const debouncedFlush = debounce(flush, 5000);
