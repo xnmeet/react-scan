@@ -16,7 +16,7 @@ import type {
 
 //'${event. type}::${normalizePath(path)}::${getSession()?.url}';
 const getInteractionId = (interaction: InternalInteraction) =>
-  `${interaction.performanceEntry.type}::${interaction.componentPath}::${getSession()?.url}`;
+  `${interaction.performanceEntry.type}::${interaction.componentPath}::${interaction.url}`;
 
 export const flush = async (): Promise<void> => {
   const monitor = Store.monitor.value;

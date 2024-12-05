@@ -1,4 +1,4 @@
-import React from 'react';
+import { createElement } from 'react';
 import { useRouteMatch, useLocation } from 'react-router';
 import { Monitor as BaseMonitor } from '..';
 import { computeRoute } from './utils';
@@ -21,7 +21,7 @@ const useRoute = (): RouteInfo => {
 
 function ReactRouterV5Monitor(props: { url?: string; apiKey: string }) {
   const { route, path } = useRoute();
-  return React.createElement(BaseMonitor, {
+  return createElement(BaseMonitor, {
     ...props,
     route,
     path,

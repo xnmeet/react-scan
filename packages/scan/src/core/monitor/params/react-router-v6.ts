@@ -1,4 +1,4 @@
-import React from 'react';
+import { createElement } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { Monitor as BaseMonitor } from '..';
 import { computeReactRouterRoute } from './utils';
@@ -24,7 +24,7 @@ const useRoute = (): RouteInfo => {
 
 function ReactRouterMonitor(props: { url?: string; apiKey: string }) {
   const { route, path } = useRoute();
-  return React.createElement(BaseMonitor, {
+  return createElement(BaseMonitor, {
     ...props,
     route,
     path,
