@@ -77,6 +77,9 @@ const COLORS = {
 };
 
 const isProd = () => {
+  if (typeof window === 'undefined') {
+    return null;
+  }
   return (
     process.env.NODE_ENV === 'production' ||
     process.env.MODE === 'production' ||
@@ -98,10 +101,9 @@ const loggerConfig: LoggerConfig = {
   level: 'info',
 };
 
-// @ts-expect-error
-window.__SCAN_DEBUG__ = true;
-
 if (typeof window !== 'undefined') {
+  // @ts-expect-error
+  window.__SCAN_DEBUG__ = true;
   const isDebugEnabled =
     new URLSearchParams(window.location.search).has('debug') ||
     !!(window as any).__SCAN_DEBUG__;
