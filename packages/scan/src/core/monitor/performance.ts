@@ -152,7 +152,6 @@ export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
   if (!monitor) return;
 
   document.addEventListener('mouseover', (event) => {
-    console.log('currnet mouse over!', event.target);
 
     if (!(event.target instanceof Element)) {
       return;
@@ -161,7 +160,6 @@ export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
   });
   // todo: unsub
   setupPerformanceListener((entry) => {
-    console.log('GOT ENTRY', entry);
 
     // console.log('entry', entry);
 
