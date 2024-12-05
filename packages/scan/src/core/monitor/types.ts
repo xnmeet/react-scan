@@ -8,14 +8,14 @@ export enum Device {
 
 export interface Session {
   id: string;
-  // url: string; // flush everytime route changes for accuracy
+  url: string; // flush everytime route changes for accuracy
   device: Device;
   agent: string;
   wifi: string;
   cpu: number;
   gpu: string | null;
   mem: number;
-  // route: string | null;
+  route: string | null;
 }
 
 export interface Interaction {

@@ -32,6 +32,8 @@ export const flush = async (): Promise<void> => {
   const session = await getSession();
 
   if (!session) return;
+  session.route = monitor.route;
+  session.url = window.location.toString();
 
   const now = performance.now();
   const recentInteractions: typeof monitor.interactions = [];
