@@ -101,17 +101,20 @@ const loggerConfig: LoggerConfig = {
   level: 'info',
 };
 
+if (typeof window !== 'undefined') {
+  // @ts-expect-error
+  window.__SCAN_DEBUG__ = true;
+}
 const getDebugEnabled = () => {
   if (typeof window === 'undefined') {
     return false;
   }
-  // @ts-expect-error
-  window.__SCAN_DEBUG__ = true;
+
   const isDebugEnabled =
     new URLSearchParams(window.location.search).has('debug') ||
     !!(window as any).__SCAN_DEBUG__;
 
-  loggerConfig.enabled = isProd()
+  return isProd()
     ? !!(window as any).__SCAN_DEBUG_PROD__ // Only enable in prod if special flag is set
     : isDebugEnabled; // Normal debug rules in dev
 };
