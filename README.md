@@ -136,6 +136,8 @@ Add the script tag to your `index.html`:
 
 </details>
 
+Finally, if you want to install the Chrome extension, follow the guide [here](https://github.com/aidenybai/react-scan/blob/main/CHROME_EXTENSION_GUIDE.md).
+
 ## API Reference
 
 If you need a programmatic API to debug further, install via NPM instead:
