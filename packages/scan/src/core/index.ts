@@ -409,7 +409,7 @@ export const start = () => {
     ReactScanInternals,
   };
 
-  if (Store.monitor) {
+  if (Store.monitor.value) {
     initializeUrlChangeMonitoring();
     clearInterval(flushInterval);
 
@@ -467,24 +467,24 @@ export const start = () => {
         type.renderData = renderData;
       }
 
-      for (let i = 0, len = renders.length; i < len; i++) {
-        const render = renders[i];
-        const outline = getOutline(fiber, render);
-        if (!outline) continue;
-        ReactScanInternals.scheduledOutlines.push(outline);
+      if (!Store.monitor.value) {
+        for (let i = 0, len = renders.length; i < len; i++) {
+          const render = renders[i];
+          const outline = getOutline(fiber, render);
+          if (!outline) continue;
+          ReactScanInternals.scheduledOutlines.push(outline);
 
-        // audio context can take up an insane amount of cpu, todo: figure out why
-        // if (ReactScanInternals.options.playSound && audioContext) {
-        //   const renderTimeThreshold = 10;
-        //   const amplitude = Math.min(
-        //     1,
-        //     (render.time - renderTimeThreshold) / (renderTimeThreshold * 2),
-        //   );
-        //   playGeigerClickSound(audioContext, amplitude);
-        // }
-      }
-      flushOutlines(ctx, new Map());
-      if (Store.monitor) {
+          // audio context can take up an insane amount of cpu, todo: figure out why
+          // if (ReactScanInternals.options.playSound && audioContext) {
+          //   const renderTimeThreshold = 10;
+          //   const amplitude = Math.min(
+          //     1,
+          //     (render.time - renderTimeThreshold) / (renderTimeThreshold * 2),
+          //   );
+          //   playGeigerClickSound(audioContext, amplitude);
+          // }
+        }
+        flushOutlines(ctx, new Map());
       }
     },
     onCommitFinish() {
