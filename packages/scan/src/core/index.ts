@@ -28,6 +28,7 @@ import {
 import { initPerformanceMonitoring } from './monitor/performance';
 import type { InternalInteraction, Session } from './monitor/types';
 import { getSession } from './monitor/utils';
+import { logger } from './utils';
 
 export interface Options {
   /**
@@ -308,11 +309,12 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
       totalTime += render.time;
     }
 
-    const displayName = getDisplayName(fiber);
+    const displayName = getDisplayName(fiber.type);
     if (!displayName) {
       // console.log(
       //   'Dev check: the component should probably always have a display name',
       // );
+      logger.error("dev check: this component shoudl always have a display name")
       return;
     }
     let component = latestInteraction.components.get(displayName);

@@ -13,6 +13,7 @@ import type {
   InternalInteraction,
   Component,
 } from './types';
+import { logger } from '../utils';
 
 //'${event. type}::${normalizePath(path)}::${getSession()?.url}';
 const getInteractionId = (interaction: InternalInteraction) =>
@@ -104,7 +105,7 @@ export const flush = async (): Promise<void> => {
     },
   };
 
-  console.log('attempting to flush', payload);
+  logger.debug('attempting to flush', payload);
 
   monitor.pendingRequests++;
   monitor.interactions = monitor.interactions.filter((interaction) =>

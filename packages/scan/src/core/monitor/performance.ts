@@ -6,6 +6,7 @@ import type {
   PerformanceInteraction,
   PerformanceInteractionEntry,
 } from './types';
+import { logger } from '../utils';
 
 interface PathFilters {
   skipProviders: boolean;
@@ -208,7 +209,7 @@ export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
       route: Store.monitor.value?.route ?? null,
       url: window.location.toString(),
     });
-    console.log('current interactions', monitor.interactions);
+    logger.debug('current interactions', monitor.interactions);
   });
 }
 
@@ -245,7 +246,7 @@ const setupPerformanceListener = (
     } else {
       const interactionType = getInteractionType(entry.name);
       if (!interactionType) {
-        console.log('dev invariant: invalid interaction type');
+        logger.debug('dev invariant: invalid interaction type');
 
         return;
       }
