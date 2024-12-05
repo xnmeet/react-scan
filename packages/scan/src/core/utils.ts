@@ -146,7 +146,7 @@ export const logger = {
 
   _log(level: LogLevel, ...args: any[]) {
     if (
-      !getDebugEnabled() ||
+      getDebugEnabled() ||
       LOG_LEVELS[level] < LOG_LEVELS[loggerConfig.level]
     ) {
       return;
