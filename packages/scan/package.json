@@ -155,6 +155,9 @@
   "types": "dist/index.d.ts",
   "typesVersions": {
     "*": {
+      "monitoring": [
+        "./dist/core/monitor/index.d.ts"
+      ],
       "monitoring/next": [
         "./dist/core/monitor/params/next.d.ts"
       ],
