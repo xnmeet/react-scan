@@ -119,6 +119,16 @@ const getDebugEnabled = () => {
     : isDebugEnabled; // Normal debug rules in dev
 };
 
+const shouldFilterLog = (log: string) => {
+  if (typeof window === 'undefined') {
+    return true;
+  }
+  // @ts-expect-error
+  const arr: Array<string> | undefined = window.__SCAN_FILTER__;
+
+  return arr && arr.some((filter) => log.includes(filter));
+};
+
 export const logger = {
   setEnabled(enabled: boolean) {
     loggerConfig.enabled = enabled;
@@ -148,6 +158,7 @@ export const logger = {
     if (
       getDebugEnabled() ||
       LOG_LEVELS[level] < LOG_LEVELS[loggerConfig.level]
+      && !shouldFilterLog(args.filter(x => typeof x=== 'string').join(""))
     ) {
       return;
     }
