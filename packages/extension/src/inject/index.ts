@@ -15,18 +15,9 @@ const injectScript = (scriptURL: string, scriptContent: string) => {
     return;
   }
 
-  // Create a Blob containing the script content
-  const blob = new Blob([scriptContent], { type: 'text/javascript' });
-  const blobURL = URL.createObjectURL(blob);
-
   const script = document.createElement('script');
   script.id = scriptURL;
-  script.src = blobURL;
-
-  // Clean up the blob URL after the script loads
-  script.onload = () => {
-    URL.revokeObjectURL(blobURL);
-  };
+  script.textContent = scriptContent;
 
   document.documentElement.appendChild(script);
 };
@@ -74,14 +65,7 @@ const injectReactScan = async () => {
         const scriptContent = await cachedResponse.text();
         injectScript(scriptURL, scriptContent);
       } else {
-        // If no valid cache, fetch new version
-        const headResponse = await fetch(scriptURL, {
-          method: 'HEAD',
-          cache: 'no-store',
-        });
-        const finalURL = headResponse.url;
-
-        const response = await fetch(finalURL, {
+        const response = await fetch(scriptURL, {
           cache: 'no-store',
         });
 
