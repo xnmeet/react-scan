@@ -2,21 +2,19 @@
   "exclude": ["node_modules"],
   "include": ["packages"],
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "CommonJS",
+    "target": "ES2018",
     "lib": ["ESNext", "DOM"],
-    "importHelpers": true,
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "declaration": true,
+    "declarationMap": true,
     "sourceMap": true,
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "moduleResolution": "bundler",
-    "jsx": "react",
-    "esModuleInterop": true,
-    "target": "ES2017",
-    "useDefineForClassFields": false,
-    "declarationMap": true
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
   }
 }

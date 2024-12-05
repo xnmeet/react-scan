@@ -1,6 +1,6 @@
 {
   "name": "react-scan",
-  "version": "0.0.146",
+  "version": "0.0.156",
   "description": "Scan your React app for renders",
   "keywords": [
     "react",
@@ -147,6 +147,28 @@
       "types": "./dist/react-component-name/rollup.d.ts",
       "import": "./dist/react-component-name/rollup.mjs",
       "require": "./dist/react-component-name/rollup.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "monitoring/next": [
+        "./dist/core/monitor/params/next.d.ts"
+      ],
+      "monitoring/*": [
+        "./dist/core/monitor/params/*.d.ts"
+      ],
+      "monitoring/react-router-legacy": [
+        "./dist/core/monitor/params/react-router-v5.d.ts"
+      ],
+      "monitoring/react-route": [
+        "./dist/core/monitor/params/react-router-v6.d.ts"
+      ],
+      "monitoring/remix": [
+        "./dist/core/monitor/params/remix.d.ts"
+      ],
+      "react-component-name/*": [
+        "./dist/react-component-name/*.d.ts"
+      ]
     }
   },
   "main": "dist/index.js",
