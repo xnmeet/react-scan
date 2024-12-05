@@ -66,7 +66,10 @@ const createBabelPlugin = (): PluginObj => {
       // Handle factory functions that return components
       if (t.isIdentifier(callee)) {
         // Check if the function name follows a component factory pattern
-        if (callee.name.startsWith('create') || callee.name.endsWith('Component')) {
+        if (
+          callee.name.startsWith('create') ||
+          callee.name.endsWith('Component')
+        ) {
           return true;
         }
       }
@@ -163,10 +166,7 @@ const createBabelPlugin = (): PluginObj => {
                       ),
                     ),
                   ]),
-                  t.catchClause(
-                    null,
-                    t.blockStatement([])
-                  )
+                  t.catchClause(null, t.blockStatement([])),
                 );
 
                 // Find the parent statement
@@ -188,10 +188,10 @@ const createBabelPlugin = (): PluginObj => {
 };
 
 export const reactComponentNamePlugin = createUnplugin<Options>(
-  (options = {}) => {
+  (options?: Options) => {
     const filter = createFilter(
-      options.include || [/\.[jt]sx?$/],
-      options.exclude || [/node_modules/],
+      options?.include || [/\.[jt]sx?$/],
+      options?.exclude || [/node_modules/],
     );
 
     return {
