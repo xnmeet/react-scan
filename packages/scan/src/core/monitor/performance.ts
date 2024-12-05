@@ -117,8 +117,8 @@ const handleMouseover = (event: Event) => {
 const getFirstNamedAncestorCompositeFiber = (element: Element) => {
   let curr: Element | null = element;
   let parentCompositeFiber: Fiber | null = null;
-  while (!parentCompositeFiber && element.parentElement) {
-    curr = element.parentElement;
+  while (!parentCompositeFiber && curr.parentElement) {
+    curr = curr.parentElement;
 
     const { parentCompositeFiber: fiber } =
       getCompositeComponentFromElement(curr);
