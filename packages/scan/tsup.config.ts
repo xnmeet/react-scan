@@ -32,9 +32,19 @@ const addDirectivesToChunkFiles = async (
 
 export default defineConfig([
   {
-    entry: ['./src/index.ts', './src/auto.ts', './src/rsc-shim.ts'],
+    entry: [
+      './src/index.ts',
+      './src/auto.ts',
+      './src/rsc-shim.ts',
+      './src/core/monitor/params/next.ts',
+      './src/core/monitor/params/react-router-v5.ts',
+      './src/core/monitor/params/react-router-v6.ts',
+      './src/core/monitor/params/remix.ts',
+      './src/core/monitor/index.ts',
+    ],
     outDir: DIST_PATH,
     splitting: false,
+    clean: true,
     sourcemap: false,
     format: ['cjs', 'esm', 'iife'],
     target: 'esnext',
@@ -48,12 +58,22 @@ export default defineConfig([
     env: {
       NODE_ENV: process.env.NODE_ENV ?? 'development',
     },
-    external: ['react', 'react-dom', 'react-reconciler', 'next', 'next/navigation'],
+    external: [
+      'react',
+      'react-dom',
+      'react-reconciler',
+      'next',
+      'next/navigation',
+      'react-router',
+      'react-router-dom',
+      '@remix-run/react',
+    ],
   },
   {
     entry: ['./src/cli.mts'],
     outDir: './dist',
     splitting: false,
+    clean: true,
     sourcemap: false,
     format: ['cjs'],
     target: 'esnext',

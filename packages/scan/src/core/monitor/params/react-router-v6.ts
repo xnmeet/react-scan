@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, useLocation } from '@remix-run/react';
+import { useParams, useLocation } from 'react-router-dom';
 import { Monitor as BaseMonitor } from '..';
 import { computeReactRouterRoute } from './utils';
 import type { RouteInfo } from './types';
@@ -12,7 +12,9 @@ const useRoute = (): RouteInfo => {
     return { route: null, path: pathname };
   }
 
-  const validParams = params as Record<string, string>;
+  const validParams = Object.fromEntries(
+    Object.entries(params).filter(([_, v]) => v !== undefined),
+  ) as Record<string, string | string[]>;
 
   return {
     route: computeReactRouterRoute(pathname, validParams),
@@ -20,7 +22,7 @@ const useRoute = (): RouteInfo => {
   };
 };
 
-function RemixMonitor(props: { url?: string; apiKey: string }) {
+function ReactRouterMonitor(props: { url?: string; apiKey: string }) {
   const { route, path } = useRoute();
   return React.createElement(BaseMonitor, {
     ...props,
@@ -29,4 +31,4 @@ function RemixMonitor(props: { url?: string; apiKey: string }) {
   });
 }
 
-export { RemixMonitor as Monitor };
+export { ReactRouterMonitor as Monitor };

@@ -1,6 +1,6 @@
 {
   "name": "react-scan",
-  "version": "0.0.80",
+  "version": "0.0.90",
   "description": "Scan your React app for renders",
   "keywords": [
     "react",
@@ -26,6 +26,31 @@
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",
+    "./monitoring": {
+      "types": "./dist/core/monitor/index.d.ts",
+      "import": "./dist/core/monitor/index.mjs",
+      "require": "./dist/core/monitor/index.js"
+    },
+    "./monitoring/next": {
+      "types": "./dist/core/monitor/params/next.d.ts",
+      "import": "./dist/core/monitor/params/next.mjs",
+      "require": "./dist/core/monitor/params/next.js"
+    },
+    "./monitoring/react-router-legacy": {
+      "types": "./dist/core/monitor/params/react-router-v5.d.ts",
+      "import": "./dist/core/monitor/params/react-router-v5.mjs",
+      "require": "./dist/core/monitor/params/react-router-v5.js"
+    },
+    "./monitoring/react-route": {
+      "types": "./dist/core/monitor/params/react-router-v6.d.ts",
+      "import": "./dist/core/monitor/params/react-router-v6.mjs",
+      "require": "./dist/core/monitor/params/react-router-v6.js"
+    },
+    "./monitoring/remix": {
+      "types": "./dist/core/monitor/params/remix.d.ts",
+      "import": "./dist/core/monitor/params/remix.mjs",
+      "require": "./dist/core/monitor/params/remix.js"
+    },
     ".": {
       "production": {
         "import": {
@@ -165,10 +190,12 @@
     "unplugin": "2.0.0-beta.2"
   },
   "devDependencies": {
+    "@remix-run/react": "*",
     "@types/babel__core": "^7.20.5",
     "@types/node": "^20.17.9",
     "@types/react": "^18.0.0",
     "@types/react-reconciler": "^0.28.8",
+    "@types/react-router": "^5.1.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vercel/style-guide": "^6.0.0",
@@ -179,10 +206,34 @@
     "react": "*",
     "react-dom": "*",
     "react-reconciler": "^0.29.2",
+    "react-router": "^5.0.0",
+    "react-router-dom": "^5.0.0 || ^6.0.0 || ^7.0.0",
     "terser": "^5.36.0",
     "tsup": "^8.0.0",
     "typescript": "^5.0.0",
     "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "@remix-run/react": ">=1.0.0",
+    "next": ">=13.0.0",
+    "react": "^16.8.0 || ^17.0.0 || ^18.0.0 | ^19.0.0",
+    "react-dom": "^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
+    "react-router": "^5.0.0 || ^6.0.0",
+    "react-router-dom": "^5.0.0 || ^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@remix-run/react": {
+      "optional": true
+    },
+    "next": {
+      "optional": true
+    },
+    "react-router": {
+      "optional": true
+    },
+    "react-router-dom": {
+      "optional": true
+    }
   },
   "publishConfig": {
     "access": "public"

@@ -25,9 +25,7 @@ import {
   isCompositeComponent,
   traverseFiber,
 } from './instrumentation/fiber';
-import {
-  initPerformanceMonitoring,
-} from './monitor/performance';
+import { initPerformanceMonitoring } from './monitor/performance';
 import type { InternalInteraction } from './monitor/types';
 
 export interface Options {
@@ -353,7 +351,7 @@ export const start = () => {
   }
   const ctx = overlayElement.getContext();
   createInspectElementStateMachine();
-
+  // audio context can take up an insane amount of cpu, todo: figure out why
   // const audioContext =
   //   typeof window !== 'undefined'
   //     ? new (window.AudioContext ||
@@ -370,10 +368,6 @@ export const start = () => {
 
   if (Store.monitor) {
     clearInterval(flushInterval);
-    // Store.monitor.subscribe((monitor) => {
-
-    // })
-    console.log('setup interval');
 
     flushInterval = setInterval(() => {
       flush();
@@ -435,6 +429,7 @@ export const start = () => {
         if (!outline) continue;
         ReactScanInternals.scheduledOutlines.push(outline);
 
+        // audio context can take up an insane amount of cpu, todo: figure out why
         // if (ReactScanInternals.options.playSound && audioContext) {
         //   const renderTimeThreshold = 10;
         //   const amplitude = Math.min(
@@ -446,8 +441,6 @@ export const start = () => {
       }
       flushOutlines(ctx, new Map());
       if (Store.monitor) {
-        // console.log('debounce flush');
-        // debouncedFlush();
       }
     },
     onCommitFinish() {
@@ -495,44 +488,6 @@ export const useScan = (options: Options) => {
   }, []);
 };
 
-('use client');
-export const Monitor = ({
-  url,
-  apiKey,
-  path,
-  route,
-}: { url?: string; apiKey: string } & {
-  route: string | null;
-  path: string;
-}) => {
-  if (!apiKey)
-    throw new Error('Please provide a valid API key for React Scan monitoring');
-
-  // TODO(nisarg): Fix this default value after we confirm the URL
-  url ??= 'https://monitoring.million.dev/api/v1/ingest';
-  Store.monitor.value ??= {
-    // components: new Map(),
-    pendingRequests: 0,
-    url,
-    apiKey,
-    interactions: [],
-
-    route,
-    path,
-  };
-  Store.monitor.value.route = route;
-  Store.monitor.value.path = path;
-
-  React.useEffect(() => {
-    scan({
-      enabled: true,
-      showToolbar: false,
-    });
-    return initPerformanceMonitoring();
-  }, []);
-
-  return null;
-};
 
 export const onRender = (
   type: unknown,
