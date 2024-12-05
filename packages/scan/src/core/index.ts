@@ -323,7 +323,7 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
         renders: 0,
         totalTime,
         // PUT BACK TO 7 ROB!!
-        retiresAllowed: 70, // allow max 7 retries before this collection gets skipped
+        retiresAllowed: 7, // allow max 7 retries before this collection gets skipped
         // todo: selfTime
       };
       latestInteraction.components.set(displayName, component);
