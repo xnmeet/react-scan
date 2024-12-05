@@ -63,8 +63,12 @@ const getGpuRenderer = () => {
  * @see https://gist.github.com/aidenybai/473689493f2d5d01bbc52e2da5950b45#file-palette-dev-browser-dist-palette-dev-mjs-L554
  * DO NOT CALL THIS EVERYTIME
  */
-export const getSession = (): Session | null => {
+let cachedSession: Session;
+export const getSession = (): Promise<Session> | null | undefined | Session => {
   if (isSSR) return null;
+  if (cachedSession) {
+    return cachedSession;
+  }
   const id = generateId();
   const url = window.location.toString();
   /**
@@ -91,27 +95,29 @@ export const getSession = (): Session | null => {
    */
   // @ts-expect-error - deviceMemory is still experimental
   const mem = navigator.deviceMemory; // GiB ram
-
-  const session = {
-    id,
-    url,
-    device: getDeviceType(),
-    wifi,
-    cpu,
-    mem,
-    gpu: null,
-    agent: navigator.userAgent,
-    route: Store.monitor.value?.route ?? null, // may not be smart to read store here, abstraction is bad at the least
-  };
-
-  /**
-   * `getGpuRenderer` creates a canvas element, which can increase
-   * Total Blocking Time (TBT). Running it when main thread is idle allows us to avoid
-   * initially blocking.
-   */
   onIdle(() => {
-    session.gpu = getGpuRenderer();
+    return new Promise((resolve) => {
+      //  `getGpuRenderer` creates a canvas element, which can increase
+      //  Total Blocking Time (TBT). Running it when main thread is idle allows us to avoid
+      //  initially blocking.
+      const session = {
+        id,
+        url,
+        device: getDeviceType(),
+        wifi,
+        cpu,
+        mem,
+        gpu: getGpuRenderer(),
+        agent: navigator.userAgent,
+        // route: Store.monitor.value?.route ?? null, // may not be smart to read store here, abstraction is bad at the least
+      };
+      cachedSession = session;
+      resolve(session);
+    });
   });
+};
+
+/**
 
   return session;
 };

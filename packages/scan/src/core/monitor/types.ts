@@ -8,14 +8,14 @@ export enum Device {
 
 export interface Session {
   id: string;
-  url: string; // flush everytime route changes for accuracy
+  // url: string; // flush everytime route changes for accuracy
   device: Device;
   agent: string;
   wifi: string;
   cpu: number;
   gpu: string | null;
   mem: number;
-  route: string | null;
+  // route: string | null;
 }
 
 export interface Interaction {
@@ -24,6 +24,8 @@ export interface Interaction {
   type: string; // type of interaction i.e pointer
   time: number; // time of interaction in ms
   timestamp: number;
+  route: string | null // the computed route that handles dynamic params
+  url: string
   // clickhouse + ingest specific types
   projectId?: string;
   sessionId?: string;
@@ -43,12 +45,14 @@ export interface Component {
 export interface IngestRequest {
   interactions: Array<Interaction>;
   components: Array<Component>;
-  session: Session;
+  session: Session 
 }
 
 // used internally in runtime for interaction tracking. converted to Interaction when flushed
 export interface InternalInteraction {
   componentName: string;
+  url: string
+  route: string | null
   componentPath: string;
   performanceEntry: PerformanceInteraction;
   components: Map<

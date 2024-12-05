@@ -26,7 +26,8 @@ import {
   traverseFiber,
 } from './instrumentation/fiber';
 import { initPerformanceMonitoring } from './monitor/performance';
-import type { InternalInteraction } from './monitor/types';
+import type { InternalInteraction, Session } from './monitor/types';
+import { getSession } from './monitor/utils';
 
 export interface Options {
   /**
@@ -128,6 +129,7 @@ interface Monitor {
   interactions: Array<InternalInteraction>;
   route: string | null;
   path: string;
+  session: ReturnType<typeof getSession>;
 }
 
 interface StoreType {
@@ -308,9 +310,9 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
 
     const displayName = getDisplayName(fiber);
     if (!displayName) {
-      console.log(
-        'Dev check: the component should probably always have a display name',
-      );
+      // console.log(
+      //   'Dev check: the component should probably always have a display name',
+      // );
       return;
     }
     let component = latestInteraction.components.get(displayName);
@@ -320,7 +322,8 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
         name: displayName,
         renders: 0,
         totalTime,
-        retiresAllowed: 7, // allow max 7 retries before this collection gets skipped
+        // PUT BACK TO 7 ROB!!
+        retiresAllowed: 70, // allow max 7 retries before this collection gets skipped
         // todo: selfTime
       };
       latestInteraction.components.set(displayName, component);

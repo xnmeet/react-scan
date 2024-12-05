@@ -128,6 +128,8 @@ export function getInteractionPath(
   return normalized;
 }
 
+let currentMouseOver: Element;
+
 function getCleanComponentName(component: any): string {
   const name = getDisplayName(component);
   if (!name) return '';
@@ -149,51 +151,66 @@ export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
   const monitor = Store.monitor.value;
   if (!monitor) return;
 
+  document.addEventListener('mouseover', (event) => {
+    console.log('currnet mouse over!', event.target);
+
+    if (!(event.target instanceof Element)) {
+      return;
+    }
+    currentMouseOver = event.target;
+  });
   // todo: unsub
   setupPerformanceListener((entry) => {
     console.log('GOT ENTRY', entry);
 
     // console.log('entry', entry);
-    if (!entry.target) {
-      // NOTE!! There are some elements which the performance observer does not give
-      // back a target,chrome devtools suffers the same limitation
-      // we should setup click listeners to always get this value, even when the performance
-      // observer doesn't get it, i must do this later
+
+    let target =
+      entry.target ?? (entry.type === 'pointer' ? currentMouseOver : null);
+    if (!target) {
       return;
     }
-
-    let target = entry.target;
     let { parentCompositeFiber } = getCompositeComponentFromElement(target);
+    if (parentCompositeFiber && !getDisplayName(parentCompositeFiber?.type)) {
+      parentCompositeFiber = undefined; // so bad clean this up
+    }
     while (!parentCompositeFiber && target.parentElement) {
       target = target.parentElement;
-      ({ parentCompositeFiber } = getCompositeComponentFromElement(target));
+
+      const { parentCompositeFiber: fiber } =
+        getCompositeComponentFromElement(target);
+
+      if (!fiber) {
+        continue;
+      }
+      if (getDisplayName(fiber?.type)) {
+        parentCompositeFiber = fiber;
+      }
     }
 
     if (!parentCompositeFiber) {
-      console.log('dev check: no fiber, is this right?');
-
       return;
     }
     const displayName = getDisplayName(parentCompositeFiber.type);
     if (!displayName) {
-      console.log('dev check: no display name, is this right?');
       return;
     }
 
     if (!entry.type) {
-      console.log('dev check: no entry type, is this right?');
       return;
     }
 
     const path = getInteractionPath(parentCompositeFiber, filters);
-    console.log('PUSH INTERACTION');
 
     monitor.interactions.push({
       componentName: displayName,
       componentPath: path,
       performanceEntry: entry, // todo: remove entries
       components: new Map(),
+      route: Store.monitor.value?.route ?? null,
+      url: window.location.toString(),
     });
+    console.log('current interactions', monitor.interactions);
   });
 }
 

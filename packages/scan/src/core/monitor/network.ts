@@ -14,62 +14,59 @@ import type {
   Component,
 } from './types';
 
-let session: Session | null = null;
-export const flush = (): void => {
+//'${event. type}::${normalizePath(path)}::${getSession()?.url}';
+const getInteractionId = (interaction: InternalInteraction) =>
+  `${interaction.performanceEntry.type}::${interaction.componentPath}::${getSession()?.url}`;
+
+export const flush = async (): Promise<void> => {
   const monitor = Store.monitor.value;
   if (
     !monitor ||
     !navigator.onLine ||
     !monitor.url ||
     !monitor.interactions.length
-  )
+  ) {
     return;
+  }
+  // idempotent
+  const session = await getSession();
 
-  // MARK: Sessions
-  if (!session) session = getSession();
-  if (!session) return; // only on SSR (unlikely)
+  if (!session) return;
 
-  session.url = window.location.toString();
-  session.route = Store.monitor.value?.route ?? null;
-
-  // MARK: Interactions
   const now = performance.now();
-  const interactions = new Array<Interaction>();
-  const toFlushInteractions = new Array<InternalInteraction>();
-  const toKeepInteractions = new Array<InternalInteraction>();
+  const recentInteractions: typeof monitor.interactions = [];
+  const oldInteractions: typeof monitor.interactions = [];
 
   // Split interactions into recent (< 4s) and old
-  for (let i = 0; i < monitor.interactions.length; i++) {
-    const interaction = monitor.interactions[i];
+  monitor.interactions.forEach((interaction) => {
     if (now - interaction.performanceEntry.startTime <= 4000) {
-      interactions.push({
-        id: `${interaction.performanceEntry.type}::${interaction.componentPath}::${session?.route}`, //'${event. type}::${normalizePath(path)}::${getSession()?.url}';
-        name: interaction.componentName,
-        time: interaction.performanceEntry.duration,
-        timestamp: interaction.performanceEntry.timestamp,
-        type: interaction.performanceEntry.type,
-      });
-      toFlushInteractions.push(interaction);
+      recentInteractions.push(interaction);
     } else {
-      toKeepInteractions.push(interaction);
+      oldInteractions.push(interaction);
     }
+  });
+
+  if (!oldInteractions.length) {
+    return;
   }
 
-  if (!toKeepInteractions.length) return;
+  const aggregatedComponents: Array<{
+    interactionId: string;
+    name: string;
+    renders: number;
+    instances: number;
+    totalTime?: number;
+    selfTime?: number;
+  }> = [];
 
-  const components: Array<Component> = [];
-
-  for (let i = 0; i < toFlushInteractions.length; i++) {
-    const interaction = toFlushInteractions[i];
-    const interactionId = interactions[i].id; // indexes should be match, and id already computed
-    const entries = Array.from(interaction.components.entries());
-    for (let j = 0; j < entries.length; j++) {
-      const [name, component] = entries[j];
-
-      components.push({
+  for (const interaction of oldInteractions) {
+    for (const [name, component] of Array.from(
+      interaction.components.entries(),
+    )) {
+      aggregatedComponents.push({
         name,
-        interactionId,
         instances: component.fibers.size,
+        interactionId: getInteractionId(interaction),
         renders: component.renders,
         totalTime: component.totalTime,
       });
@@ -81,29 +78,56 @@ export const flush = (): void => {
         // we decide to skip the collection if this is the case
         interaction.components.delete(name);
       }
-      component.retiresAllowed--;
+
+      component.retiresAllowed -= 1;
     }
   }
 
   const payload: IngestRequest = {
-    interactions,
-    components,
-    session,
+    interactions: oldInteractions.map(
+      (interaction) =>
+        ({
+          id: getInteractionId(interaction),
+          name: interaction.componentName,
+          time: interaction.performanceEntry.duration,
+          timestamp: interaction.performanceEntry.timestamp,
+          type: interaction.performanceEntry.type,
+          route: interaction.route,
+          url: interaction.url,
+        }) satisfies Interaction,
+    ),
+    components: aggregatedComponents,
+    session: {
+      ...session,
+    },
   };
-  console.log('SCAN FLUSH:', payload);
+
+  console.log('attempting to flush', payload);
 
   monitor.pendingRequests++;
-  monitor.interactions = toKeepInteractions;
-
+  monitor.interactions = monitor.interactions.filter((interaction) =>
+    oldInteractions.some(
+      (oldInteraction) =>
+        oldInteraction.performanceEntry.id !== interaction.performanceEntry.id,
+    ),
+  );
   try {
     transport(monitor.url, payload)
       .then(() => {
         monitor.pendingRequests--;
+        // there may still be renders associated with these interaction, so don't flush just yet
       })
-      .catch(() => transport(monitor.url!, payload).catch(() => null)); // retry only once
+      .catch(async () => {
+        // let the next interval attempt to flush
+        monitor.interactions = monitor.interactions.concat(oldInteractions);
+        // await transport(monitor.url!, payload).catch(() => null);
+      });
   } catch {
     /* */
   }
+
+  // Keep only recent interactions
+  monitor.interactions = recentInteractions;
 };
 
 // export const debouncedFlush = debounce(flush, 5000);

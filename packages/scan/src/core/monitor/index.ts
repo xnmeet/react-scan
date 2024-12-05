@@ -2,6 +2,7 @@
 import React from 'react';
 import { scan, Store } from '..';
 import { initPerformanceMonitoring } from './performance';
+import { getSession } from './utils';
 
 export const Monitor = ({
   url,
@@ -23,7 +24,7 @@ export const Monitor = ({
     url,
     apiKey,
     interactions: [],
-
+    session: getSession(),
     route,
     path,
   };
