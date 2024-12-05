@@ -4,15 +4,12 @@ import { defineConfig } from 'tsup';
 
 const DIST_PATH = './dist';
 
-const addDirectivesToChunkFiles = async (
-  distPath = DIST_PATH,
-): Promise<void> => {
+const addDirectivesToChunkFiles = async (readPath: string): Promise<void> => {
   try {
-    const files = await fs.readdir(distPath);
-
+    const files = await fs.readdir(readPath);
     for (const file of files) {
       if (file.endsWith('.mjs') || file.endsWith('.js')) {
-        const filePath = path.join(distPath, file);
+        const filePath = path.join(readPath, file);
 
         const data = await fs.readFile(filePath, 'utf8');
 
@@ -40,7 +37,6 @@ export default defineConfig([
       './src/core/monitor/params/react-router-v5.ts',
       './src/core/monitor/params/react-router-v6.ts',
       './src/core/monitor/params/remix.ts',
-      './src/core/monitor/index.ts',
     ],
     outDir: DIST_PATH,
     splitting: false,
@@ -52,7 +48,11 @@ export default defineConfig([
     treeshake: true,
     dts: true,
     async onSuccess() {
-      await addDirectivesToChunkFiles();
+      await Promise.all([
+        addDirectivesToChunkFiles(DIST_PATH),
+        addDirectivesToChunkFiles(DIST_PATH + '/core/monitor/params'),
+        addDirectivesToChunkFiles(DIST_PATH + '/core/monitor'),
+      ]);
     },
     minify: false,
     env: {
