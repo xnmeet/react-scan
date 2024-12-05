@@ -95,6 +95,7 @@ export const getSession = (): Promise<Session> | null | undefined | Session => {
    */
   // @ts-expect-error - deviceMemory is still experimental
   const mem = navigator.deviceMemory; // GiB ram
+  // eslint-disable-next-line @typescript-eslint/no-misused-promises
   onIdle(() => {
     return new Promise((resolve) => {
       //  `getGpuRenderer` creates a canvas element, which can increase

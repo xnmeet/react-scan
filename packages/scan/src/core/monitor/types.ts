@@ -15,7 +15,7 @@ export interface Session {
   cpu: number;
   gpu: string | null;
   mem: number;
-  route: string | null;
+  route?: string | null;
 }
 
 export interface Interaction {
