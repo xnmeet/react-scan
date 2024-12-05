@@ -101,7 +101,10 @@ const loggerConfig: LoggerConfig = {
   level: 'info',
 };
 
-if (typeof window !== 'undefined') {
+const getDebugEnabled = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
   // @ts-expect-error
   window.__SCAN_DEBUG__ = true;
   const isDebugEnabled =
@@ -111,7 +114,7 @@ if (typeof window !== 'undefined') {
   loggerConfig.enabled = isProd()
     ? !!(window as any).__SCAN_DEBUG_PROD__ // Only enable in prod if special flag is set
     : isDebugEnabled; // Normal debug rules in dev
-}
+};
 
 export const logger = {
   setEnabled(enabled: boolean) {
@@ -140,7 +143,7 @@ export const logger = {
 
   _log(level: LogLevel, ...args: any[]) {
     if (
-      !loggerConfig.enabled ||
+      !getDebugEnabled() ||
       LOG_LEVELS[level] < LOG_LEVELS[loggerConfig.level]
     ) {
       return;
