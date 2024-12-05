@@ -6,7 +6,6 @@ import type {
   PerformanceInteraction,
   PerformanceInteractionEntry,
 } from './types';
-import { logger } from '../utils';
 
 interface PathFilters {
   skipProviders: boolean;
@@ -64,43 +63,6 @@ function shouldIncludeInPath(
   return !patternsToCheck.some((pattern) => pattern.test(name));
 }
 
-const interactionPathCache = new WeakMap<Fiber, string>();
-// todo: cache like this:
-/**
- * 
- * @param fiber Rob
-  4:06 AM
-@Aiden Bai
-i need a cache validation strategy for a function that gets the path from current fiber to root
-I think i can always hit cache if the element does not have a key associated with it, is that correct? Meaning the only way the ancestor of a node gets changed is if a user manually adds a key to an element and it gets placed in a new subtree (edited) 
-4:06
-oh wait no
-4:06
-if any ancestors have a key
-4:06
-ug
-
-
-Aiden Bai
-:headphones:  4:06 AM
-key?
-4:06
-like key=“”
-
-
-Rob
-  4:07 AM
-like imagine
-if (Math.random() > .5){
-return <PArenta> <ComponentA key=a/> </>
-}else{
-return <ParentB> <ComponentA key=“a”/> </>} (edited) 
-4:07
-the ancestor changes and the fiber doesn’t get re-created
-4:08
-but if the element and all ancestors don’t have a key it should never change
-
- */
 export function getInteractionPath(
   fiber: Fiber | null,
   filters: PathFilters = DEFAULT_FILTERS,
@@ -145,57 +107,52 @@ function normalizePath(path: string[]): string {
 
   return deduped.join('.');
 }
+const handleMouseover = (event: Event) => {
+  if (!(event.target instanceof Element)) {
+    return;
+  }
+  currentMouseOver = event.target;
+};
 
+const getFirstNamedAncestorCompositeFiber = (element: Element) => {
+  let curr: Element | null = element;
+  let parentCompositeFiber: Fiber | null = null;
+  while (!parentCompositeFiber && element.parentElement) {
+    curr = element.parentElement;
+
+    const { parentCompositeFiber: fiber } =
+      getCompositeComponentFromElement(curr);
+
+    if (!fiber) {
+      continue;
+    }
+    if (getDisplayName(fiber?.type)) {
+      parentCompositeFiber = fiber;
+    }
+  }
+  return parentCompositeFiber;
+};
+// todo: update monitoring api to expose filters for component names
 export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
-  // todo: expose filters to user
   const filters = { ...DEFAULT_FILTERS, ...options };
   const monitor = Store.monitor.value;
   if (!monitor) return;
 
-  document.addEventListener('mouseover', (event) => {
-
-    if (!(event.target instanceof Element)) {
-      return;
-    }
-    currentMouseOver = event.target;
-  });
-  // todo: unsub
-  setupPerformanceListener((entry) => {
-
-    // console.log('entry', entry);
-
+  document.addEventListener('mouseover', handleMouseover);
+  const disconnectPerformanceListener = setupPerformanceListener((entry) => {
     let target =
       entry.target ?? (entry.type === 'pointer' ? currentMouseOver : null);
     if (!target) {
+      // most likely an invariant that we should log if its violated
       return;
     }
-    let { parentCompositeFiber } = getCompositeComponentFromElement(target);
-    if (parentCompositeFiber && !getDisplayName(parentCompositeFiber?.type)) {
-      parentCompositeFiber = undefined; // so bad clean this up
-    }
-    while (!parentCompositeFiber && target.parentElement) {
-      target = target.parentElement;
-
-      const { parentCompositeFiber: fiber } =
-        getCompositeComponentFromElement(target);
-
-      if (!fiber) {
-        continue;
-      }
-      if (getDisplayName(fiber?.type)) {
-        parentCompositeFiber = fiber;
-      }
-    }
-
+    let parentCompositeFiber = getFirstNamedAncestorCompositeFiber(target);
     if (!parentCompositeFiber) {
       return;
     }
     const displayName = getDisplayName(parentCompositeFiber.type);
     if (!displayName) {
-      return;
-    }
-
-    if (!entry.type) {
+      // invariant, we know its named based on getFirstNamedAncestorCompositeFiber implementation
       return;
     }
 
@@ -204,13 +161,18 @@ export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
     monitor.interactions.push({
       componentName: displayName,
       componentPath: path,
-      performanceEntry: entry, // todo: remove entries
+      performanceEntry: entry,
       components: new Map(),
       route: Store.monitor.value?.route ?? null,
       url: window.location.toString(),
+      uniqueInteractionId: entry.id,
     });
-    logger.debug('current interactions', monitor.interactions);
   });
+
+  return () => {
+    disconnectPerformanceListener();
+    document.removeEventListener('mouseover', handleMouseover);
+  };
 }
 
 const setupPerformanceListener = (
@@ -246,14 +208,12 @@ const setupPerformanceListener = (
     } else {
       const interactionType = getInteractionType(entry.name);
       if (!interactionType) {
-        logger.debug('dev invariant: invalid interaction type');
-
         return;
       }
       const interaction: PerformanceInteraction = {
         id: entry.interactionId,
         latency: entry.duration,
-        entries: [entry], // todo: make this a global map: array, dont store on object since we will send this obj through flush
+        entries: [entry],
         target: entry.target,
         type: interactionType,
         startTime: entry.startTime,
@@ -268,7 +228,6 @@ const setupPerformanceListener = (
       };
       longestInteractionMap.set(interaction.id, interaction);
       longestInteractionList.push(interaction);
-      // console.log('true entry', entry);
 
       onEntry(interaction);
     }
@@ -306,9 +265,11 @@ const setupPerformanceListener = (
       type: 'first-input',
       buffered: true,
     });
-  } catch (e) {
-    console.error('Failed to initialize observers:', e);
+  } catch {
+    /* Should collect error logs*/
   }
 
-  (window as any).getInteractions = () => longestInteractionList;
+  return () => {
+    po.disconnect();
+  };
 };

@@ -1,9 +1,7 @@
-import type { Fiber } from 'react-reconciler';
 import { onIdle } from '../web/utils';
-import { getDisplayName } from '../instrumentation/utils';
-import { Store } from '..';
 import { isSSR } from './constants';
 import { Device, type Session } from './types';
+import { getDevicePerformance } from './benchmark';
 
 const getDeviceType = () => {
   const userAgent = navigator.userAgent;
@@ -64,7 +62,9 @@ const getGpuRenderer = () => {
  * DO NOT CALL THIS EVERYTIME
  */
 let cachedSession: Session;
-export const getSession = (): Promise<Session> | null | undefined | Session => {
+export const getSession = async () => {
+  console.log('call get session');
+
   if (isSSR) return null;
   if (cachedSession) {
     return cachedSession;
@@ -96,86 +96,29 @@ export const getSession = (): Promise<Session> | null | undefined | Session => {
   // @ts-expect-error - deviceMemory is still experimental
   const mem = navigator.deviceMemory; // GiB ram
   // eslint-disable-next-line @typescript-eslint/no-misused-promises
-  onIdle(() => {
-    return new Promise((resolve) => {
-      //  `getGpuRenderer` creates a canvas element, which can increase
-      //  Total Blocking Time (TBT). Running it when main thread is idle allows us to avoid
-      //  initially blocking.
-      const session = {
-        id,
-        url,
-        device: getDeviceType(),
-        wifi,
-        cpu,
-        mem,
-        gpu: getGpuRenderer(),
-        agent: navigator.userAgent,
-        // route: Store.monitor.value?.route ?? null, // may not be smart to read store here, abstraction is bad at the least
-      };
-      cachedSession = session;
-      resolve(session);
+
+  const gpuRendererPromise = new Promise<string | null>((resolve) => {
+    onIdle(() => {
+      resolve(getGpuRenderer());
     });
   });
-};
-
-/**
-
+  const performancePromise = getDevicePerformance();
+  const [gpuRenderer, performance] = await Promise.all([
+    gpuRendererPromise,
+    performancePromise,
+  ]);
+  const session = {
+    id,
+    url,
+    device: getDeviceType(),
+    wifi,
+    cpu,
+    mem,
+    gpu: gpuRenderer,
+    agent: navigator.userAgent,
+    performance,
+  };
+  console.log('session', session);
+  cachedSession = session;
   return session;
 };
-
-/**
- * Modified from @palette.dev/browser:
- *
- * @see https://gist.github.com/aidenybai/473689493f2d5d01bbc52e2da5950b45#file-palette-dev-browser-dist-palette-dev-mjs-L334
- */
-// export const debounce = <T extends (...args: Array<any>) => any>(
-//   callback: T,
-//   timeout = 1000,
-//   maxTimeout = 5000,
-// ): ((...args: Parameters<T>) => void) => {
-//   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-//   let startTime: number | undefined;
-
-//   return function (this: ThisParameterType<T>) {
-//     const now = Date.now();
-
-//     if (startTime && now - startTime >= maxTimeout) {
-//       // Force execution if max timeout exceeded
-//       // eslint-disable-next-line prefer-rest-params
-//       callback.apply(this, arguments as any);
-//       timeoutId = undefined;
-//       startTime = undefined;
-//       return;
-//     }
-
-//     if (timeoutId !== undefined) {
-//       clearTimeout(timeoutId);
-//     } else {
-//       startTime = now;
-//     }
-
-//     timeoutId = setTimeout(() => {
-//       // eslint-disable-next-line prefer-rest-params
-//       callback.apply(this, arguments as any);
-//       timeoutId = undefined;
-//       startTime = undefined;
-//     }, timeout);
-//   };
-// };
-
-export function getComponentPath(fiber: Fiber): Array<string> {
-  const path: Array<string> = [];
-  let current: Fiber | null = fiber;
-
-  while (current) {
-    if (current.type) {
-      const name = getDisplayName(current.type);
-      if (name) {
-        path.unshift(name);
-      }
-    }
-    current = current.return;
-  }
-
-  return path;
-}

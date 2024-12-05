@@ -11,7 +11,6 @@ import {
   isCompositeComponent,
 } from '../../instrumentation/fiber';
 import { getRect } from '../outline';
-import { logger } from '../../utils';
 
 export const getFiberFromElement = (element: Element): Fiber | null => {
   if ('__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) {
@@ -191,7 +190,6 @@ export const isCurrentTree = (fiber: Fiber) => {
 
 export const getCompositeComponentFromElement = (element: Element) => {
   const associatedFiber = getNearestFiberFromElement(element);
-  logger.debug('asscoaited fiber', associatedFiber, element);
 
   if (!associatedFiber) return {};
   const currentAssociatedFiber = isCurrentTree(associatedFiber)

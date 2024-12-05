@@ -6,18 +6,80 @@ import {
   MAX_PENDING_REQUESTS,
 } from './constants';
 import { getSession } from './utils';
-import type {
-  Interaction,
-  IngestRequest,
-  Session,
-  InternalInteraction,
-  Component,
-} from './types';
-import { logger } from '../utils';
+import type { Interaction, IngestRequest, InternalInteraction } from './types';
 
-//'${event. type}::${normalizePath(path)}::${getSession()?.url}';
 const getInteractionId = (interaction: InternalInteraction) =>
   `${interaction.performanceEntry.type}::${interaction.componentPath}::${interaction.url}`;
+
+const INTERACTION_TIME_TILL_COMPLETED = 4000;
+
+const splitInteractions = (interactions: Array<InternalInteraction>) => {
+  const now = performance.now();
+  const pendingInteractions: typeof interactions = [];
+  const completedInteractions: typeof interactions = [];
+
+  interactions.forEach((interaction) => {
+    if (
+      now - interaction.performanceEntry.startTime <=
+      INTERACTION_TIME_TILL_COMPLETED
+    ) {
+      pendingInteractions.push(interaction);
+    } else {
+      completedInteractions.push(interaction);
+    }
+  });
+
+  return { pendingInteractions, completedInteractions };
+};
+
+const aggregateComponents = (interactions: Array<InternalInteraction>) => {
+  const aggregatedComponents: Array<{
+    interactionId: string;
+    name: string;
+    renders: number;
+    instances: number;
+    totalTime?: number;
+    selfTime?: number;
+  }> = [];
+
+  for (const interaction of interactions) {
+    for (const [name, component] of Array.from(
+      interaction.components.entries(),
+    )) {
+      aggregatedComponents.push({
+        name,
+        instances: component.fibers.size,
+        interactionId: getInteractionId(interaction),
+        renders: component.renders,
+        totalTime: component.totalTime,
+      });
+
+      if (component.retiresAllowed === 0) {
+        // otherwise there will be a memory leak if the user loses internet or our server goes down
+        // we decide to skip the collection if this is the case
+        interaction.components.delete(name);
+      }
+
+      component.retiresAllowed -= 1;
+    }
+  }
+  return aggregatedComponents;
+};
+
+const toPayloadInteraction = (interactions: Array<InternalInteraction>) =>
+  interactions.map(
+    (interaction) =>
+      ({
+        id: getInteractionId(interaction),
+        name: interaction.componentName,
+        time: interaction.performanceEntry.duration,
+        timestamp: interaction.performanceEntry.timestamp,
+        type: interaction.performanceEntry.type,
+        route: interaction.route,
+        url: interaction.url,
+        uniqueInteractionId: interaction.uniqueInteractionId
+      }) satisfies Interaction,
+  );
 
 export const flush = async (): Promise<void> => {
   const monitor = Store.monitor.value;
@@ -29,89 +91,39 @@ export const flush = async (): Promise<void> => {
   ) {
     return;
   }
+  const { completedInteractions, pendingInteractions } = splitInteractions(
+    monitor.interactions,
+  );
+
+  // nothing to flush
+  if (!completedInteractions.length) {
+    return;
+  }
   // idempotent
   const session = await getSession();
 
   if (!session) return;
-  session.route = monitor.route;
-  session.url = window.location.toString();
+  // nisarg do not add this back fix it on your side
+  // session.route = monitor.route;
+  // session.url = window.location.toString();
 
-  const now = performance.now();
-  const recentInteractions: typeof monitor.interactions = [];
-  const oldInteractions: typeof monitor.interactions = [];
-
-  // Split interactions into recent (< 4s) and old
-  monitor.interactions.forEach((interaction) => {
-    if (now - interaction.performanceEntry.startTime <= 4000) {
-      recentInteractions.push(interaction);
-    } else {
-      oldInteractions.push(interaction);
-    }
-  });
-
-  if (!oldInteractions.length) {
-    return;
-  }
-
-  const aggregatedComponents: Array<{
-    interactionId: string;
-    name: string;
-    renders: number;
-    instances: number;
-    totalTime?: number;
-    selfTime?: number;
-  }> = [];
-
-  for (const interaction of oldInteractions) {
-    for (const [name, component] of Array.from(
-      interaction.components.entries(),
-    )) {
-      aggregatedComponents.push({
-        name,
-        instances: component.fibers.size,
-        interactionId: getInteractionId(interaction),
-        renders: component.renders,
-        totalTime: component.totalTime,
-      });
-      // @ts-expect-error todo: fix types
-      interaction.renders = component.fibers.size;
-
-      if (component.retiresAllowed === 0) {
-        // otherwise there will be a memory leak if the user loses internet or our server goes down
-        // we decide to skip the collection if this is the case
-        interaction.components.delete(name);
-      }
-
-      component.retiresAllowed -= 1;
-    }
-  }
+  const aggregatedComponents = aggregateComponents(monitor.interactions);
 
   const payload: IngestRequest = {
-    interactions: oldInteractions.map(
-      (interaction) =>
-        ({
-          id: getInteractionId(interaction),
-          name: interaction.componentName,
-          time: interaction.performanceEntry.duration,
-          timestamp: interaction.performanceEntry.timestamp,
-          type: interaction.performanceEntry.type,
-          route: interaction.route,
-          url: interaction.url,
-        }) satisfies Interaction,
-    ),
+    interactions: toPayloadInteraction(completedInteractions),
     components: aggregatedComponents,
     session: {
       ...session,
     },
   };
 
-  logger.debug('attempting to flush', payload);
-
   monitor.pendingRequests++;
+  // remove all completed interactions from batch
   monitor.interactions = monitor.interactions.filter((interaction) =>
-    oldInteractions.some(
-      (oldInteraction) =>
-        oldInteraction.performanceEntry.id !== interaction.performanceEntry.id,
+    completedInteractions.some(
+      (completedInteraction) =>
+        completedInteraction.performanceEntry.id !==
+        interaction.performanceEntry.id,
     ),
   );
   try {
@@ -121,19 +133,19 @@ export const flush = async (): Promise<void> => {
         // there may still be renders associated with these interaction, so don't flush just yet
       })
       .catch(async () => {
-        // let the next interval attempt to flush
-        monitor.interactions = monitor.interactions.concat(oldInteractions);
-        // await transport(monitor.url!, payload).catch(() => null);
+        // we let the next interval handle retrying, instead of explicitly retrying
+        monitor.interactions = monitor.interactions.concat(
+          completedInteractions,
+        );
       });
   } catch {
     /* */
   }
 
   // Keep only recent interactions
-  monitor.interactions = recentInteractions;
+  monitor.interactions = pendingInteractions;
 };
 
-// export const debouncedFlush = debounce(flush, 5000);
 const CONTENT_TYPE = 'application/json';
 const supportsCompression = typeof CompressionStream === 'function';
 

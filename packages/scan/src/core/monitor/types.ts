@@ -1,4 +1,5 @@
 import { type Fiber } from 'react-reconciler';
+import { getDevicePerformance } from './benchmark';
 
 export enum Device {
   DESKTOP = 0,
@@ -6,16 +7,17 @@ export enum Device {
   MOBILE = 2,
 }
 
+type UnPromise<T> = T extends Promise<infer R> ? R : never;
+
 export interface Session {
   id: string;
-  url: string; // flush everytime route changes for accuracy
   device: Device;
   agent: string;
   wifi: string;
   cpu: number;
   gpu: string | null;
   mem: number;
-  route?: string | null;
+  performance: UnPromise<ReturnType<typeof getDevicePerformance>>;
 }
 
 export interface Interaction {
@@ -24,11 +26,12 @@ export interface Interaction {
   type: string; // type of interaction i.e pointer
   time: number; // time of interaction in ms
   timestamp: number;
-  route: string | null // the computed route that handles dynamic params
-  url: string
+  route: string | null; // the computed route that handles dynamic params
+  url: string;
   // clickhouse + ingest specific types
   projectId?: string;
   sessionId?: string;
+  uniqueInteractionId: string;
 }
 
 export interface Component {
@@ -40,36 +43,30 @@ export interface Component {
   selfTime?: number;
 }
 
-
-// ROB CLEAN UP TYPES AND COMMENTS LATER
 export interface IngestRequest {
   interactions: Array<Interaction>;
   components: Array<Component>;
-  session: Session 
+  session: Session;
 }
 
 // used internally in runtime for interaction tracking. converted to Interaction when flushed
 export interface InternalInteraction {
   componentName: string;
-  url: string
-  route: string | null
+  url: string;
+  route: string | null;
+  uniqueInteractionId: string;
   componentPath: string;
   performanceEntry: PerformanceInteraction;
-  components: Map<
-    string,
-    InternalComponent & {
-      fibers: Set<Fiber>; // no references will exist to this once array is cleared after flush, so we don't have to worry about memory leaks
-      retiresAllowed: number; // if our server is down and we can't collect fibers/ user has no network, it will memory leak. We need to only allow a set amount of retries before it gets gcd
-    }
-  >;
+  components: Map<string, InternalComponentCollection>;
 }
-interface InternalComponent {
-  // interactionId: string; // grouping components by interaction
+interface InternalComponentCollection {
+  uniqueInteractionId: string;
   name: string;
-  renders: number; // how many times it re-rendered / instances (normalized)
-  // instances: number; // instances which will be used to get number of total renders by * by renders
+  renders: number; // re-renders associated with the set of components in this collection
   totalTime?: number;
   selfTime?: number;
+  fibers: Set<Fiber>; // no references will exist to this once array is cleared after flush, so we don't have to worry about memory leaks
+  retiresAllowed: number; // if our server is down and we can't collect fibers/ user has no network, it will memory leak. We need to only allow a set amount of retries before it gets gcd
 }
 
 export interface PerformanceInteractionEntry extends PerformanceEntry {
@@ -85,7 +82,7 @@ export interface PerformanceInteractionEntry extends PerformanceEntry {
 export interface PerformanceInteraction {
   id: string;
   latency: number;
-  entries: Array<PerformanceInteractionEntry>; // gonna remove this
+  entries: Array<PerformanceInteractionEntry>;
   target: Element;
   type: 'pointer' | 'keyboard';
   startTime: number;

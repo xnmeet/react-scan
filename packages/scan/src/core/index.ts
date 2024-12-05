@@ -28,7 +28,7 @@ import {
 import { initPerformanceMonitoring } from './monitor/performance';
 import type { InternalInteraction, Session } from './monitor/types';
 import { getSession } from './monitor/utils';
-import { logger } from './utils';
+import { addFiberToSet } from './utils';
 
 export interface Options {
   /**
@@ -124,7 +124,6 @@ export interface Options {
 
 interface Monitor {
   pendingRequests: number;
-  // components: Map<string, Component>; // uses the uniqueish component path to group renders
   url: string | null;
   apiKey: string | null;
   interactions: Array<InternalInteraction>;
@@ -141,31 +140,7 @@ interface StoreType {
   reportData: WeakMap<Fiber, RenderData>;
   legacyReportData: Map<string, RenderData>;
   lastReportTime: Signal<number>;
-  // instanceTracker: Map<string, Set<Fiber>>; // interaction path-> Fiber, cleanup later, so we know how many instances exist of a component
 }
-function isFiberUnmounted(fiber: Fiber): boolean {
-  if (!fiber) return true;
-
-  if ((fiber.flags & /*Deletion=*/ 8) !== 0) return true;
-
-  if (!fiber.return && fiber.tag !== /*HostRoot=*/ 3) return true;
-
-  const alternate = fiber.alternate;
-  if (alternate) {
-    if ((alternate.flags & /*Deletion=*/ 8) !== 0) return true;
-  }
-
-  return false;
-}
-
-export const addInstance = (fiber: Fiber, set: Set<Fiber>) => {
-  if (fiber.alternate && set.has(fiber.alternate)) {
-    // then the alternate tree fiber exists in the weakset, don't double count the instance
-    return;
-  }
-
-  set.add(fiber);
-};
 
 interface RenderData {
   count: number;
@@ -294,7 +269,6 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
         displayName: null,
         type: getType(fiber.type) || fiber.type,
       };
-
       Store.legacyReportData.set(displayName, reportData);
     }
   }
@@ -311,10 +285,7 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
 
     const displayName = getDisplayName(fiber.type);
     if (!displayName) {
-      // console.log(
-      //   'Dev check: the component should probably always have a display name',
-      // );
-      logger.error("dev check: this component shoudl always have a display name")
+      // it may be useful to somehow report the first ancestor with a display name instead of completely ignoring
       return;
     }
     let component = latestInteraction.components.get(displayName);
@@ -324,60 +295,23 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
         name: displayName,
         renders: 0,
         totalTime,
-        // PUT BACK TO 7 ROB!!
-        retiresAllowed: 7, // allow max 7 retries before this collection gets skipped
-        // todo: selfTime
+        retiresAllowed: 7, // allow max 7 retries before the set of components do not get reported (avoid memory leaks)
+        uniqueInteractionId: latestInteraction.uniqueInteractionId,
       };
       latestInteraction.components.set(displayName, component);
     }
-    addInstance(fiber, component.fibers);
+    addFiberToSet(fiber, component.fibers);
 
     component.renders += renders.length;
-    component.totalTime = component.totalTime
+    if (!component.totalTime) {
+      component.totalTime = 0;
+    }
+    component.totalTime += component.totalTime
       ? component.totalTime + totalTime
       : totalTime;
   }
 };
 let flushInterval: ReturnType<typeof setInterval>;
-
-interface HistoryState {
-  prevPath: string | null;
-}
-
-function initializeUrlChangeMonitoring() {
-  let urlChangeTimeout: ReturnType<typeof setTimeout>;
-  const originalPushState = history.pushState;
-  const originalReplaceState = history.replaceState;
-
-  const flushAfterDelay = () => {
-    clearTimeout(urlChangeTimeout);
-    urlChangeTimeout = setTimeout(() => {
-      flush();
-    }, 4000); // we use a delay so we are sure react has completed rendering the tree. 4000 might be too long
-  };
-
-  history.pushState = function (
-    state: HistoryState,
-    title: string,
-    url?: string | null,
-  ) {
-    originalPushState.call(this, state, title, url);
-    flushAfterDelay();
-  };
-
-  history.replaceState = function (
-    state: HistoryState,
-    title: string,
-    url?: string | null,
-  ) {
-    originalReplaceState.call(this, state, title, url);
-    flushAfterDelay();
-  };
-
-  window.addEventListener('popstate', () => {
-    flushAfterDelay();
-  });
-}
 
 export const start = () => {
   if (typeof window === 'undefined') {
@@ -412,7 +346,6 @@ export const start = () => {
   };
 
   if (Store.monitor.value) {
-    initializeUrlChangeMonitoring();
     clearInterval(flushInterval);
 
     flushInterval = setInterval(() => {
