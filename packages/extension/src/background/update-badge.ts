@@ -10,12 +10,15 @@ const ANIMATION_CONFIG = {
   dashLength: 8,
   gapLength: 14,
   duration: 1500,
-  color: '#A295EE'
+  color: '#A295EE',
 } as const;
 
-let animationInterval: number | null = null;
+let animationInterval: any | null = null;
 
-const drawBadgeIcon = async (ctx: OffscreenCanvasRenderingContext2D, enabled: boolean) => {
+const drawBadgeIcon = async (
+  ctx: OffscreenCanvasRenderingContext2D,
+  enabled: boolean,
+) => {
   const png = enabled ? 'icon-no-corners.png' : '128.png';
   const response = await fetch(browser.runtime.getURL(`icon/${png}`));
   const bitmap = await createImageBitmap(await response.blob());
@@ -23,10 +26,11 @@ const drawBadgeIcon = async (ctx: OffscreenCanvasRenderingContext2D, enabled: bo
 };
 
 const calculateDashPattern = () => {
-  const { size, lineWidth, inset, borderRadius, dashLength, gapLength } = ANIMATION_CONFIG;
+  const { size, lineWidth, inset, borderRadius, dashLength, gapLength } =
+    ANIMATION_CONFIG;
   const width = size - lineWidth - inset * 2;
   const height = width;
-  const perimeter = 2 * (width + height) + (2 * Math.PI * borderRadius);
+  const perimeter = 2 * (width + height) + 2 * Math.PI * borderRadius;
   const patternLength = dashLength + gapLength;
   const totalPatterns = Math.ceil(perimeter / patternLength);
 
@@ -35,7 +39,7 @@ const calculateDashPattern = () => {
     height,
     perimeter,
     dashLength: (perimeter / totalPatterns) * (dashLength / patternLength),
-    gapLength: (perimeter / totalPatterns) * (gapLength / patternLength)
+    gapLength: (perimeter / totalPatterns) * (gapLength / patternLength),
   };
 };
 
@@ -53,7 +57,8 @@ const startAnimation = (duration: number) => {
 };
 
 export const updateBadge = async (enabled: boolean | null): Promise<number> => {
-  const { size, lineWidth, inset, borderRadius, duration, color } = ANIMATION_CONFIG;
+  const { size, lineWidth, inset, borderRadius, duration, color } =
+    ANIMATION_CONFIG;
   const canvas = new OffscreenCanvas(size, size);
   const ctx = canvas.getContext('2d');
   if (!ctx) {
@@ -63,7 +68,8 @@ export const updateBadge = async (enabled: boolean | null): Promise<number> => {
   await drawBadgeIcon(ctx, Boolean(enabled));
 
   if (enabled) {
-    const { width, height, perimeter, dashLength, gapLength } = calculateDashPattern();
+    const { width, height, perimeter, dashLength, gapLength } =
+      calculateDashPattern();
 
     ctx.lineWidth = lineWidth;
     ctx.strokeStyle = color;
@@ -80,13 +86,13 @@ export const updateBadge = async (enabled: boolean | null): Promise<number> => {
       inset + lineWidth / 2,
       width,
       height,
-      borderRadius
+      borderRadius,
     );
     ctx.stroke();
   }
 
   await chrome.action.setIcon({
-    imageData: ctx.getImageData(0, 0, size, size)
+    imageData: ctx.getImageData(0, 0, size, size),
   });
 
   return duration;
@@ -100,7 +106,8 @@ const animateBadge = async () => {
   }
 
   const domain = new URL(tab.url).origin;
-  const currentDomains = (await browser.storage.local.get(STORAGE_KEY))[STORAGE_KEY] || {};
+  const currentDomains =
+    (await browser.storage.local.get(STORAGE_KEY))[STORAGE_KEY] || {};
   const isEnabled = domain in currentDomains && currentDomains[domain] === true;
 
   if (isEnabled) {
@@ -113,7 +120,10 @@ const animateBadge = async () => {
 
 export const updateBadgeForCurrentTab = async () => {
   try {
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await browser.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
     if (!tab?.id) return;
 
     if (!tab.url || isInternalUrl(tab.url)) {
@@ -130,7 +140,6 @@ export const updateBadgeForCurrentTab = async () => {
     // Silent fail
   }
 };
-
 
 // Tab event listeners
 browser.tabs.onActivated.addListener(() => {
