@@ -1,6 +1,6 @@
 {
   "name": "react-scan",
-  "version": "0.0.156",
+  "version": "0.0.164",
   "description": "Scan your React app for renders",
   "keywords": [
     "react",
@@ -161,37 +161,31 @@
       "monitoring/next": [
         "./dist/core/monitor/params/next.d.ts"
       ],
-      "monitoring/*": [
-        "./dist/core/monitor/params/*.d.ts"
-      ],
       "monitoring/react-router-legacy": [
         "./dist/core/monitor/params/react-router-v5.d.ts"
       ],
-      "monitoring/react-route": [
+      "monitoring/react-router": [
         "./dist/core/monitor/params/react-router-v6.d.ts"
       ],
       "monitoring/remix": [
         "./dist/core/monitor/params/remix.d.ts"
       ],
-      "./react-component-name/*": [
-        "./dist/react-component-name/*.d.ts"
-      ],
-      "./react-component-name/vite": [
+      "react-component-name/vite": [
         "./dist/react-component-name/vite.d.ts"
       ],
-      "./react-component-name/webpack": [
+      "react-component-name/webpack": [
         "./dist/react-component-name/webpack.d.ts"
       ],
-      "./react-component-name/esbuild": [
+      "react-component-name/esbuild": [
         "./dist/react-component-name/esbuild.d.ts"
       ],
-      "./react-component-name/rspack": [
+      "react-component-name/rspack": [
         "./dist/react-component-name/rspack.d.ts"
       ],
-      "./react-component-name/rolldown": [
+      "react-component-name/rolldown": [
         "./dist/react-component-name/rolldown.d.ts"
       ],
-      "./react-component-name/rollup": [
+      "react-component-name/rollup": [
         "./dist/react-component-name/rollup.d.ts"
       ]
     }
