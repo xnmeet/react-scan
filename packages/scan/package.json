@@ -173,8 +173,26 @@
       "monitoring/remix": [
         "./dist/core/monitor/params/remix.d.ts"
       ],
-      "react-component-name/*": [
+      "./react-component-name/*": [
         "./dist/react-component-name/*.d.ts"
+      ],
+      "./react-component-name/vite": [
+        "./dist/react-component-name/vite.d.ts"
+      ],
+      "./react-component-name/webpack": [
+        "./dist/react-component-name/webpack.d.ts"
+      ],
+      "./react-component-name/esbuild": [
+        "./dist/react-component-name/esbuild.d.ts"
+      ],
+      "./react-component-name/rspack": [
+        "./dist/react-component-name/rspack.d.ts"
+      ],
+      "./react-component-name/rolldown": [
+        "./dist/react-component-name/rolldown.d.ts"
+      ],
+      "./react-component-name/rollup": [
+        "./dist/react-component-name/rollup.d.ts"
       ]
     }
   },
