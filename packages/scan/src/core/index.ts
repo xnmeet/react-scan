@@ -334,6 +334,46 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
   }
 };
 let flushInterval: ReturnType<typeof setInterval>;
+
+interface HistoryState {
+  prevPath: string | null;
+}
+
+function initializeUrlChangeMonitoring() {
+  let urlChangeTimeout: ReturnType<typeof setTimeout>;
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  const flushAfterDelay = () => {
+    clearTimeout(urlChangeTimeout);
+    urlChangeTimeout = setTimeout(() => {
+      flush();
+    }, 4000); // we use a delay so we are sure react has completed rendering the tree. 4000 might be too long
+  };
+
+  history.pushState = function (
+    state: HistoryState,
+    title: string,
+    url?: string | null,
+  ) {
+    originalPushState.call(this, state, title, url);
+    flushAfterDelay();
+  };
+
+  history.replaceState = function (
+    state: HistoryState,
+    title: string,
+    url?: string | null,
+  ) {
+    originalReplaceState.call(this, state, title, url);
+    flushAfterDelay();
+  };
+
+  window.addEventListener('popstate', () => {
+    flushAfterDelay();
+  });
+}
+
 export const start = () => {
   if (typeof window === 'undefined') {
     return;
@@ -367,6 +407,7 @@ export const start = () => {
   };
 
   if (Store.monitor) {
+    initializeUrlChangeMonitoring();
     clearInterval(flushInterval);
 
     flushInterval = setInterval(() => {
@@ -488,7 +529,6 @@ export const useScan = (options: Options) => {
   }, []);
 };
 
-
 export const onRender = (
   type: unknown,
   _onRender: (fiber: Fiber, renders: Array<Render>) => void,
@@ -501,5 +541,3 @@ export const onRender = (
     }
   };
 };
-// fixme
-export { MonitorNext } from './monitor/params/next';

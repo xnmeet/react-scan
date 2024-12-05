@@ -90,6 +90,7 @@ export const flush = (): void => {
     components,
     session,
   };
+  console.log('SCAN FLUSH:', payload);
 
   monitor.pendingRequests++;
   monitor.interactions = toKeepInteractions;
