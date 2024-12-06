@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { useParams, useLocation } from '@remix-run/react';
-import { Monitor as BaseMonitor } from '..';
+import { Monitoring as BaseMonitor } from '..';
 import { computeReactRouterRoute } from './utils';
 import type { RouteInfo } from './types';
 
@@ -29,4 +29,4 @@ function RemixMonitor(props: { url?: string; apiKey: string }) {
   });
 }
 
-export { RemixMonitor as Monitor };
+export { RemixMonitor as Monitoring };

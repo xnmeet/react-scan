@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { useRouteMatch, useLocation } from 'react-router';
-import { Monitor as BaseMonitor } from '..';
+import { Monitoring as BaseMonitor } from '..';
 import { computeRoute } from './utils';
 import type { RouteInfo } from './types';
 
@@ -28,4 +28,4 @@ function ReactRouterV5Monitor(props: { url?: string; apiKey: string }) {
   });
 }
 
-export { ReactRouterV5Monitor as Monitor };
+export { ReactRouterV5Monitor as Monitoring };

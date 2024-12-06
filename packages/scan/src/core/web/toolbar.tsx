@@ -233,26 +233,33 @@ export const Toolbar = ({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    const maxX = viewportWidth - toolbarRect.width - EDGE_PADDING;
-    const maxY = viewportHeight - toolbarRect.height - EDGE_PADDING;
+    // Snap to nearest horizontal edge
+    const distanceToLeft = toolbarRect.left;
+    const distanceToRight = viewportWidth - toolbarRect.right;
+    const newX =
+      distanceToLeft <= distanceToRight
+        ? EDGE_PADDING
+        : viewportWidth - toolbarRect.width - EDGE_PADDING;
 
-    const newX = Math.min(maxX, Math.max(EDGE_PADDING, x.value));
-    const newY = Math.min(maxY, Math.max(EDGE_PADDING, y.value));
+    // Snap to nearest vertical edge (optional)
+    const distanceToTop = toolbarRect.top;
+    const distanceToBottom = viewportHeight - toolbarRect.bottom;
+    const newY =
+      distanceToTop <= distanceToBottom
+        ? EDGE_PADDING
+        : viewportHeight - toolbarRect.height - EDGE_PADDING;
 
-    if (newX !== x.value || newY !== y.value) {
-      x.value = newX;
-      y.value = newY;
-      persistPositionToLocalStorage(newX, newY);
+    x.value = newX;
+    y.value = newY;
+    persistPositionToLocalStorage(newX, newY);
+
+    toolbarRef.current.style.transition = `transform ${ANIMATION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1)`;
+    toolbarRef.current.style.transform = `translate(${newX}px, ${newY}px)`;
+    setTimeout(() => {
       if (toolbarRef.current) {
-        toolbarRef.current.style.transition = `transform ${ANIMATION_DURATION}ms cubic-bezier(0.4, 0, 0.2, 1)`;
-        toolbarRef.current.style.transform = `translate(${newX}px, ${newY}px)`;
-        setTimeout(() => {
-          if (toolbarRef.current) {
-            toolbarRef.current.style.transition = '';
-          }
-        }, ANIMATION_DURATION);
+        toolbarRef.current.style.transition = '';
       }
-    }
+    }, ANIMATION_DURATION);
   };
 
   const handleViewportChange = throttle(() => {
@@ -269,6 +276,8 @@ export const Toolbar = ({
       window.removeEventListener('scroll', handleViewportChange);
     };
   }, []);
+
+  handleViewportChange();
 
   // Mouse events for resizing
   useEffect(() => {
@@ -326,8 +335,7 @@ export const Toolbar = ({
         break;
       case 'focused':
         Store.inspectState.value = {
-          kind: 'inspecting',
-          hoveredDomElement: currentState.focusedDomElement,
+          kind: 'inspect-off',
           propContainer: currentState.propContainer,
         };
         break;
@@ -430,8 +438,8 @@ export const Toolbar = ({
     inspectColor = '#999';
   }
 
-  const propsMaxHeight = focusActive || isInspectActive ? '450px' : '0';
-  const propsContainerWidth = focusActive ? `${width}px` : 'fit-content';
+  const propsMaxHeight = focusActive ? '450px' : '0';
+  const propsContainerWidth = focusActive ? `${width}px` : '0';
 
   const showNavButtons = focusActive;
 
@@ -499,6 +507,35 @@ export const Toolbar = ({
       y.value = rect.top;
     }
   }, []);
+
+  useSignalEffect(() => {
+    if (Store.inspectState.value.kind === 'focused') {
+      ensureToolbarInBounds();
+    }
+  });
+
+  useEffect(() => {
+    if (!toolbarRef.current) return;
+
+    const observer = new ResizeObserver(() => {
+      ensureToolbarInBounds();
+    });
+
+    observer.observe(toolbarRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  useSignalEffect(() => {
+    if (Store.inspectState.value.kind === 'inspecting') {
+      // Clear previous props
+      if (propContainerRef.current) {
+        propContainerRef.current.innerHTML = '';
+      }
+    }
+  });
 
   return (
     <div

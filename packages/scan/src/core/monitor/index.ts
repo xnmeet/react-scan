@@ -4,7 +4,7 @@ import { scan, Store } from '..';
 import { initPerformanceMonitoring } from './performance';
 import { getSession } from './utils';
 
-export const Monitor = ({
+export const Monitoring = ({
   url,
   apiKey,
   path,
