@@ -1,5 +1,5 @@
 import { type Fiber } from 'react-reconciler';
-import { getDevicePerformance } from './benchmark';
+import { type getDevicePerformance } from './benchmark';
 
 export enum Device {
   DESKTOP = 0,
@@ -7,7 +7,6 @@ export enum Device {
   MOBILE = 2,
 }
 
-type UnPromise<T> = T extends Promise<infer R> ? R : never;
 
 export interface Session {
   id: string;
@@ -17,7 +16,7 @@ export interface Session {
   cpu: number;
   gpu: string | null;
   mem: number;
-  performance: UnPromise<ReturnType<typeof getDevicePerformance>>;
+  performance: Awaited<ReturnType<typeof getDevicePerformance>>;
 }
 
 export interface Interaction {
