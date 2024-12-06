@@ -1,6 +1,5 @@
 'use client';
 
-import './react-scan';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Companies from '@/components/companies';
@@ -25,7 +24,15 @@ export default function Home() {
     <div className="max-w-xl mx-auto">
       <div className="space-y-4 mt-8">
         <div>
-          React Scan automatically detects performance issues in your React app.
+          React Scan automatically detects performance issues in your React app{' '}
+          <div className={`flex ${!isMobile ? 'visible' : 'hidden'}`}>
+            <button
+              onClick={() => setShowDemo(!showDemo)}
+              className="text-neutral-600 underline hover:text-black"
+            >
+              (show demo)
+            </button>
+          </div>
         </div>
 
         <div>
@@ -51,12 +58,6 @@ export default function Home() {
           >
             Get started {'»'}
           </Link>
-          <button
-            onClick={() => setShowDemo(!showDemo)}
-            className="inline-block px-5 py-2 font-medium border-2 border-black"
-          >
-            Try Demo
-          </button>
           <Link
             href="/monitoring"
             className="inline-block px-5 py-2 font-medium border-2 border-black"
