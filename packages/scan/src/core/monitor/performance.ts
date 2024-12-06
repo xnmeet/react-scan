@@ -62,9 +62,37 @@ function shouldIncludeInPath(
 
   return !patternsToCheck.some((pattern) => pattern.test(name));
 }
+const isMinified = (name: string): boolean => {
+  if (!name || typeof name !== 'string') {
+    return true;
+  }
 
-const isMinified = (name: string) => name.length <= 2 // todo: make more advanced, minified names can be above 2 chars
+  const minifiedPatterns = [
+    /^[a-z]$/, // Single lowercase letter
+    /^[a-z][0-9]$/, // Lowercase letter followed by number
+    /^_+$/, // Just underscores
+    /^[A-Za-z][_$]$/, // Letter followed by underscore or dollar
+    /^[a-z]{1,2}$/, // 1-2 lowercase letters
+  ];
 
+  if (minifiedPatterns.some((pattern) => pattern.test(name))) {
+    return true;
+  }
+
+  const hasNoVowels = !/[aeiou]/i.test(name);
+  const hasMostlyNumbers = (name.match(/\d/g)?.length ?? 0) > name.length / 2;
+  const isSingleWordLowerCase = /^[a-z]+$/.test(name);
+  const hasRandomLookingChars = /[\$_]{2,}/.test(name);
+
+  const suspiciousTraits = [
+    hasNoVowels,
+    hasMostlyNumbers,
+    isSingleWordLowerCase,
+    hasRandomLookingChars,
+  ].filter(Boolean).length;
+
+  return suspiciousTraits >= 2;
+};
 export function getInteractionPath(
   fiber: Fiber | null,
   filters: PathFilters = DEFAULT_FILTERS,
