@@ -1,6 +1,6 @@
 import { createElement } from 'react';
 import { useRouteMatch, useLocation } from 'react-router';
-import { Monitoring as BaseMonitor } from '..';
+import { BaseMonitor } from '..';
 import { computeRoute } from './utils';
 import type { RouteInfo } from './types';
 

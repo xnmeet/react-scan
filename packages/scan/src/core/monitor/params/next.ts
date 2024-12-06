@@ -4,7 +4,7 @@
 import { useParams, usePathname, useSearchParams } from 'next/navigation.js';
 // import React from 'react';
 import { createElement } from 'react';
-import { Monitoring as BaseMonitor } from '..';
+import { BaseMonitor } from '..';
 import { computeRoute } from './utils';
 // import { computeRoute } from '../utils';
 // does this work in pages and app router? Idk

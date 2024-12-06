@@ -127,8 +127,8 @@ interface Monitor {
   apiKey: string | null;
   interactions: Array<InternalInteraction>;
   route: string | null;
-  path: string;
   session: ReturnType<typeof getSession>;
+  path: string | null;
 }
 
 interface StoreType {
