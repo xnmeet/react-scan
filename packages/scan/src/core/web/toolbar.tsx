@@ -558,6 +558,7 @@ export const Toolbar = ({
         alignItems: 'flex-end',
         pointerEvents: 'none',
         maxHeight: '450px',
+        zIndex: '999999999',
       }}
     >
       <style>{/* Add your CSS rules if needed */}</style>
