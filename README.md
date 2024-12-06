@@ -23,7 +23,7 @@ Airbnb&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://polaris.shopify.com/"
 ![React Scan in action](https://raw.githubusercontent.com/aidenybai/react-scan/refs/heads/main/.github/assets/demo.gif?token=GHSAT0AAAAAAB4IOFACRC6P6E45TB2FPYFCZZV2AYA)
 
 > [!IMPORTANT]
-> Looking for a more advanced version? Check out [Million Lint](https://million.dev)!
+> Want to monitor issues in production? Check out [React Scan Monitoring](https://react-scan.com/monitoring)!
 
 ## Install
 
@@ -284,7 +284,7 @@ This often comes down to props that update in reference, like callbacks or objec
 
 React Scan helps you identify these issues by automatically detecting and highlighting renders that cause performance issues. Now, instead of guessing, you can see exactly which components you need to fix.
 
-> Want to automatically fix these issues? Check out [Million Lint](https://million.dev)!
+> Want monitor issues in production? Check out [React Scan Monitoring](https://react-scan.com/monitoring)!
 
 ### FAQ
 
