@@ -766,6 +766,8 @@ export const createToolbar = () => {
   }
 
   const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.zIndex = '2147483647';
   container.id = 'react-scan-toolbar-root';
   document.documentElement.appendChild(container);
 
