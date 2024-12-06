@@ -15,18 +15,18 @@ const isSoundOnSignal = signal(false);
 // Sizing and positioning signals
 const toolbarX = signal(
   parseInt(
-    typeof localStorage !== 'undefined'
+    typeof window !== 'undefined'
       ? (localStorage.getItem('react-scan-toolbar-x') ??
           String(window.innerWidth - 400))
-      : String(window.innerWidth - 400),
+      : '0',
   ),
 );
 const toolbarY = signal(
   parseInt(
-    typeof localStorage !== 'undefined'
+    typeof window !== 'undefined'
       ? (localStorage.getItem('react-scan-toolbar-y') ??
           String(window.innerHeight - 500))
-      : String(window.innerHeight - 500),
+      : '0',
   ),
 );
 const isDragging = signal(false);
