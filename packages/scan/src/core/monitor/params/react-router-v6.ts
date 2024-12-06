@@ -1,5 +1,5 @@
 import { createElement } from 'react';
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router';
 import { Monitor as BaseMonitor } from '..';
 import { computeReactRouterRoute } from './utils';
 import type { RouteInfo } from './types';
@@ -14,7 +14,7 @@ const useRoute = (): RouteInfo => {
 
   const validParams = Object.fromEntries(
     Object.entries(params).filter(([_, v]) => v !== undefined),
-  ) as Record<string, string | string[]>;
+  ) as Record<string, string | Array<string>>;
 
   return {
     route: computeReactRouterRoute(pathname, validParams),

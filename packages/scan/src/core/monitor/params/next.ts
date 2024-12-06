@@ -3,9 +3,9 @@
 // adapted from vercel analytics <remember to put link here>
 import { useParams, usePathname, useSearchParams } from 'next/navigation.js';
 // import React from 'react';
-import { computeRoute } from './utils';
-import { Monitor as BaseMonitor } from '..';
 import { createElement } from 'react';
+import { Monitor as BaseMonitor } from '..';
+import { computeRoute } from './utils';
 // import { computeRoute } from '../utils';
 // does this work in pages and app router? Idk
 const useRoute = (): {
@@ -22,7 +22,7 @@ const useRoute = (): {
   }
   // in Next.js@13, useParams() could return an empty object for pages router, and we default to searchParams.
   const finalParams = Object.keys(params).length
-    ? (params as Record<string, string | string[]>)
+    ? (params as Record<string, string | Array<string>>)
     : Object.fromEntries(searchParams.entries());
   return { route: computeRoute(path, finalParams), path };
 };

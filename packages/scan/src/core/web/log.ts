@@ -1,4 +1,4 @@
-import type { Render } from '../instrumentation/index';
+import type { Render } from '../instrumentation';
 import { getLabelText } from '../utils';
 
 export const log = (renders: Array<Render>) => {

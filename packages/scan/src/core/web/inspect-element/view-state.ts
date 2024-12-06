@@ -1,4 +1,4 @@
-import { fastSerialize } from '../../instrumentation/utils';
+import { fastSerialize } from '../../instrumentation';
 import { Store } from '../../index';
 import {
   getAllFiberContexts,

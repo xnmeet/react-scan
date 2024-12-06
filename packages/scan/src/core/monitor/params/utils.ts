@@ -1,12 +1,12 @@
 // adapted from vercel analytics https://github.dev/vercel/analytics
-type DynamicSegmentFormatter = {
+interface DynamicSegmentFormatter {
   param: (key: string) => string;
   catchAll: (key: string) => string;
-};
+}
 
 function computeRouteWithFormatter(
   pathname: string | null,
-  pathParams: Record<string, string | string[]> | null,
+  pathParams: Record<string, string | Array<string>> | null,
   formatter: DynamicSegmentFormatter,
 ): string | null {
   if (!pathname || !pathParams) {
@@ -36,7 +36,6 @@ function computeRouteWithFormatter(
     }
     return result;
   } catch (e) {
-    console.log('error!!', e);
     return pathname;
   }
 }
@@ -44,7 +43,7 @@ function computeRouteWithFormatter(
 // Next.js style routes (default)
 export function computeRoute(
   pathname: string | null,
-  pathParams: Record<string, string | string[]> | null,
+  pathParams: Record<string, string | Array<string>> | null,
 ): string | null {
   return computeRouteWithFormatter(pathname, pathParams, {
     param: (key) => `/[${key}]`,
@@ -54,7 +53,7 @@ export function computeRoute(
 
 export function computeReactRouterRoute(
   pathname: string | null,
-  pathParams: Record<string, string | string[]> | null,
+  pathParams: Record<string, string | Array<string>> | null,
 ): string | null {
   return computeRouteWithFormatter(pathname, pathParams, {
     param: (key) => `/:${key}`,

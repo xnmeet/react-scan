@@ -1,15 +1,15 @@
 import type { Fiber } from 'react-reconciler';
-import { ReactScanInternals, Store } from '../../index';
 import {
   FunctionComponentTag,
   ClassComponentTag,
-  isHostComponent,
+  isHostFiber,
   traverseFiber,
   MemoComponentTag,
   SimpleMemoComponentTag,
   ForwardRefTag,
-  isCompositeComponent,
-} from '../../instrumentation/fiber';
+  isCompositeFiber,
+} from 'bippy';
+import { ReactScanInternals, Store } from '../../index';
 import { getRect } from '../outline';
 
 export const getFiberFromElement = (element: Element): Fiber | null => {
@@ -88,10 +88,10 @@ export const getParentCompositeFiber = (fiber: Fiber) => {
   let prevNonHost = null;
 
   while (curr) {
-    if (isCompositeComponent(curr)) {
+    if (isCompositeFiber(curr)) {
       return [curr, prevNonHost] as const;
     }
-    if (isHostComponent(curr)) {
+    if (isHostFiber(curr)) {
       prevNonHost = curr;
     }
     curr = curr.return;

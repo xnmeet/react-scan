@@ -1,6 +1,6 @@
 import type { Fiber } from 'react-reconciler';
+import { getDisplayName } from 'bippy';
 import { ReactScanInternals, Store } from '../..';
-import { getDisplayName } from '../../instrumentation/utils';
 import { getCompositeComponentFromElement } from './utils';
 
 interface Rect {
@@ -68,9 +68,9 @@ export const drawHoverOverlay = (
 
     const animate = () => {
       const t =
-        ReactScanInternals.options.animationSpeed === 'fast'
+        ReactScanInternals.options.value.animationSpeed === 'fast'
           ? 0.51
-          : ReactScanInternals.options.animationSpeed === 'slow'
+          : ReactScanInternals.options.value.animationSpeed === 'slow'
             ? 0.1
             : 0;
       currentRect = {

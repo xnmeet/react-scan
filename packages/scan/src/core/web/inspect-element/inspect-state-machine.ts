@@ -1,6 +1,6 @@
+import { didFiberRender } from 'bippy';
 import { Store } from '../../index';
 import { throttle } from '../utils';
-import { didFiberRender } from '../../instrumentation/fiber';
 import { restoreSizeFromLocalStorage } from '../toolbar';
 import { renderPropsAndState } from './view-state';
 import {
@@ -64,9 +64,13 @@ export const createInspectElementStateMachine = () => {
       return;
     }
     updateCanvasSize(canvas, ctx);
-    window.addEventListener('resize', () => {
-      updateCanvasSize(canvas!, ctx);
-    }, {capture: true}); // todo add cleanup/dispose logic for createInspectElementStateMachine
+    window.addEventListener(
+      'resize',
+      () => {
+        updateCanvasSize(canvas!, ctx);
+      },
+      { capture: true },
+    ); // todo add cleanup/dispose logic for createInspectElementStateMachine
   }
 
   const ctx = canvas.getContext('2d', { alpha: true });
@@ -122,10 +126,12 @@ export const createInspectElementStateMachine = () => {
             clearCanvas();
             updateCanvasSize(canvas, ctx);
           };
-          window.addEventListener('mousemove', mouseMove, {capture: true});
+          window.addEventListener('mousemove', mouseMove, { capture: true });
 
           return () => {
-            window.removeEventListener('mousemove', mouseMove, {capture: true});
+            window.removeEventListener('mousemove', mouseMove, {
+              capture: true,
+            });
           };
         }
         case 'inspecting': {
@@ -175,7 +181,7 @@ export const createInspectElementStateMachine = () => {
             drawHoverOverlay(el, canvas, ctx, 'inspecting');
           }, 16);
 
-          window.addEventListener('mousemove', mouseMove, {capture: true});
+          window.addEventListener('mousemove', mouseMove, { capture: true });
 
           const pointerdown = (e: MouseEvent) => {
             e.stopPropagation();
@@ -193,7 +199,7 @@ export const createInspectElementStateMachine = () => {
 
             drawHoverOverlay(el as HTMLElement, canvas, ctx, 'locked');
 
-            restoreSizeFromLocalStorage(inspectState.propContainer);
+            inspectState.propContainer.style.width = `${restoreSizeFromLocalStorage()}px`;
             Store.inspectState.value = {
               kind: 'focused',
               focusedDomElement: el as HTMLElement,
@@ -211,7 +217,9 @@ export const createInspectElementStateMachine = () => {
               parentFocusBtn.style.display = 'none';
             }
           };
-          window.addEventListener('pointerdown', pointerdown, {capture: true});
+          window.addEventListener('pointerdown', pointerdown, {
+            capture: true,
+          });
 
           const keyDown = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
@@ -222,7 +230,7 @@ export const createInspectElementStateMachine = () => {
               clearCanvas();
             }
           };
-          window.addEventListener('keydown', keyDown, {capture: true});
+          window.addEventListener('keydown', keyDown, { capture: true });
           let cleanup = () => {
             /**/
           };
@@ -241,9 +249,13 @@ export const createInspectElementStateMachine = () => {
           }
 
           return () => {
-            window.removeEventListener('pointerdown', pointerdown, {capture: true});
-            window.removeEventListener('mousemove', mouseMove, {capture: true});
-            window.removeEventListener('keydown', keyDown, {capture: true});
+            window.removeEventListener('pointerdown', pointerdown, {
+              capture: true,
+            });
+            window.removeEventListener('mousemove', mouseMove, {
+              capture: true,
+            });
+            window.removeEventListener('keydown', keyDown, { capture: true });
             eventCatcher.parentNode?.removeChild(eventCatcher);
             cleanup();
           };
@@ -320,7 +332,7 @@ export const createInspectElementStateMachine = () => {
               };
             }
           };
-          window.addEventListener('keydown', keyDown, {capture: true});
+          window.addEventListener('keydown', keyDown, { capture: true });
 
           const onpointerdownCanvasLockIcon = (e: MouseEvent) => {
             if (!currentLockIconRect) {
@@ -361,7 +373,9 @@ export const createInspectElementStateMachine = () => {
               return;
             }
           };
-          window.addEventListener('pointerdown', onpointerdownCanvasLockIcon, {capture: true});
+          window.addEventListener('pointerdown', onpointerdownCanvasLockIcon, {
+            capture: true,
+          });
 
           const cleanup = trackElementPosition(
             inspectState.focusedDomElement,
@@ -378,18 +392,19 @@ export const createInspectElementStateMachine = () => {
           return () => {
             cleanup();
 
-            window.removeEventListener('keydown', keyDown, {capture: true});
+            window.removeEventListener('keydown', keyDown, { capture: true });
             window.removeEventListener(
               'pointerdown',
-              onpointerdownCanvasLockIcon
-            , {capture: true});
+              onpointerdownCanvasLockIcon,
+              { capture: true },
+            );
           };
         }
       }
     })();
 
     if (unSub) {
-      unsubscribeFns[Store.inspectState.value.kind] = unSub;
+      (unsubscribeFns as any)[Store.inspectState.value.kind] = unSub;
     }
   }, 16);
 

@@ -51,8 +51,8 @@ export default defineConfig([
     async onSuccess() {
       await Promise.all([
         addDirectivesToChunkFiles(DIST_PATH),
-        addDirectivesToChunkFiles(DIST_PATH + '/core/monitor/params'),
-        addDirectivesToChunkFiles(DIST_PATH + '/core/monitor'),
+        addDirectivesToChunkFiles(`${DIST_PATH}/core/monitor/params`),
+        addDirectivesToChunkFiles(`${DIST_PATH}/core/monitor`),
       ]);
     },
     minify: false,
