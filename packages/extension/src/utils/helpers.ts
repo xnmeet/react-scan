@@ -1,3 +1,5 @@
+import { broadcastChannel } from "./constants";
+
 export const NO_OP = () => {
   /**/
 };
@@ -44,4 +46,15 @@ export const getReactVersion = (retries = 10, delay = 10): Promise<string> => {
 
     check();
   });
+};
+
+export const broadcast = {
+  postMessage: (type: string, data: unknown) => {
+    broadcastChannel.postMessage({ type, data });
+  },
+  set onmessage(handler: BroadcastHandler | null) {
+    broadcastChannel.onmessage = handler
+      ? (event) => handler(event.data.type, event.data.data)
+      : null;
+  }
 };

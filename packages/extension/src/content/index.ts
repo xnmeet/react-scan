@@ -1,56 +1,49 @@
 import styles from '../assets/css/styles.css?inline';
-import { IncomingMessageSchema } from '../types/messages';
-import { loadCss } from '../utils/helpers';
+import { BroadcastSchema } from '../types/messages';
+import { loadCss, broadcast } from '../utils/helpers';
 
+chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
+  const result = BroadcastSchema.safeParse(message);
 
-chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-  const { data, error } = IncomingMessageSchema.safeParse(message);
-  if (error) {
-    // Silent fail
-    return;
-  }
+  if (result.success) {
+    const data = result.data;
 
-  if (data.type === 'CHECK_REACT_VERSION') {
-    window.addEventListener('react-scan:version-check-result', (event: Event) => {
-      const { isReactDetected, version } = (event as CustomEvent).detail;
-      sendResponse({ isReactDetected, version });
-    }, { once: true });
+    if (data.type === 'react-scan:ping') {
+      sendResponse(true);
+      return false;
+    }
 
-    window.dispatchEvent(new CustomEvent('react-scan:check-version'));
-    return true;
-  }
+    if (data.type === 'react-scan:check-version') {
+      broadcast.onmessage = (type, msgData) => {
+        if (type === 'react-scan:update') {
+          const response = {
+            isReactDetected: !['Unknown', 'Not Found'].includes(msgData.reactVersion),
+            version: msgData.reactVersion
+          };
+          sendResponse(response);
+        }
+      };
 
-  if (data.type === 'PING') {
-    sendResponse(true);
-    return;
-  }
+      // Send the check message
+      broadcast.postMessage('react-scan:check-version', {});
 
-  switch (data.type) {
-    case 'CSP_RULES_CHANGED':
+      return true; // Keep the message channel open
+    }
+
+    if (data.type === 'react-scan:csp-rules-changed') {
       window.location.reload();
-      break;
-    case 'IS_CSP_RULES_ENABLED':
-      window.dispatchEvent(
-        new CustomEvent('react-scan:is-csp-rules-enabled', {
-          detail: { ...data.data },
-        }),
-      );
-      break;
+    }
   }
+  return true;
 });
 
 const getCSPRulesState = async () => chrome.runtime.sendMessage({
-  type: 'IS_CSP_RULES_ENABLED',
+  type: 'react-scan:is-csp-rules-enabled',
   data: {
     domain: window.location.origin,
   },
 }).then((cspRulesEnabled) => {
-  window.dispatchEvent(
-    new CustomEvent('react-scan:is-csp-rules-enabled', {
-      detail: { ...cspRulesEnabled },
-    }),
-  );
-
+  broadcast.postMessage('react-scan:is-csp-rules-enabled', cspRulesEnabled);
   return cspRulesEnabled.enabled;
 });
 
@@ -78,16 +71,18 @@ const init = (() => {
       const isCSPRulesEnabled = await getCSPRulesState();
       const toolbarContent = document.getElementById('react-scan-toolbar-content');
 
-      window.dispatchEvent(
-        new CustomEvent('react-scan:state-change', {
-          detail: { enabled: isCSPRulesEnabled }
-        })
-      );
+      // window.dispatchEvent(
+      //   new CustomEvent('react-scan:state-change', {
+      //     detail: { enabled: isCSPRulesEnabled }
+      //   })
+      // );
+
+      // broadcast.postMessage('react-scan:state-change', { enabled: isCSPRulesEnabled });
 
       if (isCSPRulesEnabled) {
         // send message to the extension to disable the rules
         await chrome.runtime.sendMessage({
-          type: 'CSP_RULES_CHANGED',
+          type: 'react-scan:csp-rules-changed',
           data: {
             enabled: false,
             domain: window.location.origin,
@@ -96,7 +91,7 @@ const init = (() => {
       } else {
         // send message to the extension to enable the rules
         await chrome.runtime.sendMessage({
-          type: 'CSP_RULES_CHANGED',
+          type: 'react-scan:csp-rules-changed',
           data: {
             enabled: true,
             domain: window.location.origin,
@@ -131,10 +126,10 @@ const init = (() => {
   };
 })();
 
-window.addEventListener('react-scan:update', ((event: Event) => {
-  const customEvent = event as CustomEvent;
-
-  if (!['Unknown', 'Not Found'].includes(customEvent.detail.reactVersion)) {
-    void init();
+broadcast.onmessage = (type, data) => {
+  if (type === 'react-scan:update') {
+    if (!['Unknown', 'Not Found'].includes(data.reactVersion)) {
+      void init();
+    }
   }
-}) as EventListener);
+};

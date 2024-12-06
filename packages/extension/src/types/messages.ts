@@ -1,36 +1,39 @@
 import { z } from 'zod';
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __REACT_DEVTOOLS_GLOBAL_HOOK__: Window['__REACT_DEVTOOLS_GLOBAL_HOOK__'];
-  type TTimer = ReturnType<typeof setTimeout | typeof setInterval>;
-}
-
-export const IncomingMessageSchema = z.discriminatedUnion('type', [
+export const BroadcastSchema = z.discriminatedUnion('type', [
   z.object({
-    type: z.literal('PING'),
+    type: z.literal('react-scan:ping'),
   }),
   z.object({
-    type: z.literal('CSP_RULES_CHANGED'),
+    type: z.literal('react-scan:csp-rules-changed'),
+    data: z.object({
+      domain: z.string(),
+      enabled: z.boolean(),
+    }),
+  }),
+  z.object({
+    type: z.literal('react-scan:is-csp-rules-enabled'),
+    data: z.object({
+      domain: z.string(),
+      enabled: z.boolean(),
+    }),
+  }),
+  z.object({
+    type: z.literal('react-scan:check-version'),
+  }),
+  z.object({
+    type: z.literal('react-scan:update'),
+    data: z.object({
+      reactVersion: z.string(),
+      isReactDetected: z.boolean().optional(),
+    }),
+  }),
+  z.object({
+    type: z.literal('react-scan:state-change'),
     data: z.object({
       enabled: z.boolean(),
-      domain: z.string(),
     }),
-  }),
-  z.object({
-    type: z.literal('IS_CSP_RULES_ENABLED'),
-    data: z.object({
-      domain: z.string(),
-    }),
-  }),
-  z.object({
-    type: z.literal('CHECK_REACT_VERSION'),
   }),
 ]);
 
-export type IncomingMessage = z.infer<typeof IncomingMessageSchema>;
-
-export type OutgoingMessage = {
-  type: 'SCAN_UPDATE';
-  reactVersion: string;
-};
+export type BroadcastMessage = z.infer<typeof BroadcastSchema>;

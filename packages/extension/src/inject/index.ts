@@ -1,7 +1,5 @@
-import '../utils/dev-tools-hook';
-
 import noReactStyles from '../assets/css/no-react.css?inline';
-import { getReactVersion, loadCss } from '../utils/helpers';
+import { getReactVersion, loadCss, broadcast } from '../utils/helpers';
 import { CACHE_TTL, CACHE_NAME } from '../utils/constants';
 
 const scriptsToInject = [
@@ -88,33 +86,9 @@ const injectReactScan = async () => {
   }
 };
 
-window.addEventListener('react-scan:is-csp-rules-enabled', (event) => {
-  const cspRulesEnabled = (event as CustomEvent).detail.enabled;
-
-  if (cspRulesEnabled) {
-    void injectReactScan();
-  }
-});
-
-window.addEventListener('react-scan:state-change', (event: Event) => {
-  const { enabled } = (event as CustomEvent).detail;
-  if (
-    typeof window.__REACT_SCAN__?.ReactScanInternals === 'object' &&
-    window.__REACT_SCAN__?.ReactScanInternals !== null
-  ) {
-    window.__REACT_SCAN__.ReactScanInternals.isPaused = enabled;
-  }
-});
-
 window.addEventListener('DOMContentLoaded', async () => {
-  const version = await getReactVersion();
-  window.dispatchEvent(
-    new CustomEvent('react-scan:update', {
-      detail: {
-        reactVersion: version,
-      },
-    }),
-  );
+  const reactVersion = await getReactVersion();
+  broadcast.postMessage('react-scan:update', { reactVersion });
 });
 
 (() => {
@@ -157,19 +131,34 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   document.documentElement.appendChild(fragment);
 
-  window.addEventListener('react-scan:check-version', async () => {
-    const version = await getReactVersion();
-    const isReactDetected = !['Unknown', 'Not Found'].includes(version);
-
-    window.dispatchEvent(
-      new CustomEvent('react-scan:version-check-result', {
-        detail: { isReactDetected, version }
-      })
-    );
-
-    if (!isReactDetected) {
-      document.documentElement.classList.add('freeze');
-      backdrop.className = 'animate-fade-in';
+  broadcast.onmessage = async (type, data) => {
+    if (type === 'react-scan:is-csp-rules-enabled') {
+      const cspRulesEnabled = data.enabled;
+      if (cspRulesEnabled) {
+        void injectReactScan();
+      }
     }
-  });
+
+    if (type === 'react-scan:state-change') {
+      if (
+        typeof window.__REACT_SCAN__?.ReactScanInternals === 'object' &&
+        window.__REACT_SCAN__?.ReactScanInternals !== null
+      ) {
+        window.__REACT_SCAN__.ReactScanInternals.isPaused = data.enabled;
+      }
+    }
+
+    if (type === 'react-scan:check-version') {
+      const reactVersion = await getReactVersion();
+      const isReactDetected = !['Unknown', 'Not Found'].includes(reactVersion);
+
+
+      if (!isReactDetected) {
+        document.documentElement.classList.add('freeze');
+        backdrop.className = 'animate-fade-in';
+      }
+
+      broadcast.postMessage('react-scan:update', { reactVersion });
+    }
+  };
 })();
