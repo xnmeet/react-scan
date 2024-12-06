@@ -798,6 +798,7 @@ export const createToolbar = () => {
   styleElement.textContent = `
   #react-scan-toolbar {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    z-index: 999999999;
   }
 
 
@@ -1032,9 +1033,12 @@ export const createToolbar = () => {
     background: rgba(255, 255, 255, 0.3);
   }
 
+
+
   #react-scan-toolbar::-webkit-scrollbar {
 	  width: 4px;
 	  height: 4px;
+
 	}
 
 	#react-scan-toolbar::-webkit-scrollbar-track {
