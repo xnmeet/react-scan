@@ -1,6 +1,6 @@
 import { type Fiber } from 'react-reconciler';
-import { getNearestHostFiber } from '../instrumentation/fiber';
-import type { Render } from '../instrumentation/index';
+import { getNearestHostFiber } from 'bippy';
+import type { Render } from '../instrumentation';
 import { ReactScanInternals } from '../index';
 import { getLabelText } from '../utils';
 import { isOutlineUnstable, throttle } from './utils';
@@ -189,7 +189,8 @@ let animationFrameId: number | null = null;
 export const fadeOutOutline = (
   ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
 ) => {
-  const { activeOutlines, options } = ReactScanInternals;
+  const { activeOutlines } = ReactScanInternals;
+  const options = ReactScanInternals.options.value;
 
   const dpi = window.devicePixelRatio || 1;
   ctx.clearRect(0, 0, ctx.canvas.width / dpi, ctx.canvas.height / dpi);
@@ -255,7 +256,7 @@ export const fadeOutOutline = (
       time += render.time;
     }
 
-    const maxRenders = ReactScanInternals.options.maxRenders ?? 100;
+    const maxRenders = ReactScanInternals.options.value.maxRenders ?? 100;
     const t = Math.min((count * (time || 1)) / maxRenders, 1);
 
     const r = Math.round(START_COLOR.r + t * (END_COLOR.r - START_COLOR.r));
@@ -356,10 +357,10 @@ async function paintOutlines(
 ): Promise<void> {
   return new Promise<void>((resolve) => {
     const { options } = ReactScanInternals;
-    const totalFrames = options.alwaysShowLabels ? 60 : 30;
+    const totalFrames = options.value.alwaysShowLabels ? 60 : 30;
     const alpha = 0.8;
 
-    options.onPaintStart?.(outlines);
+    options.value.onPaintStart?.(outlines);
 
     const newActiveOutlines = outlines.map((outline) => {
       const renders = outline.renders;
