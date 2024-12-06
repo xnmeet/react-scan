@@ -13,9 +13,13 @@ export default function Monitoring() {
           React components that cause the most lag for your users
         </div>
 
-        <div>Sign up for our private beta:</div>
+        <p>
+          It takes less than 2 minutes to set up.
+        </p>
 
-        <Waitlist />
+        <button className="inline-block px-5 py-2 font-medium text-white bg-black text-center whitespace-nowrap disabled:opacity-50">
+          Try it out!
+        </button>
 
         <div className="relative h-[400px] my-8">
           <Image
