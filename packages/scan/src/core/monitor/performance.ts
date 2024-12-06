@@ -63,6 +63,8 @@ function shouldIncludeInPath(
   return !patternsToCheck.some((pattern) => pattern.test(name));
 }
 
+const isMinified = (name: string) => name.length <= 2 // todo: make more advanced, minified names can be above 2 chars
+
 export function getInteractionPath(
   fiber: Fiber | null,
   filters: PathFilters = DEFAULT_FILTERS,
@@ -80,7 +82,7 @@ export function getInteractionPath(
   while (current) {
     if (current.type && typeof current.type === 'function') {
       const name = getCleanComponentName(current.type);
-      if (name && name.length > 2 && shouldIncludeInPath(name, filters)) {
+      if (name && !isMinified(name) && shouldIncludeInPath(name, filters)) {
         fullPath.unshift(name);
       }
     }
@@ -151,7 +153,7 @@ export function initPerformanceMonitoring(options?: Partial<PathFilters>) {
       return;
     }
     const displayName = getDisplayName(parentCompositeFiber.type);
-    if (!displayName) {
+    if (!displayName || isMinified(displayName)) {
       // invariant, we know its named based on getFirstNamedAncestorCompositeFiber implementation
       return;
     }
