@@ -14,9 +14,12 @@ export default function Monitoring() {
 
         <p>It takes less than 2 minutes to set up.</p>
 
-        <button className="inline-block px-5 py-2 font-medium text-white bg-black text-center whitespace-nowrap disabled:opacity-50">
+        <Link
+          className="inline-block px-5 py-2 font-medium text-white bg-black text-center whitespace-nowrap disabled:opacity-50"
+          href="https://dashboard.react-scan.com/"
+        >
           Try it out!
-        </button>
+        </Link>
 
         <div className="relative h-[400px] my-8">
           <Image
