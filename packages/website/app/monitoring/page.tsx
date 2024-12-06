@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import Waitlist from './(components)/waitlist';
 import Link from 'next/link';
 
 export default function Monitoring() {
@@ -13,9 +12,7 @@ export default function Monitoring() {
           React components that cause the most lag for your users
         </div>
 
-        <p>
-          It takes less than 2 minutes to set up.
-        </p>
+        <p>It takes less than 2 minutes to set up.</p>
 
         <button className="inline-block px-5 py-2 font-medium text-white bg-black text-center whitespace-nowrap disabled:opacity-50">
           Try it out!
