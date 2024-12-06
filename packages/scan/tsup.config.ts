@@ -33,6 +33,7 @@ export default defineConfig([
       './src/index.ts',
       './src/auto.ts',
       './src/rsc-shim.ts',
+      './src/core/monitor/index.ts',
       './src/core/monitor/params/next.ts',
       './src/core/monitor/params/react-router-v5.ts',
       './src/core/monitor/params/react-router-v6.ts',
