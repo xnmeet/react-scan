@@ -1,4 +1,4 @@
-import { NO_OP } from './helpers';
+import { NO_OP } from "../utils/helpers";
 
 type Hook = {
   checkDCE: () => void;
@@ -45,6 +45,11 @@ export const registerDevtoolsHook = ({
   return devtoolsHook;
 };
 
-registerDevtoolsHook({
-  onCommitFiberRoot: NO_OP as Hook['onCommitFiberRoot'],
-});
+
+
+// Install hook if not already present
+if (!window.__REACT_DEVTOOLS_GLOBAL_HOOK__) {
+  registerDevtoolsHook({
+    onCommitFiberRoot: NO_OP as Hook['onCommitFiberRoot'],
+  });
+}

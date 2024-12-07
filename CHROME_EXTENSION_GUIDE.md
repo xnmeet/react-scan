@@ -1,10 +1,27 @@
-# Chrome Extension Installation Guide
+# BrowserExtension Installation Guide
 
 > [!WARNING]
-> React Scan's Chrome extension is still pending approval from the Chrome Web Store. Below is a guide to installing the extension manually.
+> React Scan's Browser extension is still pending approvals from the Chrome Web Store, Firefox Add-ons, and Brave Browser. Below is a guide to installing the extension manually.
 
-1. Download the [`dist.zip`](https://github.com/aidenybai/react-scan/blob/main/packages/extension/dist.zip?raw=true) file.
+## Chrome
+
+1. Download the [`chrome-react-scanner-extension-v1.0.0.zip`](https://github.com/aidenybai/react-scan/blob/main/packages/extension/build/chrome-react-scanner-extension-v1.0.0.zip?raw=true) file.
 2. Unzip the file.
 3. Open Chrome and navigate to `chrome://extensions/`.
 4. Enable "Developer mode" if it is not already enabled.
 5. Click "Load unpacked" and select the unzipped folder (or drag the folder into the page).
+
+## Firefox
+
+1. Download the [`firefox-react-scanner-extension-v1.0.0.zip`](https://github.com/aidenybai/react-scan/blob/main/packages/extension/build/firefox-react-scanner-extension-v1.0.0.zip?raw=true) file.
+2. Unzip the file.
+3. Open Firefox and navigate to `about:debugging#/runtime/this-firefox`.
+4. Click "Load Temporary Add-on..."
+5. Select `manifest.json` from the unzipped folder
+
+## Brave
+
+1. Download the [`brave-react-scanner-extension-v1.0.0.zip`](https://github.com/aidenybai/react-scan/blob/main/packages/extension/build/brave-react-scanner-extension-v1.0.0.zip?raw=true) file.
+2. Unzip the file.
+3. Open Brave and navigate to `brave://extensions`.
+4. Click "Load unpacked" and select the unzipped folder (or drag the folder into the page).

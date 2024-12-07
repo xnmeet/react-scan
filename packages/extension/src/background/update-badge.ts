@@ -2,6 +2,9 @@ import browser from 'webextension-polyfill';
 import { isInternalUrl } from '../utils/helpers';
 import { STORAGE_KEY } from '../utils/constants';
 
+const isFirefox = browser.runtime.getURL('').startsWith('moz-extension://');
+const browserAction = browser.action || browser.browserAction;
+
 const ANIMATION_CONFIG = {
   size: 24,
   lineWidth: 1.5,
@@ -9,11 +12,11 @@ const ANIMATION_CONFIG = {
   borderRadius: 3,
   dashLength: 8,
   gapLength: 14,
-  duration: 1500,
+  duration: 1800,
   color: '#A295EE',
 } as const;
 
-let animationInterval: any | null = null;
+let animationInterval: TTimer = null;
 
 const drawBadgeIcon = async (
   ctx: OffscreenCanvasRenderingContext2D,
@@ -56,9 +59,35 @@ const startAnimation = (duration: number) => {
   animationInterval = setInterval(animateBadge, interval);
 };
 
+type ImageDataType = {
+  width: number;
+  height: number;
+  data: Uint8ClampedArray;
+  colorSpace: 'srgb';
+};
+
+
 export const updateBadge = async (enabled: boolean | null): Promise<number> => {
-  const { size, lineWidth, inset, borderRadius, duration, color } =
-    ANIMATION_CONFIG;
+  const { duration } = ANIMATION_CONFIG;
+
+  if (isFirefox) {
+    await browserAction.setIcon({
+      path: enabled
+        ? browser.runtime.getURL('icon/logo-animated.svg')
+        : browser.runtime.getURL('icon/128.png')
+    });
+
+    // Start animation for Firefox
+    if (enabled && !animationInterval) {
+      startAnimation(duration);
+    } else if (!enabled) {
+      clearBadgeAnimation();
+    }
+
+    return duration;
+  }
+
+  const { size, lineWidth, inset, borderRadius, color } = ANIMATION_CONFIG;
   const canvas = new OffscreenCanvas(size, size);
   const ctx = canvas.getContext('2d');
   if (!ctx) {
@@ -91,8 +120,15 @@ export const updateBadge = async (enabled: boolean | null): Promise<number> => {
     ctx.stroke();
   }
 
-  await chrome.action.setIcon({
-    imageData: ctx.getImageData(0, 0, size, size),
+  await browserAction.setIcon({
+    imageData: {
+      [size]: {
+        width: size,
+        height: size,
+        data: ctx.getImageData(0, 0, size, size).data,
+        colorSpace: 'srgb'
+      }
+    }
   });
 
   return duration;
