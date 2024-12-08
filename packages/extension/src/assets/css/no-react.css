@@ -1,4 +1,4 @@
-html.freeze>body {
+html.freeze > body {
   pointer-events: none;
 }
 
@@ -46,7 +46,8 @@ html.freeze #react-scan-toast {
   max-width: 480px;
   color: #fff;
   font-size: 12px;
-  font-family: Menlo, Consolas, Monaco, 'Liberation Mono', 'Lucida Console', monospace;
+  font-family: Menlo, Consolas, Monaco, 'Liberation Mono', 'Lucida Console',
+    monospace;
   line-height: 1.5;
   background: rgba(0, 0, 0, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.1);

@@ -2,6 +2,7 @@ import { scan } from 'react-scan/dist/index.mjs'; // force production build
 import React, { useState, createContext } from 'react';
 import ReactDOMClient from 'react-dom/client';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 import './styles.css';
 
@@ -195,6 +196,7 @@ export const Input = ({ onChange, onEnter, value }) => {
 ReactDOMClient.createRoot(document.getElementById('root')).render(
   <>
     <Analytics />
+    <SpeedInsights />
     <App />
     {/* <Monitor apiKey="123" /> */}
   </>,
