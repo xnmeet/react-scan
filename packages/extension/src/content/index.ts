@@ -2,6 +2,9 @@ import styles from '../assets/css/styles.css?inline';
 import { BroadcastSchema } from '../types/messages';
 import { loadCss, broadcast } from '../utils/helpers';
 
+const isIframe = window !== window.top;
+const isPopup = window.opener !== null;
+
 chrome.runtime.onMessage.addListener((message: unknown, _sender, sendResponse) => {
   const result = BroadcastSchema.safeParse(message);
 
@@ -43,7 +46,12 @@ const getCSPRulesState = async () => chrome.runtime.sendMessage({
     domain: window.location.origin,
   },
 }).then((cspRulesEnabled) => {
+  if (isIframe || isPopup) {
+    return false;
+  }
+
   broadcast.postMessage('react-scan:is-csp-rules-enabled', cspRulesEnabled);
+
   return cspRulesEnabled.enabled;
 });
 
@@ -70,14 +78,6 @@ const init = (() => {
     el.onclick = async () => {
       const isCSPRulesEnabled = await getCSPRulesState();
       const toolbarContent = document.getElementById('react-scan-toolbar-content');
-
-      // window.dispatchEvent(
-      //   new CustomEvent('react-scan:state-change', {
-      //     detail: { enabled: isCSPRulesEnabled }
-      //   })
-      // );
-
-      // broadcast.postMessage('react-scan:state-change', { enabled: isCSPRulesEnabled });
 
       if (isCSPRulesEnabled) {
         // send message to the extension to disable the rules
