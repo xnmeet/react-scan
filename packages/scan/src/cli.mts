@@ -227,12 +227,16 @@ const init = async () => {
     await page.evaluate(() => {
       const globalHook = globalThis.__REACT_SCAN__;
       if (!globalHook) return;
-      const reportData = globalHook.ReactScanInternals.reportData;
-      if (!Object.keys(reportData).length) return;
       let count = 0;
-      for (const componentName in reportData) {
-        count += reportData[componentName].count;
-      }
+      globalHook.ReactScanInternals.onRender = (fiber, renders) => {
+        let localCount = 0;
+        for (const render of renders) {
+          localCount += render.count;
+        }
+        count = localCount;
+      };
+      const reportData = globalHook.ReactScanInternals.Store.reportData;
+      if (!Object.keys(reportData).length) return;
 
       console.log('REACT_SCAN_REPORT', count);
     });
@@ -242,7 +246,7 @@ const init = async () => {
   let currentSpinner: ReturnType<typeof spinner> | undefined;
   let currentURL = urlString;
 
-  let interval:ReturnType<typeof setInterval>
+  let interval: ReturnType<typeof setInterval>;
 
   const inject = async (url: string) => {
     if (interval) clearInterval(interval);
@@ -272,7 +276,6 @@ const init = async () => {
       await page.evaluate(() => {
         if (typeof globalThis.reactScan !== 'function') return;
         globalThis.reactScan({ report: true });
-        globalThis.__REACT_SCAN__.ReactScanInternals.reportData = {};
       });
 
       interval = setInterval(() => {

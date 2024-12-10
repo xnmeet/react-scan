@@ -1,5 +1,5 @@
 import type { Fiber } from 'react-reconciler';
-import * as React from 'react';
+import type * as React from 'react';
 import { type Signal, signal } from '@preact/signals';
 import {
   getDisplayName,
@@ -156,6 +156,7 @@ export interface Internals {
   scheduledOutlines: Array<PendingOutline>;
   activeOutlines: Array<ActiveOutline>;
   onRender: ((fiber: Fiber, renders: Array<Render>) => void) | null;
+  Store: StoreType;
 }
 
 export const Store: StoreType = {
@@ -190,6 +191,7 @@ export const ReactScanInternals: Internals = {
   onRender: null,
   scheduledOutlines: [],
   activeOutlines: [],
+  Store,
 };
 
 export const getReport = (type?: React.ComponentType<any>) => {
@@ -473,9 +475,8 @@ export const scan = (options: Options = {}) => {
 };
 
 export const useScan = (options: Options) => {
-  React.useEffect(() => {
-    scan(options);
-  }, []);
+  setOptions(options);
+  start();
 };
 
 export const onRender = (

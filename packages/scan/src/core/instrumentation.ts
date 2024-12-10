@@ -1,5 +1,5 @@
 import type { Fiber, FiberRoot } from 'react-reconciler';
-import * as React from 'react';
+import type * as React from 'react';
 import {
   getTimings,
   hasMemoCache,
@@ -32,6 +32,16 @@ export interface Render {
 
 const unstableTypes = ['function', 'object'];
 
+export const isValidElement = (value: unknown): value is React.ReactElement => {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    '$$typeof' in value &&
+    typeof value.$$typeof === 'symbol' &&
+    String(value.$$typeof) === 'Symbol(react.element)'
+  );
+};
+
 export const fastSerialize = (value: unknown) => {
   switch (typeof value) {
     case 'function':
@@ -45,12 +55,7 @@ export const fastSerialize = (value: unknown) => {
       if (Array.isArray(value)) {
         return value.length > 0 ? '[…]' : '[]';
       }
-      if (
-        React.isValidElement(value) &&
-        '$$typeof' in value &&
-        typeof value.$$typeof === 'symbol' &&
-        String(value.$$typeof) === 'Symbol(react.element)'
-      ) {
+      if (isValidElement(value)) {
         // attempt to extract some name from the component
         return `<${getDisplayName(value.type) ?? ''}${
           Object.keys(value.props || {}).length > 0 ? ' …' : ''
@@ -96,8 +101,8 @@ export const getPropsRender = (fiber: Fiber, type: Function): Render | null => {
 
     if (
       Object.is(prevValue, nextValue) ||
-      React.isValidElement(prevValue) ||
-      React.isValidElement(nextValue)
+      isValidElement(prevValue) ||
+      isValidElement(nextValue)
     ) {
       continue;
     }
