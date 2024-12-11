@@ -87,6 +87,7 @@ export const startMonitoring = () => {
     ReactScanInternals,
   };
   const instrumentation = createInstrumentation({
+    kind: 'monitoring',
     onCommitStart() {
       ReactScanInternals.options.value.onCommitStart?.();
     },

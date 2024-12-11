@@ -301,6 +301,7 @@ export const start = () => {
 
   // TODO: dynamic enable, and inspect-off check
   const instrumentation = createInstrumentation({
+    kind: 'devtool',
     onCommitStart() {
       ReactScanInternals.options.value.onCommitStart?.();
     },
