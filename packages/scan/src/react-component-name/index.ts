@@ -196,7 +196,7 @@ export const reactComponentNamePlugin = createUnplugin<Options>(
     );
 
     return {
-      name: 'unplugin-react-component-name',
+      name: 'react-component-name',
       enforce: 'post',
 
       async transform(code: string, id: string) {

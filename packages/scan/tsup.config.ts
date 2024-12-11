@@ -94,6 +94,7 @@ export default defineConfig([
       './src/react-component-name/rspack.ts',
       './src/react-component-name/rolldown.ts',
       './src/react-component-name/rollup.ts',
+      './src/react-component-name/astro.ts',
     ],
     outDir: './dist/react-component-name',
     splitting: false,

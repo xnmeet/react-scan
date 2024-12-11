@@ -150,6 +150,11 @@
       "types": "./dist/react-component-name/rollup.d.ts",
       "import": "./dist/react-component-name/rollup.mjs",
       "require": "./dist/react-component-name/rollup.js"
+    },
+    "./react-component-name/astro": {
+      "types": "./dist/react-component-name/astro.d.ts",
+      "import": "./dist/react-component-name/astro.mjs",
+      "require": "./dist/react-component-name/astro.js"
     }
   },
   "main": "dist/index.js",
@@ -193,6 +198,9 @@
       ],
       "react-component-name/rollup": [
         "./dist/react-component-name/rollup.d.ts"
+      ],
+      "react-component-name/astro": [
+        "./dist/react-component-name/astro.d.ts"
       ]
     }
   },
