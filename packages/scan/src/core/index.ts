@@ -318,6 +318,8 @@ export const start = () => {
         reportRender(fiber, renders);
       }
 
+      ReactScanInternals.options.value.onRender?.(fiber, renders);
+
       for (let i = 0, len = renders.length; i < len; i++) {
         const render = renders[i];
         const outline = getOutline(fiber, render);

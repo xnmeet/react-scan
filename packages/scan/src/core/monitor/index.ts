@@ -105,6 +105,7 @@ export const startMonitoring = () => {
         reportRender(fiber, renders);
         aggregateComponentRenderToInteraction(fiber, renders);
       }
+      ReactScanInternals.options.value.onRender?.(fiber, renders);
     },
     onCommitFinish() {
       ReactScanInternals.options.value.onCommitFinish?.();
