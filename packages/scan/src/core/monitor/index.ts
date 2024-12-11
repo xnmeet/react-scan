@@ -16,7 +16,7 @@ import { getSession } from './utils';
 import { flush } from './network';
 
 // max retries before the set of components do not get reported (avoid memory leaks of the set of fibers stored on the component aggregation)
-const MAX_RETRIES_BEFORE_COMPONENT_GC = 7
+const MAX_RETRIES_BEFORE_COMPONENT_GC = 7;
 
 export const Monitoring = ({
   url,
@@ -76,7 +76,11 @@ export const startMonitoring = () => {
   }
 
   flushInterval = setInterval(() => {
-    void flush();
+    try {
+      void flush();
+    } catch {
+      /* */
+    }
   }, 2000);
 
   globalThis.__REACT_SCAN__ = {
@@ -110,8 +114,6 @@ export const startMonitoring = () => {
   ReactScanInternals.instrumentation = instrumentation;
 };
 
-
-
 const aggregateComponentRenderToInteraction = (
   fiber: Fiber,
   renders: Array<Render>,
@@ -138,7 +140,7 @@ const aggregateComponentRenderToInteraction = (
         name: displayName,
         renders: 0,
         totalTime,
-        retiresAllowed: MAX_RETRIES_BEFORE_COMPONENT_GC, 
+        retiresAllowed: MAX_RETRIES_BEFORE_COMPONENT_GC,
         uniqueInteractionId: latestInteraction.uniqueInteractionId,
       };
       latestInteraction.components.set(displayName, component);

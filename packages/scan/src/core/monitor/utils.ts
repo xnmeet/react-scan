@@ -62,7 +62,6 @@ const getGpuRenderer = () => {
  */
 let cachedSession: Session;
 export const getSession = async () => {
-
   if (isSSR) return null;
   if (cachedSession) {
     return cachedSession;
@@ -93,14 +92,13 @@ export const getSession = async () => {
    */
   // @ts-expect-error - deviceMemory is still experimental
   const mem = navigator.deviceMemory; // GiB ram
-   
 
   const gpuRendererPromise = new Promise<string | null>((resolve) => {
     onIdle(() => {
       resolve(getGpuRenderer());
     });
   });
- 
+
   const session = {
     id,
     url,
