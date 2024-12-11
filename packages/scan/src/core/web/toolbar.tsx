@@ -339,7 +339,8 @@ export const Toolbar = ({
         break;
       case 'focused':
         Store.inspectState.value = {
-          kind: 'inspect-off',
+          kind: 'inspecting',
+          hoveredDomElement: null,
           propContainer: currentState.propContainer,
         };
         break;
