@@ -129,6 +129,9 @@ export default defineConfig([
   },
   {
     entry: ['./src/cli.mts'],
+    banner: {
+      js: banner,
+    },
     outDir: './dist',
     splitting: false,
     clean: true,
