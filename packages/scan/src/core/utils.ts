@@ -12,6 +12,7 @@ export const getLabelText = (renders: Array<Render>) => {
       count: number;
       trigger: boolean;
       forget: boolean;
+      time: number;
     }
   >();
 
@@ -20,15 +21,17 @@ export const getLabelText = (renders: Array<Render>) => {
     const name = render.name;
     if (!name?.trim()) continue;
 
-    const { count, trigger, forget } = components.get(name) ?? {
+    const { count, trigger, forget, time } = components.get(name) ?? {
       count: 0,
       trigger: false,
       forget: false,
+      time: 0,
     };
     components.set(name, {
       count: count + render.count,
       trigger: trigger || render.trigger,
       forget: forget || render.forget,
+      time: time + render.time,
     });
   }
 
@@ -37,10 +40,13 @@ export const getLabelText = (renders: Array<Render>) => {
   );
 
   const parts: Array<string> = [];
-  for (const [name, { count, forget }] of sortedComponents) {
+  for (const [name, { count, forget, time }] of sortedComponents) {
     let text = name;
     if (count > 1) {
       text += ` ×${count}`;
+    }
+    if (time >= 0.01 && count > 0) {
+      text += ` (${time.toFixed(2)}ms)`;
     }
 
     if (forget) {
@@ -52,8 +58,8 @@ export const getLabelText = (renders: Array<Render>) => {
   labelText = parts.join(' ');
 
   if (!labelText.length) return null;
-  if (labelText.length > 20) {
-    labelText = `${labelText.slice(0, 20)}…`;
+  if (labelText.length > 40) {
+    labelText = `${labelText.slice(0, 40)}…`;
   }
   return labelText;
 };

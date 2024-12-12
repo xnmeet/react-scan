@@ -251,7 +251,7 @@ const init = async () => {
   const inject = async (url: string) => {
     if (interval) clearInterval(interval);
     currentURL = url;
-    const truncatedURL = truncateString(url, 50);
+    const truncatedURL = truncateString(url, 35);
     currentSpinner?.stop(`${truncatedURL}${count ? ` (×${count})` : ''}`);
     currentSpinner = spinner();
     currentSpinner.start(dim(`Scanning: ${truncatedURL}`));
