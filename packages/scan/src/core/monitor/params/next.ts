@@ -1,13 +1,11 @@
-'use client';
-
-// adapted from vercel analytics <remember to put link here>
+// adapted from: https://github.com/vercel/analytics
 import { useParams, usePathname, useSearchParams } from 'next/navigation.js';
-// import React from 'react';
 import { createElement, Suspense } from 'react';
-import { Monitoring as BaseMonitoring, type MonitoringWithoutRouteProps } from '..';
+import {
+  Monitoring as BaseMonitoring,
+  type MonitoringWithoutRouteProps,
+} from '..';
 import { computeRoute } from './utils';
-// import { computeRoute } from '../utils';
-// does this work in pages and app router? Idk
 const useRoute = (): {
   route: string | null;
   path: string;

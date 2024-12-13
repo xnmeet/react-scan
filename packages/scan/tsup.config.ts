@@ -98,7 +98,9 @@ export default defineConfig([
     format: ['cjs', 'esm'],
     target: 'esnext',
     platform: 'browser',
-    treeshake: true,
+    // FIXME: tree shaking removes use client directive
+    // Info: vercel analytics does the same thing- https://github.com/vercel/analytics/blob/main/packages/web/tsup.config.js
+    treeshake: false,
     dts: true,
     async onSuccess() {
       await Promise.all([
