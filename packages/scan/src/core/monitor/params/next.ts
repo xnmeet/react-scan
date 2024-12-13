@@ -6,6 +6,7 @@ import {
   type MonitoringWithoutRouteProps,
 } from '..';
 import { computeRoute } from './utils';
+
 const useRoute = (): {
   route: string | null;
   path: string;
