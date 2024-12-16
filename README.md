@@ -27,28 +27,7 @@ Airbnb&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://polaris.shopify.com/"
 
 ## Install
 
-> Looking for [React Native](https://github.com/aidenybai/react-scan/pull/23)?
-
-The fastest way to get started is via CLI. This will spin up an isolated browser instance which you can interact or use React Scan with.
-
-```bash
-npx react-scan@latest http://localhost:3000
-# you can technically scan ANY website on the web:
-# npx react-scan@latest https://react.dev
-```
-
-You can add it to your existing dev process as well. Here's an example for Next.js:
-
-```json
-{
-  "scripts": {
-    "dev": "next dev",
-    "scan": "next dev & npx react-scan@latest localhost:3000"
-  }
-}
-```
-
-If you don't want to use a separate browser and you have access to your local codebase, then add this script to your app:
+Add this script to your app:
 
 ```html
 <!-- import this BEFORE any scripts -->
@@ -157,6 +136,27 @@ if (typeof window !== 'undefined') {
     enabled: true,
     log: true, // logs render info to console (default: false)
   });
+}
+```
+
+> Looking for [React Native](https://github.com/aidenybai/react-scan/pull/23)?
+
+If you don't have a localv version of the site, you can use the CLI. This will spin up an isolated browser instance which you can interact or use React Scan with.
+
+```bash
+npx react-scan@latest http://localhost:3000
+# you can technically scan ANY website on the web:
+# npx react-scan@latest https://react.dev
+```
+
+You can add it to your existing dev process as well. Here's an example for Next.js:
+
+```json
+{
+  "scripts": {
+    "dev": "next dev",
+    "scan": "next dev & npx react-scan@latest localhost:3000"
+  }
 }
 ```
 
