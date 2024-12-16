@@ -2,10 +2,13 @@ import fsPromise from 'node:fs/promises';
 import * as fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from 'tsup';
-// @ts-expect-error no typedefs
 import { init, parse } from 'es-module-lexer';
 
 const DIST_PATH = './dist';
+
+if (!fs.existsSync(DIST_PATH)) {
+  fs.mkdirSync(DIST_PATH, { recursive: true });
+}
 
 const addDirectivesToChunkFiles = async (readPath: string): Promise<void> => {
   try {
