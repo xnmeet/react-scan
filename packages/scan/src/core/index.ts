@@ -31,6 +31,8 @@ import { type getSession } from './monitor/utils';
 // @ts-expect-error CSS import
 import styles from './web/assets/css/styles.css';
 
+let toolbarContainer: HTMLElement | null = null;
+
 export interface Options {
   /**
    * Enable/disable scanning
@@ -218,10 +220,19 @@ export const setOptions = (options: Options) => {
     instrumentation.isPaused.value = options.enabled === false;
   }
 
+  const previousOptions = ReactScanInternals.options.value;
+
   ReactScanInternals.options.value = {
     ...ReactScanInternals.options.value,
     ...options,
   };
+
+  if (previousOptions.showToolbar && !options.showToolbar) {
+    if (toolbarContainer) {
+      toolbarContainer.remove();
+      toolbarContainer = null;
+    }
+  }
 };
 
 export const getOptions = () => ReactScanInternals.options;
@@ -409,7 +420,7 @@ export const start = () => {
   ReactScanInternals.instrumentation = instrumentation;
 
   if (options.showToolbar) {
-    createToolbar(shadow);
+    toolbarContainer = createToolbar(shadow);
   }
 
   // Add this right after creating the container
