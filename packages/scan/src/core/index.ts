@@ -13,7 +13,6 @@ import {
   flushOutlines,
   getOutline,
   type PendingOutline,
-
 } from '@web-utils/outline';
 import { log, logIntro } from '@web-utils/log';
 import {
@@ -22,7 +21,7 @@ import {
 } from '@web-inspect-element/inspect-state-machine';
 import { playGeigerClickSound } from '@web-utils/geiger';
 import { ICONS } from '@web-assets/svgs/svgs';
-import {  updateFiberRenderData, type RenderData } from 'src/core/utils';
+import { updateFiberRenderData, type RenderData } from 'src/core/utils';
 import { initReactScanOverlay } from './web/overlay';
 import { createInstrumentation, type Render } from './instrumentation';
 import { createToolbar } from './web/toolbar';
@@ -149,6 +148,7 @@ interface Monitor {
 }
 
 interface StoreType {
+  wasDetailsOpen: Signal<boolean>;
   isInIframe: Signal<boolean>;
   inspectState: Signal<States>;
   monitor: Signal<Monitor | null>;
@@ -169,6 +169,7 @@ export interface Internals {
 }
 
 export const Store: StoreType = {
+  wasDetailsOpen: signal(true),
   isInIframe: signal(
     typeof window !== 'undefined' && window.self !== window.top,
   ),
@@ -252,8 +253,10 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
     type: null,
   };
 
-  currentFiberData.count = Number(currentFiberData.count || 0) + Number(renders.length);
-  currentFiberData.time = Number(currentFiberData.time || 0) + Number(selfTime || 0);
+  currentFiberData.count =
+    Number(currentFiberData.count || 0) + Number(renders.length);
+  currentFiberData.time =
+    Number(currentFiberData.time || 0) + Number(selfTime || 0);
   currentFiberData.renders = renders;
 
   Store.reportData.set(reportFiber, currentFiberData);
@@ -267,8 +270,10 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
       type: getType(fiber.type) || fiber.type,
     };
 
-    existingLegacyData.count = Number(existingLegacyData.count || 0) + Number(renders.length);
-    existingLegacyData.time = Number(existingLegacyData.time || 0) + Number(selfTime || 0);
+    existingLegacyData.count =
+      Number(existingLegacyData.count || 0) + Number(renders.length);
+    existingLegacyData.time =
+      Number(existingLegacyData.time || 0) + Number(selfTime || 0);
     existingLegacyData.renders = renders;
 
     Store.legacyReportData.set(displayName, existingLegacyData);
@@ -320,7 +325,10 @@ export const start = () => {
   cssStyles.textContent = styles;
 
   // Create SVG sprite sheet node directly
-  const iconSprite = new DOMParser().parseFromString(ICONS, 'image/svg+xml').documentElement;
+  const iconSprite = new DOMParser().parseFromString(
+    ICONS,
+    'image/svg+xml',
+  ).documentElement;
   shadow.appendChild(iconSprite);
 
   // add toolbar root
@@ -346,8 +354,8 @@ export const start = () => {
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
-        // @ts-expect-error -- This is a fallback for Safari
-        window.webkitAudioContext)()
+          // @ts-expect-error -- This is a fallback for Safari
+          window.webkitAudioContext)()
       : null;
 
   if (!Store.monitor.value) {
