@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'preact/hooks';
+import { useCallback, useEffect, useMemo } from 'preact/hooks';
 import { cn, readLocalStorage, saveLocalStorage } from '@web-utils/helpers';
 import { ReactScanInternals, setOptions, Store } from '../../../..';
 import { INSPECT_TOGGLE_ID } from '../../inspect-element/inspect-state-machine';
 import { getNearestFiberFromElement } from '../../inspect-element/utils';
 import { Icon } from '../icon';
-import { getFPS } from '../../../instrumentation';
 import { FpsMeter } from './FpsMeter';
 
 interface ToolbarProps {
