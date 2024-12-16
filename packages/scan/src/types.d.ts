@@ -15,4 +15,11 @@ declare global {
   var scheduler: {
     postTask: (cb: any, options: { priority: string }) => void;
   };
+
+  type TTimer = ReturnType<typeof setTimeout> | undefined;
+}
+
+declare module '*.css' {
+  const content: string;
+  export default content;
 }

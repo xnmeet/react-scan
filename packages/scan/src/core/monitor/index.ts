@@ -1,7 +1,7 @@
 'use client';
-import React from 'react';
 import { getDisplayName, isCompositeFiber } from 'bippy';
 import { type Fiber } from 'react-reconciler';
+import { useEffect } from 'preact/hooks';
 import {
   type MonitoringOptions,
   ReactScanInternals,
@@ -72,9 +72,10 @@ export const Monitoring = ({
       route ?? path ?? new URL(window.location.toString()).pathname; // this is inaccurate on vanilla react if the path is not provided but used for session route
   }
 
-  // eslint-disable-next-line import/no-named-as-default-member
-  React.useEffect(() => {
-    scanMonitoring({ enabled: true });
+  useEffect(() => {
+    scanMonitoring({
+      enabled: true,
+    });
     return initPerformanceMonitoring();
   }, []);
 

@@ -1,9 +1,11 @@
 import { type Fiber } from 'react-reconciler';
 import { getNearestHostFiber } from 'bippy';
-import { isElementInViewport, type Render } from '../instrumentation';
-import { ReactScanInternals } from '../index';
-import { getLabelText } from '../utils';
-import { throttle } from './utils';
+import { throttle } from '@web-utils/helpers';
+import { getLabelText } from '../../utils';
+import { isElementInViewport, type Render } from '../../instrumentation';
+import { ReactScanInternals } from '../../index';
+
+
 
 export interface PendingOutline {
   rect: DOMRect;
@@ -27,12 +29,11 @@ export interface OutlineLabel {
   reasons: Array<'unstable' | 'commit' | 'unnecessary'>;
 }
 
-export const MONO_FONT =
-  'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
 const DEFAULT_THROTTLE_TIME = 32; // 2 frames
 
 const START_COLOR = { r: 115, g: 97, b: 230 };
 const END_COLOR = { r: 185, g: 49, b: 115 };
+const MONO_FONT = 'Menlo,Consolas,Monaco,Liberation Mono,Lucida Console,monospace';
 
 export const getOutlineKey = (outline: PendingOutline): string => {
   return `${outline.rect.top}-${outline.rect.left}-${outline.rect.width}-${outline.rect.height}`;

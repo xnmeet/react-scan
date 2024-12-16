@@ -8,24 +8,28 @@ import {
   isCompositeFiber,
   traverseFiber,
 } from 'bippy';
-import { createInstrumentation, type Render } from './instrumentation';
 import {
   type ActiveOutline,
   flushOutlines,
   getOutline,
   type PendingOutline,
-} from './web/outline';
-import { log, logIntro } from './web/log';
-import { initReactScanOverlay } from './web/overlay';
+
+} from '@web-utils/outline';
+import { log, logIntro } from '@web-utils/log';
 import {
   createInspectElementStateMachine,
   type States,
-} from './web/inspect-element/inspect-state-machine';
+} from '@web-inspect-element/inspect-state-machine';
+import { playGeigerClickSound } from '@web-utils/geiger';
+import { ICONS } from '@web-assets/svgs/svgs';
+import {  updateFiberRenderData, type RenderData } from 'src/core/utils';
+import { initReactScanOverlay } from './web/overlay';
+import { createInstrumentation, type Render } from './instrumentation';
 import { createToolbar } from './web/toolbar';
 import type { InternalInteraction } from './monitor/types';
 import { type getSession } from './monitor/utils';
-import { type RenderData, updateFiberRenderData } from './utils';
-import { playGeigerClickSound } from './web/geiger';
+// @ts-expect-error CSS import
+import styles from './web/assets/css/styles.css';
 
 export interface Options {
   /**
@@ -237,8 +241,8 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
     type: null,
   };
 
-  currentFiberData.count += renders.length;
-  currentFiberData.time += selfTime;
+  currentFiberData.count = Number(currentFiberData.count || 0) + Number(renders.length);
+  currentFiberData.time = Number(currentFiberData.time || 0) + Number(selfTime || 0);
   currentFiberData.renders = renders;
 
   Store.reportData.set(reportFiber, currentFiberData);
@@ -252,8 +256,8 @@ export const reportRender = (fiber: Fiber, renders: Array<Render>) => {
       type: getType(fiber.type) || fiber.type,
     };
 
-    existingLegacyData.count += renders.length;
-    existingLegacyData.time += selfTime;
+    existingLegacyData.count = Number(existingLegacyData.count || 0) + Number(renders.length);
+    existingLegacyData.time = Number(existingLegacyData.time || 0) + Number(selfTime || 0);
     existingLegacyData.renders = renders;
 
     Store.legacyReportData.set(displayName, existingLegacyData);
@@ -286,27 +290,66 @@ export const isValidFiber = (fiber: Fiber) => {
 
 export const start = () => {
   if (typeof window === 'undefined') return;
-  const options = ReactScanInternals.options.value;
 
-  const existingOverlay = document.querySelector('react-scan-overlay');
-  if (existingOverlay) {
+  const existingRoot = document.querySelector('react-scan-root');
+  if (existingRoot) {
     return;
   }
-  initReactScanOverlay();
-  const overlayElement = document.createElement('react-scan-overlay') as any;
 
-  document.documentElement.appendChild(overlayElement);
+  // Create container for shadow DOM
+  const container = document.createElement('div');
+  container.id = 'react-scan-root';
 
-  const ctx = overlayElement.getContext();
-  createInspectElementStateMachine();
+  const shadow = container.attachShadow({ mode: 'open' });
+
+  const fragment = document.createDocumentFragment();
+
+  // add styles
+  const cssStyles = document.createElement('style');
+  cssStyles.textContent = styles;
+
+  // Create SVG sprite sheet node directly
+  const iconSprite = new DOMParser().parseFromString(ICONS, 'image/svg+xml').documentElement;
+  shadow.appendChild(iconSprite);
+
+  // add toolbar root
+  const root = document.createElement('div');
+  root.id = 'react-scan-toolbar-root';
+  root.className = 'absolute z-2147483647';
+
+  fragment.appendChild(cssStyles);
+  fragment.appendChild(root);
+
+  shadow.appendChild(fragment);
+
+  // Add container to document first (so shadow DOM is available)
+  document.documentElement.appendChild(container);
+
+  const options = ReactScanInternals.options.value;
+
+  const ctx = initReactScanOverlay();
+  if (!ctx) return;
+
+  createInspectElementStateMachine(shadow);
+
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
-          // @ts-expect-error -- This is a fallback for Safari
-          window.webkitAudioContext)()
+        // @ts-expect-error -- This is a fallback for Safari
+        window.webkitAudioContext)()
       : null;
 
-  logIntro();
+  if (!Store.monitor.value) {
+    const existingOverlay = document.querySelector('react-scan-overlay');
+    if (existingOverlay) {
+      return;
+    }
+    const overlayElement = document.createElement('react-scan-overlay') as any;
+
+    document.documentElement.appendChild(overlayElement);
+
+    logIntro();
+  }
 
   globalThis.__REACT_SCAN__ = {
     ReactScanInternals,
@@ -366,8 +409,24 @@ export const start = () => {
   ReactScanInternals.instrumentation = instrumentation;
 
   if (options.showToolbar) {
-    createToolbar();
+    createToolbar(shadow);
   }
+
+  // Add this right after creating the container
+  container.setAttribute('part', 'scan-root');
+
+  // Add this before creating the Shadow DOM
+  const mainStyles = document.createElement('style');
+  mainStyles.textContent = `
+    html[data-theme="light"] react-scan-root::part(scan-root) {
+      --icon-color: rgba(0, 0, 0, 0.8);
+    }
+
+    html[data-theme="dark"] react-scan-root::part(scan-root) {
+      --icon-color: rgba(255, 255, 255, 0.8);
+    }
+  `;
+  document.head.appendChild(mainStyles);
 };
 
 export const withScan = <T>(

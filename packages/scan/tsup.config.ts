@@ -2,6 +2,7 @@ import fsPromise from 'node:fs/promises';
 import * as fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from 'tsup';
+import { TsconfigPathsPlugin } from '@esbuild-plugins/tsconfig-paths';
 import { init, parse } from 'es-module-lexer';
 
 const DIST_PATH = './dist';
@@ -54,7 +55,7 @@ void (async () => {
 
   const code = fs.readFileSync('./src/core/index.ts', 'utf8');
   const [_, allExports] = parse(code);
-  const names = [];
+  const names: Array<string> = [];
   for (const exportItem of allExports) {
     names.push(exportItem.n);
   }
@@ -111,6 +112,9 @@ export default defineConfig([
       'react-router-dom',
       '@remix-run/react',
     ],
+    loader: {
+      '.css': 'text',
+    },
   },
   {
     entry: [
@@ -137,6 +141,7 @@ export default defineConfig([
     // Info: vercel analytics does the same thing- https://github.com/vercel/analytics/blob/main/packages/web/tsup.config.js
     treeshake: false,
     dts: true,
+    watch: process.env.NODE_ENV === 'development',
     async onSuccess() {
       await Promise.all([
         addDirectivesToChunkFiles(DIST_PATH),
@@ -144,7 +149,7 @@ export default defineConfig([
         addDirectivesToChunkFiles(`${DIST_PATH}/core/monitor`),
       ]);
     },
-    minify: false,
+    minify: process.env.NODE_ENV === 'production' ? 'terser' : false,
     env: {
       NODE_ENV: process.env.NODE_ENV ?? 'development',
       NPM_PACKAGE_VERSION: JSON.parse(
@@ -163,14 +168,22 @@ export default defineConfig([
       'react-router',
       'react-router-dom',
       '@remix-run/react',
+      'preact',
+      '@preact/signals',
+    ],
+    loader: {
+      '.css': 'text',
+    },
+    esbuildPlugins: [
+      TsconfigPathsPlugin({ tsconfig: path.resolve(__dirname, './tsconfig.json') })
     ],
   },
   {
     entry: ['./src/cli.mts'],
+    outDir: DIST_PATH,
     banner: {
       js: banner,
     },
-    outDir: './dist',
     splitting: false,
     clean: true,
     sourcemap: false,
@@ -181,6 +194,7 @@ export default defineConfig([
     env: {
       NODE_ENV: process.env.NODE_ENV ?? 'development',
     },
+    watch: process.env.NODE_ENV === 'development',
   },
   {
     entry: [
@@ -193,7 +207,7 @@ export default defineConfig([
       './src/react-component-name/rollup.ts',
       './src/react-component-name/astro.ts',
     ],
-    outDir: './dist/react-component-name',
+    outDir: `${DIST_PATH}/react-component-name`,
     splitting: false,
     sourcemap: false,
     clean: true,
