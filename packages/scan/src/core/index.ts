@@ -6,6 +6,7 @@ import {
   getTimings,
   getType,
   isCompositeFiber,
+  isInstrumentationActive,
   traverseFiber,
 } from 'bippy';
 import {
@@ -448,6 +449,17 @@ export const start = () => {
     }
   `;
   document.head.appendChild(mainStyles);
+
+  // TODO: add an visual error indicator that it didn't load
+  if (!Store.monitor.value) {
+    setTimeout(() => {
+      if (isInstrumentationActive()) return;
+      // eslint-disable-next-line no-console
+      console.error(
+        '[React Scan] Failed to load. Must import React Scan before React runs.',
+      );
+    }, 5000);
+  }
 };
 
 export const withScan = <T>(
