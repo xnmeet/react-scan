@@ -357,24 +357,27 @@ export const start = () => {
           window.webkitAudioContext)()
       : null;
 
-  if (!Store.monitor.value) {
-    const existingOverlay = document.querySelector('react-scan-overlay');
-    if (existingOverlay) {
-      return;
-    }
-    const overlayElement = document.createElement('react-scan-overlay') as any;
-
-    document.documentElement.appendChild(overlayElement);
-
-    logIntro();
-  }
-
   globalThis.__REACT_SCAN__ = {
     ReactScanInternals,
   };
 
   // TODO: dynamic enable, and inspect-off check
   const instrumentation = createInstrumentation('devtools', {
+    onActive() {
+      if (!Store.monitor.value) {
+        const existingOverlay = document.querySelector('react-scan-overlay');
+        if (existingOverlay) {
+          return;
+        }
+        const overlayElement = document.createElement(
+          'react-scan-overlay',
+        ) as any;
+
+        document.documentElement.appendChild(overlayElement);
+
+        logIntro();
+      }
+    },
     onCommitStart() {
       ReactScanInternals.options.value.onCommitStart?.();
     },
