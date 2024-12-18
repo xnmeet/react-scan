@@ -3,11 +3,13 @@ import type * as React from 'react';
 import { type Signal, signal } from '@preact/signals';
 import {
   getDisplayName,
+  getRDTHook,
   getTimings,
   getType,
   isCompositeFiber,
   isInstrumentationActive,
   traverseFiber,
+  detectReactBuildType,
 } from 'bippy';
 import {
   type ActiveOutline,
@@ -48,6 +50,13 @@ export interface Options {
    * @default true
    */
   includeChildren?: boolean;
+
+  /**
+   * Force React Scan to run in production (not recommended)
+   *
+   * @default false
+   */
+  dangerouslyForceRunInProduction?: boolean;
 
   /**
    * Enable/disable geiger sound
@@ -196,6 +205,7 @@ export const ReactScanInternals: Internals = {
     report: undefined,
     alwaysShowLabels: false,
     animationSpeed: 'fast',
+    dangerouslyForceRunInProduction: false,
   }),
   onRender: null,
   scheduledOutlines: [],
@@ -307,50 +317,6 @@ export const isValidFiber = (fiber: Fiber) => {
 export const start = () => {
   if (typeof window === 'undefined') return;
 
-  const existingRoot = document.querySelector('react-scan-root');
-  if (existingRoot) {
-    return;
-  }
-
-  // Create container for shadow DOM
-  const container = document.createElement('div');
-  container.id = 'react-scan-root';
-
-  const shadow = container.attachShadow({ mode: 'open' });
-
-  const fragment = document.createDocumentFragment();
-
-  // add styles
-  const cssStyles = document.createElement('style');
-  cssStyles.textContent = styles;
-
-  // Create SVG sprite sheet node directly
-  const iconSprite = new DOMParser().parseFromString(
-    ICONS,
-    'image/svg+xml',
-  ).documentElement;
-  shadow.appendChild(iconSprite);
-
-  // add toolbar root
-  const root = document.createElement('div');
-  root.id = 'react-scan-toolbar-root';
-  root.className = 'absolute z-2147483647';
-
-  fragment.appendChild(cssStyles);
-  fragment.appendChild(root);
-
-  shadow.appendChild(fragment);
-
-  // Add container to document first (so shadow DOM is available)
-  document.documentElement.appendChild(container);
-
-  const options = ReactScanInternals.options.value;
-
-  const ctx = initReactScanOverlay();
-  if (!ctx) return;
-
-  createInspectElementStateMachine(shadow);
-
   const audioContext =
     typeof window !== 'undefined'
       ? new (window.AudioContext ||
@@ -358,14 +324,89 @@ export const start = () => {
           window.webkitAudioContext)()
       : null;
 
-  globalThis.__REACT_SCAN__ = {
-    ReactScanInternals,
-  };
-
+  let ctx: ReturnType<typeof initReactScanOverlay> | null = null;
   // TODO: dynamic enable, and inspect-off check
+
   const instrumentation = createInstrumentation('devtools', {
     onActive() {
       if (!Store.monitor.value) {
+        const rdtHook = getRDTHook();
+        let isProduction = false;
+        for (const renderer of rdtHook.renderers.values()) {
+          const buildType = detectReactBuildType(renderer);
+          if (
+            buildType === 'production' &&
+            !ReactScanInternals.options.value.dangerouslyForceRunInProduction
+          ) {
+            isProduction = true;
+          }
+        }
+        if (isProduction) {
+          setOptions({ enabled: false, showToolbar: false });
+          return;
+        }
+
+        const existingRoot = document.querySelector('react-scan-root');
+        if (existingRoot) {
+          return;
+        }
+
+        const container = document.createElement('div');
+        container.id = 'react-scan-root';
+
+        const shadow = container.attachShadow({ mode: 'open' });
+
+        const fragment = document.createDocumentFragment();
+
+        const cssStyles = document.createElement('style');
+        cssStyles.textContent = styles;
+
+        const iconSprite = new DOMParser().parseFromString(
+          ICONS,
+          'image/svg+xml',
+        ).documentElement;
+        shadow.appendChild(iconSprite);
+
+        const root = document.createElement('div');
+        root.id = 'react-scan-toolbar-root';
+        root.className = 'absolute z-2147483647';
+
+        fragment.appendChild(cssStyles);
+        fragment.appendChild(root);
+
+        shadow.appendChild(fragment);
+
+        document.documentElement.appendChild(container);
+
+        ctx = initReactScanOverlay();
+        if (!ctx) return;
+
+        createInspectElementStateMachine(shadow);
+
+        globalThis.__REACT_SCAN__ = {
+          ReactScanInternals,
+        };
+
+        if (ReactScanInternals.options.value.showToolbar) {
+          toolbarContainer = createToolbar(shadow);
+        }
+
+        // Add this right after creating the container
+        container.setAttribute('part', 'scan-root');
+
+        // Add this before creating the Shadow DOM
+        const mainStyles = document.createElement('style');
+        mainStyles.textContent = `
+          html[data-theme="light"] react-scan-root::part(scan-root) {
+            --icon-color: rgba(0, 0, 0, 0.8);
+          }
+
+          html[data-theme="dark"] react-scan-root::part(scan-root) {
+            --icon-color: rgba(255, 255, 255, 0.8);
+          }
+        `;
+        document.head.appendChild(mainStyles);
+
         const existingOverlay = document.querySelector('react-scan-overlay');
         if (existingOverlay) {
           return;
@@ -388,7 +429,7 @@ export const start = () => {
     },
     isValidFiber,
     onRender(fiber, renders) {
-      if (ReactScanInternals.instrumentation?.isPaused.value) {
+      if (Boolean(ReactScanInternals.instrumentation?.isPaused.value) || !ctx) {
         // don't draw if it's paused
         return;
       }
@@ -429,26 +470,6 @@ export const start = () => {
   });
 
   ReactScanInternals.instrumentation = instrumentation;
-
-  if (options.showToolbar) {
-    toolbarContainer = createToolbar(shadow);
-  }
-
-  // Add this right after creating the container
-  container.setAttribute('part', 'scan-root');
-
-  // Add this before creating the Shadow DOM
-  const mainStyles = document.createElement('style');
-  mainStyles.textContent = `
-    html[data-theme="light"] react-scan-root::part(scan-root) {
-      --icon-color: rgba(0, 0, 0, 0.8);
-    }
-
-    html[data-theme="dark"] react-scan-root::part(scan-root) {
-      --icon-color: rgba(255, 255, 255, 0.8);
-    }
-  `;
-  document.head.appendChild(mainStyles);
 
   // TODO: add an visual error indicator that it didn't load
   if (!Store.monitor.value) {
