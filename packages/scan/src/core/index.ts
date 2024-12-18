@@ -319,9 +319,11 @@ export const start = () => {
 
   const audioContext =
     typeof window !== 'undefined'
-      ? new (window.AudioContext ||
+      ? new (
+          window.AudioContext ||
           // @ts-expect-error -- This is a fallback for Safari
-          window.webkitAudioContext)()
+          window.webkitAudioContext
+        )()
       : null;
 
   let ctx: ReturnType<typeof initReactScanOverlay> | null = null;
@@ -391,10 +393,8 @@ export const start = () => {
           toolbarContainer = createToolbar(shadow);
         }
 
-        // Add this right after creating the container
         container.setAttribute('part', 'scan-root');
 
-        // Add this before creating the Shadow DOM
         const mainStyles = document.createElement('style');
         mainStyles.textContent = `
           html[data-theme="light"] react-scan-root::part(scan-root) {
@@ -411,9 +411,7 @@ export const start = () => {
         if (existingOverlay) {
           return;
         }
-        const overlayElement = document.createElement(
-          'react-scan-overlay',
-        ) as any;
+        const overlayElement = document.createElement('react-scan-overlay');
 
         document.documentElement.appendChild(overlayElement);
 
