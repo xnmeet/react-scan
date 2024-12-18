@@ -336,14 +336,14 @@ export const start = () => {
         let isProduction = false;
         for (const renderer of rdtHook.renderers.values()) {
           const buildType = detectReactBuildType(renderer);
-          if (
-            buildType === 'production' &&
-            !ReactScanInternals.options.value.dangerouslyForceRunInProduction
-          ) {
+          if (buildType === 'production') {
             isProduction = true;
           }
         }
-        if (isProduction) {
+        if (
+          isProduction &&
+          !ReactScanInternals.options.value.dangerouslyForceRunInProduction
+        ) {
           setOptions({ enabled: false, showToolbar: false });
           return;
         }
