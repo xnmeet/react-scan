@@ -143,11 +143,12 @@ export const Header = () => {
         className="with-data-text mr-auto !overflow-visible text-xs text-[#888]"
       />
 
-      <BtnReplay />
+      {/* fixme: render replay button causes large amounts of cpu usage when idle */}
+      {/* <BtnReplay /> */}
 
       <button
         title="Close"
-        class="react-scan-close-button"
+        class="react-scan-close-button ml-auto"
         onClick={handleClose}
       >
         <Icon name="icon-close" />
