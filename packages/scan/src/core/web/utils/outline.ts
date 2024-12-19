@@ -473,10 +473,8 @@ async function paintOutlines(
 }
 export const getLabelRect = (label: OutlineLabel): DOMRect => {
   const textHeight = 11;
-
   const labelX = label.rect.x;
-  const labelY = label.rect.y - textHeight - 4;
-
+  const labelY = label.rect.y;
   return new DOMRect(labelX, labelY, label.textWidth + 4, textHeight + 4);
 };
 
