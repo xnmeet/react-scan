@@ -116,19 +116,16 @@ export const Header = () => {
   }, []);
 
   useEffect(() => {
-    const debouncedUpdate = debounce(updateHeaderContent, 16, { leading: true });
-
-    const unsubscribeLastReportTime = Store.lastReportTime.subscribe(debouncedUpdate);
+    const unsubscribeLastReportTime = Store.lastReportTime.subscribe(updateHeaderContent);
     const unsubscribeStoreInspectState = Store.inspectState.subscribe(state => {
       if (state.kind === 'focused') {
-        debouncedUpdate();
+        updateHeaderContent();
       }
     });
 
     return () => {
       unsubscribeLastReportTime();
       unsubscribeStoreInspectState();
-      debouncedUpdate.cancel?.();
     };
   }, [updateHeaderContent]);
 
