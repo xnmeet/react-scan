@@ -215,7 +215,8 @@ export const ReactScanInternals: Internals = {
   Store,
 };
 
-type LocalStorageOptions = Omit<Options,
+type LocalStorageOptions = Omit<
+  Options,
   | 'onCommitStart'
   | 'onRender'
   | 'onCommitFinish'
@@ -253,7 +254,9 @@ const validateOptions = (options: Partial<Options>): Partial<Options> => {
         break;
       case 'animationSpeed':
         if (!['slow', 'fast', 'off'].includes(value as string)) {
-          errors.push(`- Invalid animation speed "${value}". Using default "fast"`);
+          errors.push(
+            `- Invalid animation speed "${value}". Using default "fast"`,
+          );
         } else {
           (validOptions as any)[key] = value;
         }
@@ -295,38 +298,30 @@ export const getReport = (type?: React.ComponentType<any>) => {
 };
 
 export const setOptions = (userOptions: Partial<Options>) => {
-  // Validate user options first
   const validOptions = validateOptions(userOptions);
 
-  // Skip if no valid options
   if (Object.keys(validOptions).length === 0) {
     return;
   }
 
-  // Special handling for sound + enabled state
   if ('playSound' in validOptions && validOptions.playSound) {
     validOptions.enabled = true;
   }
 
-  // Update options with validated values
   const newOptions = {
     ...ReactScanInternals.options.value,
-    ...validOptions
+    ...validOptions,
   };
 
-  // Update instrumentation state if needed
   const { instrumentation } = ReactScanInternals;
   if (instrumentation && 'enabled' in validOptions) {
     instrumentation.isPaused.value = validOptions.enabled === false;
   }
 
-  // Update options
   ReactScanInternals.options.value = newOptions;
 
-  // Save to localStorage
   saveLocalStorage('react-scan-options', newOptions);
 
-  // Handle toolbar visibility only if showToolbar changed
   if ('showToolbar' in validOptions) {
     if (toolbarContainer && !newOptions.showToolbar) {
       toolbarContainer.remove();
@@ -418,14 +413,14 @@ const startFlushOutlineInterval = (ctx: CanvasRenderingContext2D) => {
 export const start = () => {
   if (typeof window === 'undefined') return;
 
-  // Load options from localStorage first
-  const localStorageOptions = readLocalStorage<LocalStorageOptions>('react-scan-options');
+  const localStorageOptions =
+    readLocalStorage<LocalStorageOptions>('react-scan-options');
   if (localStorageOptions) {
     const validLocalOptions = validateOptions(localStorageOptions);
     if (Object.keys(validLocalOptions).length > 0) {
       ReactScanInternals.options.value = {
         ...ReactScanInternals.options.value,
-        ...validLocalOptions
+        ...validLocalOptions,
       };
     }
   }
@@ -461,7 +456,7 @@ export const start = () => {
           // eslint-disable-next-line no-console
           console.warn(
             '[React Scan] Running in production mode is not recommended.\n' +
-            'If you really need this, set dangerouslyForceRunInProduction: true in options.'
+              'If you really need this, set dangerouslyForceRunInProduction: true in options.',
           );
           return;
         }
