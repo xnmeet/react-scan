@@ -170,7 +170,7 @@ let unsubscribeTrackVisibilityChange: () => void;
 let lastVisibilityHiddenAt: number | 'never-hidden' = 'never-hidden';
 
 const trackVisibilityChange = () => {
-  trackVisibilityChange();
+  unsubscribeTrackVisibilityChange();
   const onVisibilityChange = () => {
     if (document.hidden) {
       lastVisibilityHiddenAt = Date.now();
@@ -280,7 +280,10 @@ const setupPerformanceListener = (
         presentationDelay:
           entry.duration - (entry.processingEnd - entry.startTime),
         timestamp: Date.now(),
-        timeSinceTabInactive: lastVisibilityHiddenAt === 'never-hidden' ? 'never-hidden' : Date.now() - lastVisibilityHiddenAt,
+        timeSinceTabInactive:
+          lastVisibilityHiddenAt === 'never-hidden'
+            ? 'never-hidden'
+            : Date.now() - lastVisibilityHiddenAt,
         visibilityState: document.visibilityState,
         timeOrigin: performance.timeOrigin,
         referrer: document.referrer,
