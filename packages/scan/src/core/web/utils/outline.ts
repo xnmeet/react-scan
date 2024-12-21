@@ -645,6 +645,14 @@ function pickColorClosestToStartStage(
   a: MergedOutlineLabel,
   b: MergedOutlineLabel,
 ) {
+  // stupid hack to always take the gray value when the render is unnecessary (we know the gray value has equal rgb)
+  if (a.color.r === a.color.g && a.color.g === a.color.b) {
+    return { color: a.color };
+  }
+  if (b.color.r === b.color.g && b.color.g === b.color.b) {
+    return { color: b.color };
+  }
+
   return { color: a.color.r <= b.color.r ? a.color : b.color };
 }
 
