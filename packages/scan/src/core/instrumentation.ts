@@ -387,7 +387,6 @@ export const createInstrumentation = (
           changes,
           time: selfTime,
           forget: hasMemoCache(fiber),
-          // todo: optimize isRenderUnnecessary so it can be turned on by default
           // todo: allow this to be toggle-able through toolbar
           // todo: performance optimization: if the last fiber measure was very off screen, do not run isRenderUnnecessary
           unnecessary: shouldRunUnnecessaryRenderCheck()
