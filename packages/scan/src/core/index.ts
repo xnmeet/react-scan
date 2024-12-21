@@ -486,9 +486,12 @@ const updateScheduledOutlines = (fiber: Fiber, renders: Array<Render>) => {
   }
 };
 // we only need to run this check once and will read the value in hot path
-let isProduction = false;
+let isProduction: boolean | null = null;
 let rdtHook: ReturnType<typeof getRDTHook>;
 export const getIsProduction = () => {
+  if (isProduction !== null) {
+    return isProduction;
+  }
   rdtHook ??= getRDTHook();
   for (const renderer of rdtHook.renderers.values()) {
     const buildType = detectReactBuildType(renderer);
