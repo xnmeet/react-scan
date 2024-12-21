@@ -303,7 +303,7 @@ export const fadeOutOutline = (
   for (let i = 0, len = mergedLabels.length; i < len; i++) {
     const { alpha, color, reasons, groupedAggregatedRender, rect } =
       mergedLabels[i];
-    const text = getLabelText(groupedAggregatedRender) ?? 'Unknown';
+    const text = getLabelText(groupedAggregatedRender) ?? 'N/A';
     const conditionalText = reasons.includes('unnecessary') ? `${text}⚠️` : text;
 
     const textMetrics = ctx.measureText(conditionalText);
@@ -420,6 +420,8 @@ const activateOutlines = async () => {
               to: aggregatedRender,
             });
           }
+          // fixme: this seems to leave a label/outline alive for an extra frame in some cases
+          activeOutline.groupedAggregatedRender?.delete(fiber);
           activeFibers.delete(fiber.alternate);
         }
         // match the current render to its fiber
@@ -538,13 +540,12 @@ export interface MergedOutlineLabel {
   rect: DOMRect;
 }
 
+// todo: optimize me so this can run always
+// note: this can be implemented in nlogn using https://en.wikipedia.org/wiki/Sweep_line_algorithm
 export const mergeOverlappingLabels = (
   labels: Array<OutlineLabel>,
 ): Array<MergedOutlineLabel> => {
   if (labels.length > 1500) {
-    return labels.map((label) => toMergedLabel(label));
-  }
-  if (labels.length <= 1) {
     return labels.map((label) => toMergedLabel(label));
   }
 
@@ -648,11 +649,11 @@ function pickColorClosestToStartStage(
 }
 
 function getOverlapArea(rect1: DOMRect, rect2: DOMRect): number {
-  if (rect1.right < rect2.left || rect2.right < rect1.left) {
+  if (rect1.right <= rect2.left || rect2.right <= rect1.left) {
     return 0;
   }
 
-  if (rect1.bottom < rect2.top || rect2.bottom < rect1.top) {
+  if (rect1.bottom <= rect2.top || rect2.bottom <= rect1.top) {
     return 0;
   }
 

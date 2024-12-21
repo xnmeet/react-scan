@@ -462,7 +462,7 @@ const updateScheduledOutlines = (fiber: Fiber, renders: Array<Render>) => {
           computedCurrent: null,
           name:
             renders.find((render) => render.componentName)?.componentName ??
-            'Unknown',
+            'N/A',
           aggregatedCount: 1,
           changes: aggregateChanges(render.changes),
           didCommit: render.didCommit,
