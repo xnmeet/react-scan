@@ -42,9 +42,9 @@ export const recalcOutlines = throttle(async () => {
   }
   const rectMap = await batchGetBoundingRects(domNodes);
   for (const activeOutline of activeOutlines.values()) {
-    let rect = rectMap.get(activeOutline.domNode);
+    const rect = rectMap.get(activeOutline.domNode);
     if (!rect) {
-      // the rect will fade out on its own
+      // we couldn't get a rect for the dom node, but the rect will fade out on its own when we continue
       continue;
     }
     activeOutline.target = rect;
@@ -640,7 +640,10 @@ function getBoundingRect(r1: DOMRect, r2: DOMRect): DOMRect {
   return new DOMRect(x1, y1, x2 - x1, y2 - y1);
 }
 
-function pickColorClosestToStartStage(a: MergedOutlineLabel, b: MergedOutlineLabel) {
+function pickColorClosestToStartStage(
+  a: MergedOutlineLabel,
+  b: MergedOutlineLabel,
+) {
   return { color: a.color.r <= b.color.r ? a.color : b.color };
 }
 
