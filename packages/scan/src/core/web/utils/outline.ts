@@ -59,6 +59,12 @@ export const recalcOutlines = throttle(async () => {
   }
 }, DEFAULT_THROTTLE_TIME);
 
+// using intersection observer lets us get the boundingClientRect asynchronously without forcing a reflow.
+// The browser can internally optimize the bounding rect query, so this will be faster then meticulously
+// Batching getBoundingClientRect at the right time in the browser rendering pipeline.
+// batchGetBoundingRects function can return in sub <10ms under good conditions, but may take much longer under poor conditions.
+// We interpolate the outline rects to avoid the appearance of jitter
+// reference: https://w3c.github.io/IntersectionObserver/
 export const batchGetBoundingRects = (
   elements: Array<HTMLElement>,
 ): Promise<Map<HTMLElement, DOMRect>> => {
