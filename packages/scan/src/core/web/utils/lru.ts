@@ -25,13 +25,20 @@ export class LRUMap<Key, Value> {
 
   get(key: Key): Value | undefined {
     const result = this.nodes.get(key);
-    return result ? result.value : undefined;
+    if (result) {
+      this.bubble(result);
+      return result.value;
+    }
+    return undefined;
   }
 
   set(key: Key, value: Value): void {
     // If node already exists, bubble up
     if (this.nodes.has(key)) {
-      this.bubble(key, value);
+      const result = this.nodes.get(key);
+      if (result) {
+        this.bubble(result);
+      }
       return;
     }
 
@@ -47,6 +54,15 @@ export class LRUMap<Key, Value> {
     }
 
     this.nodes.set(key, node);
+  }
+
+  delete(key: Key): void {
+    const result = this.nodes.get(key);
+
+    if (result) {
+      this.removeNode(result);
+      this.nodes.delete(key);
+    }
   }
 
   private insertHead(node: LRUNode<Key, Value>): void {
@@ -79,27 +95,27 @@ export class LRUMap<Key, Value> {
     }
   }
 
-  delete(key: Key): void {
-    const result = this.nodes.get(key);
-
-    if (result) {
-      this.removeNode(result);
-      this.nodes.delete(key);
+  private insertBefore(
+    node: LRUNode<Key, Value>,
+    newNode: LRUNode<Key, Value>,
+  ) {
+    newNode.next = node;
+    if (node.prev) {
+      newNode.prev = node.prev;
+      node.prev.next = newNode;
+    } else {
+      newNode.prev = undefined;
+      this.head = newNode;
     }
+    node.prev = newNode;
   }
 
-  private bubble(key: Key, value: Value) {
-    const result = this.nodes.get(key);
-
-    if (result) {
-      result.value = value;
-      if (this.head === result) {
-        return;
-      }
+  private bubble(node: LRUNode<Key, Value>) {
+    if (node.prev) {
       // Remove the node
-      this.removeNode(result);
-      // insert at head
-      this.insertHead(result);
+      this.removeNode(node);
+      // swap places with previous node
+      this.insertBefore(node.prev, node);
     }
   }
 }
