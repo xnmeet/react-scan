@@ -38,13 +38,8 @@ export class LRUMap<Key, Value> {
     // create a new node
     const node = new LRUNode(key, value);
 
-    if (this.head) {
-      node.next = this.head;
-      this.head.prev = node;
-    } else {
-      this.tail = node;
-    }
-    this.head = node;
+    // Set node as head
+    this.insertHead(node);
 
     // if the map is already at it's limit, remove the old tail
     if (this.nodes.size === this.limit && this.tail) {
@@ -54,24 +49,41 @@ export class LRUMap<Key, Value> {
     this.nodes.set(key, node);
   }
 
+  private insertHead(node: LRUNode<Key, Value>): void {
+    if (this.head) {
+      node.next = this.head;
+      this.head.prev = node;
+    } else {
+      this.tail = node;
+      node.next = undefined;
+    }
+    node.prev = undefined;
+    this.head = node;
+  }
+
+  private removeNode(node: LRUNode<Key, Value>): void {
+    // Link previous node to next node
+    if (node.prev) {
+      node.prev.next = node.next;
+    }
+    // and vice versa
+    if (node.next) {
+      node.next.prev = node.prev;
+    }
+
+    if (node === this.tail) {
+      this.tail = node.prev;
+      if (this.tail) {
+        this.tail.next = undefined;
+      }
+    }
+  }
+
   delete(key: Key): void {
     const result = this.nodes.get(key);
 
     if (result) {
-      if (result.prev) {
-        result.prev.next = result.next;
-      }
-      if (result.next) {
-        result.next.prev = result.prev;
-      }
-
-      if (result === this.tail) {
-        this.tail = result.prev;
-        if (this.tail) {
-          this.tail.next = undefined;
-        }
-      }
-
+      this.removeNode(result);
       this.nodes.delete(key);
     }
   }
@@ -84,29 +96,10 @@ export class LRUMap<Key, Value> {
       if (this.head === result) {
         return;
       }
-      // Re-link
-      if (result.prev) {
-        result.prev.next = result.next;
-      }
-      if (result.next) {
-        result.next.prev = result.prev;
-      }
-
-      // update tail
-      if (result === this.tail) {
-        this.tail = result.prev;
-        if (this.tail) {
-          this.tail.next = undefined;
-        }
-      }
-
+      // Remove the node
+      this.removeNode(result);
       // insert at head
-      if (this.head) {
-        result.next = this.head;
-        this.head.prev = result;
-      }
-      result.prev = undefined;
-      this.head = result;
+      this.insertHead(result);
     }
   }
 }
