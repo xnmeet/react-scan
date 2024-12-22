@@ -92,6 +92,14 @@ export class LRUMap<Key, Value> {
         result.next.prev = result.prev;
       }
 
+      // update tail
+      if (result === this.tail) {
+        this.tail = result.prev;
+        if (this.tail) {
+          this.tail.next = undefined;
+        }
+      }
+
       // insert at head
       if (this.head) {
         result.next = this.head;
