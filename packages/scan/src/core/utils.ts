@@ -96,7 +96,7 @@ export const getLabelText = (
     cumulativeTime += totalTime;
 
     if (componentGroup.length > 4) {
-      text += '...';
+      text += '…';
     }
 
     if (count > 1) {
