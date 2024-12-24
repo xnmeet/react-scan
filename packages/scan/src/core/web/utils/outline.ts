@@ -1,6 +1,6 @@
+import { type Fiber } from 'react-reconciler';
 import { throttle } from '@web-utils/helpers';
 import { LRUMap } from '@web-utils/lru';
-import { type Fiber } from 'react-reconciler';
 import { type AggregatedChange } from 'src/core/instrumentation';
 import { ReactScanInternals, type OutlineKey } from '../../index';
 import { getLabelText, joinAggregations } from '../../utils';
@@ -31,10 +31,7 @@ export const getOutlineKey = (rect: DOMRect): string => {
   return `${rect.top}-${rect.left}-${rect.width}-${rect.height}`;
 };
 
-let currentFrameId = 0;
-
 function incrementFrameId() {
-  currentFrameId++;
   requestAnimationFrame(incrementFrameId);
 }
 
@@ -143,12 +140,12 @@ export const fadeOutOutline = (
 
   for (const [key, activeOutline] of activeOutlines) {
     // invariant: active outline has "active" info non nullable at this point of the program b/c they must be activated
-    const invariant_activeOutline = activeOutline as {
+    const invariantActiveOutline = activeOutline as {
       [K in keyof Outline]: NonNullable<Outline[K]>;
     };
     let frame;
 
-    for (const aggregatedRender of invariant_activeOutline.groupedAggregatedRender.values()) {
+    for (const aggregatedRender of invariantActiveOutline.groupedAggregatedRender.values()) {
       aggregatedRender.frame! += 1;
 
       frame = frame
@@ -165,12 +162,12 @@ export const fadeOutOutline = (
 
     const THRESHOLD_FPS = 60;
     const avgFps =
-      invariant_activeOutline.aggregatedRender.fps /
-      invariant_activeOutline.aggregatedRender.aggregatedCount;
+      invariantActiveOutline.aggregatedRender.fps /
+      invariantActiveOutline.aggregatedRender.aggregatedCount;
     const averageScore = Math.max(
       (THRESHOLD_FPS - Math.min(avgFps, THRESHOLD_FPS)) / THRESHOLD_FPS,
-      invariant_activeOutline.aggregatedRender.time ??
-        0 / invariant_activeOutline.aggregatedRender.aggregatedCount / 16,
+      invariantActiveOutline.aggregatedRender.time ??
+        0 / invariantActiveOutline.aggregatedRender.aggregatedCount / 16,
     );
 
     const t = Math.min(averageScore, 1);
@@ -188,7 +185,7 @@ export const fadeOutOutline = (
     let unstable = false;
     let isUnnecessary = false;
 
-    for (const render of invariant_activeOutline.groupedAggregatedRender.values()) {
+    for (const render of invariantActiveOutline.groupedAggregatedRender.values()) {
       if (render.unnecessary) {
         isUnnecessary = true;
       }
@@ -211,22 +208,22 @@ export const fadeOutOutline = (
     }
 
     const alphaScalar = 0.8;
-    invariant_activeOutline.alpha =
-      alphaScalar * (1 - frame / invariant_activeOutline.totalFrames);
+    invariantActiveOutline.alpha =
+      alphaScalar * (1 - frame / invariantActiveOutline.totalFrames);
 
-    const alpha = invariant_activeOutline.alpha;
+    const alpha = invariantActiveOutline.alpha;
     const fillAlpha = alpha * 0.1;
-    const target = invariant_activeOutline.target;
+    const target = invariantActiveOutline.target;
 
     const shouldSkip = shouldSkipInterpolation(target);
     if (shouldSkip) {
-      invariant_activeOutline.current = target;
-      invariant_activeOutline.groupedAggregatedRender.forEach((v) => {
+      invariantActiveOutline.current = target;
+      invariantActiveOutline.groupedAggregatedRender.forEach((v) => {
         v.computedCurrent = target;
       });
     } else {
-      if (!invariant_activeOutline.current) {
-        invariant_activeOutline.current = new DOMRect(
+      if (!invariantActiveOutline.current) {
+        invariantActiveOutline.current = new DOMRect(
           target.x,
           target.y,
           target.width,
@@ -235,7 +232,7 @@ export const fadeOutOutline = (
       }
 
       const INTERPOLATION_SPEED = 0.2;
-      const current = invariant_activeOutline.current;
+      const current = invariantActiveOutline.current;
 
       const lerp = (start: number, end: number) => {
         return start + (end - start) * INTERPOLATION_SPEED;
@@ -248,9 +245,9 @@ export const fadeOutOutline = (
         lerp(current.height, target.height),
       );
 
-      invariant_activeOutline.current = computedCurrent;
+      invariantActiveOutline.current = computedCurrent;
 
-      invariant_activeOutline.groupedAggregatedRender.forEach((v) => {
+      invariantActiveOutline.groupedAggregatedRender.forEach((v) => {
         v.computedCurrent = computedCurrent;
       });
     }
@@ -262,16 +259,16 @@ export const fadeOutOutline = (
 
     ctx.beginPath();
     ctx.rect(
-      invariant_activeOutline.current.x,
-      invariant_activeOutline.current.y,
-      invariant_activeOutline.current.width,
-      invariant_activeOutline.current.height,
+      invariantActiveOutline.current.x,
+      invariantActiveOutline.current.y,
+      invariantActiveOutline.current.width,
+      invariantActiveOutline.current.height,
     );
     ctx.stroke();
     ctx.fill();
 
     const labelText = getLabelText(
-      Array.from(invariant_activeOutline.groupedAggregatedRender.values()),
+      Array.from(invariantActiveOutline.groupedAggregatedRender.values()),
     );
 
     if (
@@ -286,21 +283,21 @@ export const fadeOutOutline = (
         reasons,
         labelText,
         textWidth: measured.width,
-        activeOutline: invariant_activeOutline,
+        activeOutline: invariantActiveOutline,
       });
     }
 
-    const totalFrames = invariant_activeOutline.totalFrames;
+    const totalFrames = invariantActiveOutline.totalFrames;
     for (const [
       fiber,
       aggregatedRender,
-    ] of invariant_activeOutline.groupedAggregatedRender) {
+    ] of invariantActiveOutline.groupedAggregatedRender) {
       if (aggregatedRender.frame! >= totalFrames) {
-        invariant_activeOutline.groupedAggregatedRender.delete(fiber);
+        invariantActiveOutline.groupedAggregatedRender.delete(fiber);
       }
     }
 
-    if (invariant_activeOutline.groupedAggregatedRender.size === 0) {
+    if (invariantActiveOutline.groupedAggregatedRender.size === 0) {
       activeOutlines.delete(key);
     }
   }
@@ -350,9 +347,9 @@ export interface Outline {
   /* Active Info- we re-use the Outline object to avoid over-allocing objects, which is why we have a singular aggregatedRender and collection of it (groupedAggregatedRender) */
   alpha: number | null;
   totalFrames: number | null;
-  /* 
-    - Invariant: This scales at a rate of O(unique components rendered at the same (x,y) coordinates) 
-    - renders with the same x/y position but different fibers will be a different fiber -> aggregated render entry. 
+  /*
+    - Invariant: This scales at a rate of O(unique components rendered at the same (x,y) coordinates)
+    - renders with the same x/y position but different fibers will be a different fiber -> aggregated render entry.
   */
   groupedAggregatedRender: Map<Fiber, AggregatedRender> | null;
 
@@ -448,7 +445,7 @@ const activateOutlines = async () => {
 
   for (const [fiber, outline] of scheduledOutlines) {
     const existingAggregatedRender =
-      activeFibers.get(fiber) ||
+      activeFibers.get(fiber) ??
       (fiber.alternate && activeFibers.get(fiber.alternate));
     if (existingAggregatedRender) {
       joinAggregations({
@@ -479,7 +476,7 @@ const activateOutlines = async () => {
     }
 
     const prevAggregatedRender =
-      activeFibers.get(fiber) ||
+      activeFibers.get(fiber) ??
       (fiber.alternate && activeFibers.get(fiber.alternate));
 
     const isOffScreen = getIsOffscreen(rect);
@@ -515,7 +512,9 @@ const activateOutlines = async () => {
               value.frame = 45; // todo: make this max frame, not hardcoded
 
               // for interpolation reference equality
-              existingOutline!.current = value.computedCurrent!;
+              if (existingOutline) {
+                existingOutline.current = value.computedCurrent!;
+              }
             }
           },
         );
@@ -525,6 +524,7 @@ const activateOutlines = async () => {
       // we currently do not handle if the fiber moved positions, this is likely going to cause a problem somehwere
       // (the same fiber likely will exist multiple times in the active outlines)
       // this should be investigated asap
+      // eslint-disable-next-line no-lonely-if
       if (!prevAggregatedRender) {
         existingOutline.alpha = outline.alpha;
         existingOutline.groupedAggregatedRender?.set(

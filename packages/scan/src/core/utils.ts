@@ -1,6 +1,6 @@
-import type { AggregatedRender } from '@web-utils/outline';
 import { getType } from 'bippy';
 import type { Fiber } from 'react-reconciler';
+import type { AggregatedRender } from '@web-utils/outline';
 import { ReactScanInternals } from '..';
 import type { AggregatedChange, Render, RenderChange } from './instrumentation';
 
