@@ -32,10 +32,11 @@ export const flush = async (): Promise<void> => {
   const interactions = monitor.interactions;
   for (let i = 0; i < interactions.length; i++) {
     const interaction = interactions[i];
-    if (
-      now - interaction.performanceEntry.startTime <=
-      INTERACTION_TIME_TILL_COMPLETED
-    ) {
+    const timeSinceStart = now - interaction.performanceEntry.startTime;
+    // these interactions were retried enough and should be discarded to avoid mem leak
+    if (timeSinceStart > 30000) {
+      continue;
+    } else if (timeSinceStart <= INTERACTION_TIME_TILL_COMPLETED) {
       pendingInteractions.push(interaction);
     } else {
       completedInteractions.push(interaction);
@@ -71,7 +72,6 @@ export const flush = async (): Promise<void> => {
       processingStart,
       referrer,
       startTime,
-      target,
       timeOrigin,
       timeSinceTabInactive,
       timestamp,
@@ -102,7 +102,6 @@ export const flush = async (): Promise<void> => {
           processingStart,
           referrer,
           startTime,
-          target,
           timeOrigin,
           timeSinceTabInactive,
           visibilityState,
