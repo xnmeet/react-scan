@@ -16,7 +16,7 @@ import {
 import type * as React from 'react';
 import type { Fiber, FiberRoot } from 'react-reconciler';
 import { isEqual } from 'src/core/utils';
-import { getIsProduction, ReactScanInternals, Store } from './index';
+import { ReactScanInternals, Store, getIsProduction } from './index';
 
 let fps = 0;
 let lastTime = performance.now();

@@ -1,6 +1,7 @@
-import { type Fiber } from 'react-reconciler';
 import { throttle } from '@web-utils/helpers';
 import { LRUMap } from '@web-utils/lru';
+import { outlineWorker, type DrawingQueue } from '@web-utils/outline-worker';
+import { type Fiber } from 'react-reconciler';
 import { type AggregatedChange } from 'src/core/instrumentation';
 import { ReactScanInternals, type OutlineKey } from '../../index';
 import { getLabelText, joinAggregations } from '../../utils';
@@ -83,9 +84,7 @@ export const batchGetBoundingRects = (
   });
 };
 
-export const flushOutlines = async (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-) => {
+export const flushOutlines = async () => {
   if (
     !ReactScanInternals.scheduledOutlines.size &&
     !ReactScanInternals.activeOutlines.size
@@ -108,7 +107,7 @@ export const flushOutlines = async (
   options.value.onPaintStart?.(flattenedScheduledOutlines);
 
   if (!animationFrameId) {
-    animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
+    animationFrameId = requestAnimationFrame(() => fadeOutOutline());
   }
 };
 
@@ -128,13 +127,9 @@ const shouldSkipInterpolation = (rect: DOMRect) => {
   return !ReactScanInternals.options.value.smoothlyAnimateOutlines;
 };
 
-export const fadeOutOutline = (
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-) => {
-  const dpi = window.devicePixelRatio || 1;
-  ctx.clearRect(0, 0, ctx.canvas.width / dpi, ctx.canvas.height / dpi);
+export const fadeOutOutline = () => {
+  const drawingQueue: Array<DrawingQueue> = [];
   const pendingLabeledOutlines: Array<OutlineLabel> = [];
-  ctx.save();
   const phases = new Set<string>();
   const activeOutlines = ReactScanInternals.activeOutlines;
 
@@ -252,20 +247,12 @@ export const fadeOutOutline = (
       });
     }
 
-    const rgb = `${color.r},${color.g},${color.b}`;
-    ctx.strokeStyle = `rgba(${rgb},${alpha})`;
-    ctx.lineWidth = 1;
-    ctx.fillStyle = `rgba(${rgb},${fillAlpha})`;
-
-    ctx.beginPath();
-    ctx.rect(
-      invariantActiveOutline.current.x,
-      invariantActiveOutline.current.y,
-      invariantActiveOutline.current.width,
-      invariantActiveOutline.current.height,
-    );
-    ctx.stroke();
-    ctx.fill();
+    drawingQueue.push({
+      rect: invariantActiveOutline.current,
+      color,
+      alpha,
+      fillAlpha,
+    });
 
     const labelText = getLabelText(
       Array.from(invariantActiveOutline.groupedAggregatedRender.values()),
@@ -276,7 +263,7 @@ export const fadeOutOutline = (
       labelText &&
       !(phases.has('mount') && phases.size === 1)
     ) {
-      const measured = measureTextCached(labelText, ctx);
+      const measured = measureTextCached(labelText);
       pendingLabeledOutlines.push({
         alpha,
         color,
@@ -302,42 +289,32 @@ export const fadeOutOutline = (
     }
   }
 
-  ctx.restore();
-
   const mergedLabels = mergeOverlappingLabels(pendingLabeledOutlines);
 
-  ctx.save();
-  ctx.font = `11px ${MONO_FONT}`;
-
-  for (let i = 0, len = mergedLabels.length; i < len; i++) {
-    const { alpha, color, reasons, groupedAggregatedRender, rect } =
-      mergedLabels[i];
-    const text = getLabelText(groupedAggregatedRender) ?? 'N/A';
-    const conditionalText = reasons & Reason.Unnecessary ? `${text}⚠️` : text;
-
-    const textMetrics = ctx.measureText(conditionalText);
-    const textWidth = textMetrics.width;
-    const textHeight = 11;
-
-    const labelX: number = rect.x;
-    const labelY: number = rect.y - textHeight - 4;
-
-    ctx.fillStyle = `rgba(${color.r},${color.g},${color.b},${alpha})`;
-    ctx.fillRect(labelX, labelY, textWidth + 4, textHeight + 4);
-
-    ctx.fillStyle = `rgba(255,255,255,${alpha})`;
-    ctx.fillText(conditionalText, labelX + 2, labelY + textHeight);
-  }
-
-  ctx.restore();
+  outlineWorker.call({
+    type: 'fade-out-outline',
+    payload: {
+      dpi: window.devicePixelRatio,
+      drawingQueue,
+      mergedLabels: mergedLabels.map((v) => ({
+        alpha: v.alpha,
+        rect: v.rect,
+        color: v.color,
+        reasons: v.reasons,
+        labelText: getLabelText(v.groupedAggregatedRender) ?? 'N/A',
+      })),
+    },
+  });
 
   if (activeOutlines.size) {
-    animationFrameId = requestAnimationFrame(() => fadeOutOutline(ctx));
+    animationFrameId = requestAnimationFrame(() => fadeOutOutline());
   } else {
     animationFrameId = null;
   }
 };
+
 type ComponentName = string;
+
 export interface Outline {
   domNode: HTMLElement;
   /** Aggregated render info */ // TODO: Flatten AggregatedRender into Outline to avoid re-creating objects
@@ -520,30 +497,31 @@ const activateOutlines = async () => {
         );
       }
       activeOutlines.set(key, existingOutline);
-    } else {
       // we currently do not handle if the fiber moved positions, this is likely going to cause a problem somehwere
       // (the same fiber likely will exist multiple times in the active outlines)
       // this should be investigated asap
-      // eslint-disable-next-line no-lonely-if
-      if (!prevAggregatedRender) {
-        existingOutline.alpha = outline.alpha;
-        existingOutline.groupedAggregatedRender?.set(
-          fiber,
-          outline.aggregatedRender,
-        );
-      } else {
-        joinAggregations({
-          to: prevAggregatedRender,
-          from: outline.aggregatedRender,
-        });
-      }
+    } else if (!prevAggregatedRender) {
+      existingOutline.alpha = outline.alpha;
+      existingOutline.groupedAggregatedRender?.set(
+        fiber,
+        outline.aggregatedRender,
+      );
+    } else {
+      joinAggregations({
+        to: prevAggregatedRender,
+        from: outline.aggregatedRender,
+      });
     }
 
-    existingOutline.alpha = Math.max(existingOutline.alpha!, outline.alpha!);
+    // FIXME(Alexis): `|| 0` just for tseslint to shutup
+    existingOutline.alpha = Math.max(
+      existingOutline.alpha || 0,
+      outline.alpha || 0,
+    );
 
     existingOutline.totalFrames = Math.max(
-      existingOutline.totalFrames!,
-      outline.totalFrames!,
+      existingOutline.totalFrames || 0,
+      outline.totalFrames || 0,
     );
   }
 };
@@ -701,13 +679,42 @@ function applyLabelTransform(
 
 const textMeasurementCache = new LRUMap<string, TextMetrics>(100);
 
-export const measureTextCached = (
-  text: string,
-  ctx: CanvasRenderingContext2D | OffscreenCanvasRenderingContext2D,
-): TextMetrics => {
+type MeasuringContext = CanvasTextDrawingStyles & CanvasText;
+
+let offscreenContext: MeasuringContext;
+
+function getMeasuringContext(): MeasuringContext {
+  if (!offscreenContext) {
+    const dpi = window.devicePixelRatio || 1;
+    const width = dpi * window.innerWidth;
+    const height = dpi * window.innerHeight;
+
+    if ('OffscreenCanvas' in window) {
+      const canvas = new OffscreenCanvas(width, height);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('unreachable');
+      }
+      offscreenContext = ctx;
+    } else {
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        throw new Error('unreachable');
+      }
+      offscreenContext = ctx as MeasuringContext;
+    }
+  }
+  return offscreenContext;
+}
+
+export const measureTextCached = (text: string): TextMetrics => {
   if (textMeasurementCache.has(text)) {
     return textMeasurementCache.get(text)!;
   }
+  const ctx = getMeasuringContext();
   ctx.font = `11px ${MONO_FONT}`;
   const metrics = ctx.measureText(text);
   textMeasurementCache.set(text, metrics);
