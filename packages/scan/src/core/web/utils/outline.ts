@@ -419,7 +419,8 @@ const activateOutlines = async () => {
       activeFibers.set(fiber, aggregatedRender);
     }
   }
-
+  // handles the case where the fiber already is in a position group, and the data
+  // simply needs to be merged in the existing entry
   for (const [fiber, outline] of scheduledOutlines) {
     const existingAggregatedRender =
       activeFibers.get(fiber) ??
@@ -439,6 +440,16 @@ const activateOutlines = async () => {
   const rects = await batchGetBoundingRects(domNodes);
   const totalFrames = 45;
   const alpha = 0.8;
+
+  /**
+   *  - handles calculating + updating rects, adding new outlines to a groupedAggregatedRender, and moving fibers to new position groups if their rect moved
+   *
+   *  - this logic makes sense together since we can only determine if an outline should be created OR moved after we calculate the latest
+   *    rect for the scheduled outline since that allows us to compute the position key- first level of aggregation we do on aggregations
+   *    (note: we aggregate on position because we will always merge outlines with the same rect. Within the position based aggregation we
+   *     aggregate based on fiber because we want re-renders for a fibers outline to stay consistent between frames, and gives us tight
+   *     control over animation restart/cancel + interpolation)
+   */
   for (const [fiber, outline] of scheduledOutlines) {
     // todo: put this behind config to use intersection observer or update speed
     // outlineUpdateSpeed: throttled | synchronous // "using synchronous updates will result in smoother animations, but add more overhead to react-scan"
@@ -497,21 +508,15 @@ const activateOutlines = async () => {
         );
       }
       activeOutlines.set(key, existingOutline);
-      // we currently do not handle if the fiber moved positions, this is likely going to cause a problem somehwere
-      // (the same fiber likely will exist multiple times in the active outlines)
-      // this should be investigated asap
     } else if (!prevAggregatedRender) {
       existingOutline.alpha = outline.alpha;
       existingOutline.groupedAggregatedRender?.set(
         fiber,
         outline.aggregatedRender,
       );
-    } else {
-      joinAggregations({
-        to: prevAggregatedRender,
-        from: outline.aggregatedRender,
-      });
     }
+    // if there's an aggregation at the rect position AND a previously computed render
+    // the previous fiber joining logic handles merging render aggregations with updated data
 
     // FIXME(Alexis): `|| 0` just for tseslint to shutup
     existingOutline.alpha = Math.max(
