@@ -1,6 +1,6 @@
 import { FunctionComponentTag } from 'bippy';
+import { Context, type ComponentState } from 'react';
 import { type Fiber } from 'react-reconciler';
-import { type ComponentState } from 'react';
 import { isEqual } from '~core/utils';
 
 interface ContextDependency<T = unknown> {
@@ -34,57 +34,59 @@ let lastRenderedStates = new WeakMap<Fiber>();
 const STATE_NAME_REGEX = /\[(?<name>\w+),\s*set\w+\]/g;
 const PROPS_ORDER_REGEX = /\(\s*{\s*(?<props>[^}]+)\s*}\s*\)/;
 
-const ensureRecord = (value: unknown, seen = new WeakSet()): Record<string, unknown> => {
-  if (value === null || value === undefined) {
+const ensureRecord = (
+  value: unknown,
+  seen = new WeakSet(),
+): Record<string, unknown> => {
+  if (value == null) {
     return {};
   }
-
-  if (value instanceof Element) {
-    return {
-      type: 'Element',
-      tagName: value.tagName.toLowerCase(),
-    };
-  }
-
-  if (typeof value === 'function') {
-    return { type: 'function', name: value.name || 'anonymous' };
-  }
-
-  if (value && (value instanceof Promise || (typeof value === 'object' && 'then' in value))) {
-    return { type: 'promise' };
-  }
-
-  if (typeof value === 'object') {
-    if (seen.has(value)) {
-      return { type: 'circular' };
-    }
-
-    if (Array.isArray(value)) {
-      seen.add(value);
-      const safeArray = value.map(item => ensureRecord(item, seen));
-      return { type: 'array', length: value.length, items: safeArray };
-    }
-
-    seen.add(value);
-
-    const result: Record<string, unknown> = {};
-    try {
-      const keys = Object.keys(value);
-      for (const key of keys) {
-        try {
-          const val = (value as any)[key];
-          result[key] = ensureRecord(val, seen);
-        } catch {
-          result[key] = { type: 'error', message: 'Failed to access property' };
-        }
+  switch (typeof value) {
+    case 'object':
+      if (value instanceof Element) {
+        return {
+          type: 'Element',
+          tagName: value.tagName.toLowerCase(),
+        };
       }
-      return result;
-    } catch {
-      return { type: 'object' };
-    }
-  }
+      if (value instanceof Promise || 'then' in value) {
+        return { type: 'promise' };
+      }
+      if (seen.has(value)) {
+        return { type: 'circular' };
+      }
 
-  return { value };
+      if (Array.isArray(value)) {
+        seen.add(value);
+        const safeArray = value.map((item) => ensureRecord(item, seen));
+        return { type: 'array', length: value.length, items: safeArray };
+      }
+
+      seen.add(value);
+
+      const result: Record<string, unknown> = {};
+      try {
+        const keys = Object.keys(value);
+        for (const key of keys) {
+          try {
+            const val = (value as any)[key];
+            result[key] = ensureRecord(val, seen);
+          } catch {
+            result[key] = {
+              type: 'error',
+              message: 'Failed to access property',
+            };
+          }
+        }
+        return result;
+      } catch {
+        return { type: 'object' };
+      }
+    case 'function':
+      return { type: 'function', name: value.name || 'anonymous' };
+    default:
+      return { value };
+  }
 };
 
 export const resetStateTracking = () => {
@@ -94,25 +96,31 @@ export const resetStateTracking = () => {
   lastRenderedStates = new WeakMap<Fiber>();
 };
 
-export const getStateChangeCount = (name: string): number => stateChangeCounts.get(name) ?? 0;
-export const getPropsChangeCount = (name: string): number => propsChangeCounts.get(name) ?? 0;
-export const getContextChangeCount = (name: string): number => contextChangeCounts.get(name) ?? 0;
+export const getStateChangeCount = (name: string): number =>
+  stateChangeCounts.get(name) ?? 0;
+export const getPropsChangeCount = (name: string): number =>
+  propsChangeCounts.get(name) ?? 0;
+export const getContextChangeCount = (name: string): number =>
+  contextChangeCounts.get(name) ?? 0;
 
 export const getStateNames = (fiber: Fiber): Array<string> => {
   const componentSource = fiber.type?.toString?.() || '';
   // Return the matches if we found any, otherwise return empty array
   // Empty array means we'll use numeric indices as fallback
-  return componentSource ? Array.from(
-    componentSource.matchAll(STATE_NAME_REGEX),
-    (m: RegExpMatchArray) => m.groups?.name ?? ''
-  ) : [];
+  return componentSource
+    ? Array.from(
+        componentSource.matchAll(STATE_NAME_REGEX),
+        (m: RegExpMatchArray) => m.groups?.name ?? '',
+      )
+    : [];
 };
 
 export const isDirectComponent = (fiber: Fiber): boolean => {
   if (!fiber || !fiber.type) return false;
 
   const isFunctionalComponent = typeof fiber.type === 'function';
-  const isClassComponent = fiber.type.prototype && fiber.type.prototype.isReactComponent;
+  const isClassComponent =
+    fiber.type.prototype && fiber.type.prototype.isReactComponent;
 
   if (!(isFunctionalComponent || isClassComponent)) return false;
 
@@ -146,11 +154,8 @@ export const getCurrentState = (fiber: Fiber | null) => {
 
 export const getChangedState = (fiber: Fiber): Set<string> => {
   const changes = new Set<string>();
-  if (
-    !fiber
-    || fiber.tag !== FunctionComponentTag
-    || !isDirectComponent(fiber)
-  ) return changes;
+  if (!fiber || fiber.tag !== FunctionComponentTag || !isDirectComponent(fiber))
+    return changes;
 
   try {
     const currentState = getCurrentFiberState(fiber);
@@ -196,7 +201,7 @@ const getCurrentFiberState = (fiber: Fiber): ComponentState | null => {
 
   let memoizedState = currentIsNewer
     ? fiber.memoizedState
-    : fiber.alternate?.memoizedState ?? fiber.memoizedState;
+    : (fiber.alternate?.memoizedState ?? fiber.memoizedState);
 
   if (!memoizedState) return null;
 
@@ -228,9 +233,10 @@ const getStateValue = (memoizedState: any): any => {
     let update = pending.next;
     do {
       if (update?.payload) {
-        value = typeof update.payload === 'function'
-          ? update.payload(value)
-          : update.payload;
+        value =
+          typeof update.payload === 'function'
+            ? update.payload(value)
+            : update.payload;
       }
       update = update.next;
     } while (update !== pending.next);
@@ -251,13 +257,16 @@ export const getPropsOrder = (fiber: Fiber): Array<string> => {
 };
 
 export const getCurrentProps = (fiber: Fiber): Record<string, unknown> => {
-  const currentIsNewer = fiber && fiber.alternate
-    ? (fiber.actualStartTime ?? 0) > (fiber.alternate?.actualStartTime ?? 0)
-    : true;
+  const currentIsNewer =
+    fiber && fiber.alternate
+      ? (fiber.actualStartTime ?? 0) > (fiber.alternate?.actualStartTime ?? 0)
+      : true;
 
   const baseProps = currentIsNewer
     ? fiber.memoizedProps || fiber.pendingProps
-    : fiber.alternate?.memoizedProps || fiber.alternate?.pendingProps || fiber.memoizedProps;
+    : fiber.alternate?.memoizedProps ||
+      fiber.alternate?.pendingProps ||
+      fiber.memoizedProps;
 
   return { ...baseProps };
 };
@@ -302,11 +311,15 @@ export const getChangedProps = (fiber: Fiber): Set<string> => {
   return changes;
 };
 
-export const getAllFiberContexts = (fiber: Fiber): Map<string, ContextValue> => {
+export const getAllFiberContexts = (
+  fiber: Fiber,
+): Map<string, ContextValue> => {
   const contexts = new Map<string, ContextValue>();
   if (!fiber) return contexts;
 
-  const findProviderValue = (contextType: ReactContext): { value: ContextValue; displayName: string } | null => {
+  const findProviderValue = (
+    contextType: ReactContext,
+  ): { value: ContextValue; displayName: string } | null => {
     let searchFiber: Fiber | null = fiber;
     while (searchFiber) {
       if (searchFiber.type?.Provider) {
@@ -323,27 +336,31 @@ export const getAllFiberContexts = (fiber: Fiber): Map<string, ContextValue> => 
             value: {
               displayValue: ensureRecord(currentValue),
               isUserContext: false,
-              rawValue: currentValue
+              rawValue: currentValue,
             },
-            displayName: contextType.displayName
+            displayName: contextType.displayName,
           };
         }
 
-        const providerName = searchFiber.type.name?.replace('Provider', '') ??
+        const providerName =
+          searchFiber.type.name?.replace('Provider', '') ??
           searchFiber._debugOwner?.type?.name ??
           'Unnamed';
 
-        const valueToUse = pendingValue !== undefined ? pendingValue :
-          providerValue !== undefined ? providerValue :
-            currentValue;
+        const valueToUse =
+          pendingValue !== undefined
+            ? pendingValue
+            : providerValue !== undefined
+              ? providerValue
+              : currentValue;
 
         return {
           value: {
             displayValue: ensureRecord(valueToUse),
             isUserContext: true,
-            rawValue: valueToUse
+            rawValue: valueToUse,
           },
-          displayName: providerName
+          displayName: providerName,
         };
       }
       searchFiber = searchFiber.return;
@@ -354,7 +371,8 @@ export const getAllFiberContexts = (fiber: Fiber): Map<string, ContextValue> => 
   let currentFiber: Fiber | null = fiber;
   while (currentFiber) {
     if (currentFiber.dependencies?.firstContext) {
-      let contextItem = currentFiber.dependencies.firstContext as ContextDependency | null;
+      let contextItem = currentFiber.dependencies
+        .firstContext as ContextDependency | null;
       while (contextItem !== null) {
         const context = contextItem.context;
         if (context && '_currentValue' in context) {
@@ -374,25 +392,14 @@ export const getAllFiberContexts = (fiber: Fiber): Map<string, ContextValue> => 
 
 export const getCurrentContext = (fiber: Fiber) => {
   const contexts = getAllFiberContexts(fiber);
+  // TODO(Alexis): megamorphic code
   const contextObj: Record<string, unknown> = {};
 
-  contexts.forEach((value, contextName) => {
+  for (const [contextName, value] of contexts) {
     contextObj[contextName] = value.displayValue;
-  });
-
-  return contextObj;
-};
-
-const getContextDisplayName = (contextType: unknown): string => {
-  if (typeof contextType !== 'object' || contextType === null) {
-    return String(contextType);
   }
 
-  return (contextType as any)?.displayName ??
-    (contextType as any)?.Provider?.displayName ??
-    (contextType as any)?.Consumer?.displayName ??
-    (contextType as any)?.type?.name?.replace('Provider', '') ??
-    'Unnamed';
+  return contextObj;
 };
 
 export const getChangedContext = (fiber: Fiber): Set<string> => {
@@ -401,8 +408,7 @@ export const getChangedContext = (fiber: Fiber): Set<string> => {
 
   const currentContexts = getAllFiberContexts(fiber);
 
-  currentContexts.forEach((_currentValue, contextType) => {
-    const contextName = getContextDisplayName(contextType);
+  for (const [contextName] of currentContexts) {
 
     let searchFiber: Fiber | null = fiber;
     let providerFiber: Fiber | null = null;
@@ -421,10 +427,13 @@ export const getChangedContext = (fiber: Fiber): Set<string> => {
 
       if (!isEqual(currentProviderValue, alternateValue)) {
         changes.add(contextName);
-        contextChangeCounts.set(contextName, (contextChangeCounts.get(contextName) ?? 0) + 1);
+        contextChangeCounts.set(
+          contextName,
+          (contextChangeCounts.get(contextName) ?? 0) + 1,
+        );
       }
     }
-  });
+  }
 
   return changes;
 };
