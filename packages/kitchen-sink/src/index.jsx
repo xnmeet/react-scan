@@ -1,6 +1,6 @@
-import { scan } from 'react-scan/dist/index.mjs'; // force production build
-import React, { useState, createContext } from 'react';
+import React, { createContext, useState } from 'react';
 import ReactDOMClient from 'react-dom/client';
+import { scan } from 'react-scan/dist/index.mjs'; // force production build
 
 import './styles.css';
 
@@ -95,7 +95,7 @@ export const AddTaskBar = ({ onCreate }) => {
 
   const handleCreate = () => {
     if (value.length === 0) return;
-    onCreate({ id, text: `${value} (${id})` });
+    onCreate({ id: `item-${id}`, text: `${value} (${id})` });
     setValue('');
     setId(id + 1);
   };
