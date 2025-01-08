@@ -109,7 +109,8 @@ export const ScanOverlay = () => {
 
     const pillHeight = 24;
     const pillPadding = 8;
-    const componentName = getDisplayName(fiber?.type) ?? 'Unknown';
+    const componentName =
+      (fiber?.type && getDisplayName(fiber.type)) ?? 'Unknown';
     let text = componentName;
     if (stats.count) {
       text += ` • ×${stats.count}`;
@@ -557,8 +558,9 @@ export const ScanOverlay = () => {
   const handleResizeOrScroll = () => {
     const state = Store.inspectState.peek();
     const canvas = refCanvas.current;
+    if (!canvas) return;
     const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
+    if (!ctx) return;
 
     cancelAnimationFrame(refRafId.current);
     clearTimeout(refTimeout.current);
@@ -590,8 +592,9 @@ export const ScanOverlay = () => {
 
   useEffect(() => {
     const canvas = refCanvas.current;
+    if (!canvas) return;
     const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
+    if (!ctx) return;
 
     updateCanvasSize(canvas, ctx);
 

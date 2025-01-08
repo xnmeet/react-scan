@@ -1,5 +1,5 @@
 import { FunctionComponentTag } from 'bippy';
-import { Context, type ComponentState } from 'react';
+import { type ComponentState } from 'react';
 import { type Fiber } from 'react-reconciler';
 import { isEqual } from '~core/utils';
 
@@ -292,10 +292,8 @@ export const getChangedProps = (fiber: Fiber): Set<string> => {
     if (!isEqual(currentValue, previousValue)) {
       changes.add(key);
 
-      if (typeof currentValue !== 'function') {
-        const count = (propsChangeCounts.get(key) ?? 0) + 1;
-        propsChangeCounts.set(key, count);
-      }
+      const count = (propsChangeCounts.get(key) ?? 0) + 1;
+      propsChangeCounts.set(key, count);
     }
   }
 
@@ -409,7 +407,6 @@ export const getChangedContext = (fiber: Fiber): Set<string> => {
   const currentContexts = getAllFiberContexts(fiber);
 
   for (const [contextName] of currentContexts) {
-
     let searchFiber: Fiber | null = fiber;
     let providerFiber: Fiber | null = null;
 
