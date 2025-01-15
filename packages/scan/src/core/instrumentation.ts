@@ -311,7 +311,7 @@ interface InstrumentationInstance {
 
 interface Instrumentation {
   isPaused: Signal<boolean>;
-  fiberRoots: Set<FiberRoot>;
+  fiberRoots: WeakSet<FiberRoot>;
 }
 
 const instrumentationInstances = new Map<string, InstrumentationInstance>();
@@ -382,7 +382,7 @@ export const createInstrumentation = (
   const instrumentation: Instrumentation = {
     // this will typically be false, but in cases where a user provides showToolbar: true, this will be true
     isPaused: signal(!ReactScanInternals.options.value.enabled),
-    fiberRoots: new Set<FiberRoot>(),
+    fiberRoots: new WeakSet<FiberRoot>(),
   };
   instrumentationInstances.set(instanceKey, {
     key: instanceKey,
