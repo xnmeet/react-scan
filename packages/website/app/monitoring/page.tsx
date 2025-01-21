@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import Image from "next/image";
 
 export default function Monitoring() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -50,9 +51,29 @@ export default function Monitoring() {
           </div>
         </div>
 
-        {/* Demo iframe section */}
+        {/* Demo iframe/image section */}
         <div className="mt-8 -mx-4 sm:-mx-20 lg:-mx-48 xl:-mx-64 2xl:-mx-[341.3333333333px]">
           <div className="relative w-full rounded-lg overflow-hidden shadow-2xl bg-zinc-900 aspect-[4/3] md:aspect-[16/9]">
+            {/* Show image on small screens */}
+            <div className="relative md:hidden w-full h-full group">
+              <Image
+                src="/monitoring.png"
+                alt="React Scan Monitoring Dashboard"
+                fill
+                className="object-cover transition-all duration-300 group-hover:blur-[2px] group-hover:brightness-[0.8]"
+              />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Link
+                  href="https://dashboard.react-scan.com/project/demo"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center h-[38px] px-6 py-2 text-sm font-medium text-white rounded-md transition-all duration-200 ease-out bg-scan-600 hover:bg-scan-500 border border-scan-500 hover:border-scan-400 focus-visible:outline-4 focus-visible:outline-offset-1 focus-visible:outline-scan-400"
+                >
+                  View a live demo
+                </Link>
+              </div>
+            </div>
+            {/* Show iframe on medium screens and up */}
             <iframe
               ref={iframeRef}
               onLoad={() => {
@@ -68,7 +89,7 @@ export default function Monitoring() {
                 }
               }}
               src="https://dashboard.react-scan.com/project/demo"
-              className="absolute inset-0 w-full h-full"
+              className="absolute inset-0 w-full h-full hidden md:block"
             />
           </div>
         </div>
