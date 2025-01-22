@@ -141,12 +141,8 @@ export default function ReplayPage() {
                   src="/player-video.mp4"
                   playsInline
                   muted
-                  preload="auto"
-                  onLoadedData={(e) => {
-                    const video = e.target as HTMLVideoElement;
-                    video.currentTime = 0;
-                    video.pause();
-                  }}
+                  preload="metadata"
+                  poster="/thumbnail.png"
                 />
                   <div className="absolute inset-0 w-full h-full flex items-center justify-center">
                     <div className="h-16 w-16 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center transform group-hover:scale-105 transition-all duration-300 group-hover:bg-white">
