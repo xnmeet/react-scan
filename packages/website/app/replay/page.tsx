@@ -136,14 +136,18 @@ export default function ReplayPage() {
             <div className="relative overflow-hidden group cursor-pointer h-full" onClick={() => setIsModalOpen(true)}>
               <div className="relative pb-[56.25%]">
                 <div className="absolute inset-0">
-                  <div className="w-full h-full bg-black/5 absolute inset-0 group-hover:bg-black/10 transition-all duration-300" />
-                  <video
-                    className="w-full h-full object-cover"
-                    src="/player-video.mp4"
-                    playsInline
-                    muted
-                    preload="metadata"
-                  />
+                <video
+                  className="w-full h-full object-cover"
+                  src="/player-video.mp4"
+                  playsInline
+                  muted
+                  preload="auto"
+                  onLoadedData={(e) => {
+                    const video = e.target as HTMLVideoElement;
+                    video.currentTime = 0;
+                    video.pause();
+                  }}
+                />
                   <div className="absolute inset-0 w-full h-full flex items-center justify-center">
                     <div className="h-16 w-16 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center transform group-hover:scale-105 transition-all duration-300 group-hover:bg-white">
                       <svg className="w-7 h-7 text-gray-900 relative left-0.5" fill="currentColor" viewBox="0 0 24 24">
