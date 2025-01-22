@@ -140,6 +140,9 @@ export default function ReplayPage() {
                   <video
                     className="w-full h-full object-cover"
                     src="/player-video.mp4"
+                    playsInline
+                    muted
+                    preload="metadata"
                   />
                   <div className="absolute inset-0 w-full h-full flex items-center justify-center">
                     <div className="h-16 w-16 rounded-full bg-white/90 backdrop-blur-sm shadow-lg flex items-center justify-center transform group-hover:scale-105 transition-all duration-300 group-hover:bg-white">
