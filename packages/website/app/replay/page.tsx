@@ -73,7 +73,7 @@ export default function ReplayPage() {
     <div className="mx-auto max-w-xl">
       <div className="mt-8 space-y-6">
         <div>
-          <span className="font-bold">Replays for React Scan</span> saves clips of your website when performance drops, and provides a breakdown of what happened
+          <span className="font-bold">Replay for React Scan</span> saves clips of your website when performance drops, and provides a breakdown of what happened
         </div>
 
         <div className="relative">
