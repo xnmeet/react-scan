@@ -77,7 +77,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen flex-col antialiased`}
       >
-        <div className="mx-auto max-w-[700px] px-8 pb-4 pt-20 sm:px-20 ">
+        <div className="mx-auto max-w-[700px] px-4 sm:px-8 pb-4 pt-12 sm:pt-20">
           <Header />
           {children}
         </div>

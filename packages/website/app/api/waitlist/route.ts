@@ -31,7 +31,7 @@ export async function POST(request: Request) {
         email,
         firstName: name?.split(' ')[0],
         lastName: name?.split(' ')[1],
-        source: 'monitoring waitlist',
+        source: 'replay waitlist',
       }),
     };
 
