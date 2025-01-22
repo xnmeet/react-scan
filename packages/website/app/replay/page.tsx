@@ -160,7 +160,7 @@ export default function ReplayPage() {
 
       {isModalOpen && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto pt-8 pb-16"
           onClick={closeModal}
           style={{ 
             opacity: 0,
@@ -170,7 +170,7 @@ export default function ReplayPage() {
           }}
         >
           <div 
-            className="w-[95vw] md:w-[90vw] max-h-[90vh] relative"
+            className="w-[95vw] md:w-[80vw] max-h-[90vh] relative" 
             onClick={e => e.stopPropagation()}
             style={{ 
               opacity: 0,
