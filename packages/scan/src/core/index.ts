@@ -21,12 +21,7 @@ import {
   updateFiberRenderData,
 } from 'src/core/utils';
 // import { initReactScanOverlay } from '~web/overlay';
-import {
-  getCanvasEl,
-  hasStopped,
-  initReactScanInstrumentation,
-  startReportInterval,
-} from 'src/new-outlines';
+import { initReactScanInstrumentation } from 'src/new-outlines';
 import styles from '~web/assets/css/styles.css';
 import { ICONS } from '~web/assets/svgs/svgs';
 import type { States } from '~web/components/inspector/utils';
@@ -498,6 +493,13 @@ export const start = () => {
     return;
   }
 
+  if (
+    getIsProduction() &&
+    !ReactScanInternals.options.value.dangerouslyForceRunInProduction
+  ) {
+    return;
+  }
+
   const localStorageOptions =
     readLocalStorage<LocalStorageOptions>('react-scan-options');
 
@@ -515,45 +517,8 @@ export const start = () => {
 
   const options = getOptions();
 
-  initReactScanInstrumentation({
-    onActive: () => {
-      const rdtHook = getRDTHook();
-
-      if (hasStopped()) return;
-
-      for (const renderer of rdtHook.renderers.values()) {
-        const buildType = detectReactBuildType(renderer);
-        if (buildType === 'production') {
-          isProduction = true;
-        }
-      }
-
-      if (
-        isProduction &&
-        !ReactScanInternals.options.value.dangerouslyForceRunInProduction
-      ) {
-        setOptions({ enabled: false, showToolbar: false });
-        // eslint-disable-next-line no-console
-        console.warn(
-          '[React Scan] Running in production mode is not recommended.\n' +
-            'If you really need this, set dangerouslyForceRunInProduction: true in options.',
-        );
-        return;
-      }
-
-      idempotent_createToolbar(!!options.value.showToolbar);
-
-      const host = getCanvasEl();
-      if (host) {
-        document.documentElement.appendChild(host);
-      }
-      globalThis.__REACT_SCAN__ = {
-        ReactScanInternals,
-      };
-      startReportInterval();
-      logIntro();
-    },
-  });
+  idempotent_createToolbar(!!options.value.showToolbar);
+  initReactScanInstrumentation();
 
   const isUsedInBrowserExtension = typeof window !== 'undefined';
   if (!Store.monitor.value && !isUsedInBrowserExtension) {

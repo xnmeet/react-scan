@@ -1,6 +1,5 @@
 import {
   type Fiber,
-  ReactDevToolsGlobalHook,
   getDisplayName,
   isCompositeFiber,
   isHostFiber,
@@ -54,9 +53,7 @@ interface ReactInternalProps {
 export const getFiberFromElement = (element: Element): Fiber | null => {
   if ('__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) {
     const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-    if (!hook?.renderers) {
-      return null;
-    }
+    if (!hook.renderers) return null;
     for (const [, renderer] of Array.from(hook.renderers)) {
       try {
         const fiber = renderer.findFiberByHostInstance?.(element);
@@ -292,62 +289,60 @@ export const getOverrideMethods = (): OverrideMethods => {
   let overrideHookState = null;
 
   if ('__REACT_DEVTOOLS_GLOBAL_HOOK__' in window) {
-    const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
-    if (!hook?.renderers) {
-      return { overrideProps: null, overrideHookState: null };
-    }
+    const { renderers } = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
+    if (renderers) {
+      for (const [_, renderer] of Array.from(renderers)) {
+        try {
+          const devToolsRenderer = renderer as ExtendedReactRenderer;
 
-    for (const [_, renderer] of Array.from(hook.renderers)) {
-      try {
-        const devToolsRenderer = renderer as ExtendedReactRenderer;
-
-        if (overrideHookState) {
-          const prevOverrideHookState = overrideHookState;
-          overrideHookState = (
-            fiber: Fiber,
-            id: string,
-            path: Array<unknown>,
-            value: unknown,
-          ) => {
-            // Find the hook
-            let current = fiber.memoizedState;
-            for (let i = 0; i < Number(id); i++) {
-              if (!current?.next) break;
-              current = current.next;
-            }
-
-            if (current?.queue) {
-              // Update through React's queue mechanism
-              const queue = current.queue;
-              if (isRecord(queue) && 'dispatch' in queue) {
-                const dispatch = queue.dispatch as (value: unknown) => void;
-                dispatch(value);
-                return;
+          if (overrideHookState) {
+            const prevOverrideHookState = overrideHookState;
+            overrideHookState = (
+              fiber: Fiber,
+              id: string,
+              path: Array<unknown>,
+              value: unknown,
+            ) => {
+              // Find the hook
+              let current = fiber.memoizedState;
+              for (let i = 0; i < Number(id); i++) {
+                if (!current?.next) break;
+                current = current.next;
               }
-            }
 
-            prevOverrideHookState(fiber, id, path, value);
-            devToolsRenderer.overrideHookState?.(fiber, id, path, value);
-          };
-        } else if (devToolsRenderer.overrideHookState) {
-          overrideHookState = devToolsRenderer.overrideHookState;
-        }
+              if (current?.queue) {
+                // Update through React's queue mechanism
+                const queue = current.queue;
+                if (isRecord(queue) && 'dispatch' in queue) {
+                  const dispatch = queue.dispatch as (value: unknown) => void;
+                  dispatch(value);
+                  return;
+                }
+              }
 
-        if (overrideProps) {
-          const prevOverrideProps = overrideProps;
-          overrideProps = (
-            fiber: Fiber,
-            path: Array<string>,
-            value: unknown,
-          ) => {
-            prevOverrideProps(fiber, path, value);
-            devToolsRenderer.overrideProps?.(fiber, path, value);
-          };
-        } else if (devToolsRenderer.overrideProps) {
-          overrideProps = devToolsRenderer.overrideProps;
+              prevOverrideHookState(fiber, id, path, value);
+              devToolsRenderer.overrideHookState?.(fiber, id, path, value);
+            };
+          } else if (devToolsRenderer.overrideHookState) {
+            overrideHookState = devToolsRenderer.overrideHookState;
+          }
+
+          if (overrideProps) {
+            const prevOverrideProps = overrideProps;
+            overrideProps = (
+              fiber: Fiber,
+              path: Array<string>,
+              value: unknown,
+            ) => {
+              prevOverrideProps(fiber, path, value);
+              devToolsRenderer.overrideProps?.(fiber, path, value);
+            };
+          } else if (devToolsRenderer.overrideProps) {
+            overrideProps = devToolsRenderer.overrideProps;
+          }
+        } catch {
+          /**/
         }
-      } catch {
-        /**/
       }
     }
   }
@@ -1258,7 +1253,7 @@ export function hackyJsFormatter(code: string) {
           (arrowParamSet.has(i) && tok === '(') ||
           (genericSet.has(i) && tok === '<')
         ) {
-          // Don't break lines after commas etc.
+          // Don’t break lines after commas etc.
           // We won't do multiline logic for these.
         } else {
           // If next is not a direct close, go multiline
