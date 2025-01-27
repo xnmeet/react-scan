@@ -70,7 +70,7 @@ export default function InstallGuide() {
   const getCodeForTab = (tab: Tab) => {
     switch (tab) {
       case 'script':
-        return `<!-- import this BEFORE any scripts -->\n<script src="//unpkg.com/react-scan/dist/auto.global.js"></script>`;
+        return `<!-- paste this BEFORE any scripts -->\n<script src="unpkg.com/react-scan/dist/auto.global.js"></script>`;
       case 'nextjs-app':
         return `export default function RootLayout({
   children,
@@ -80,10 +80,7 @@ export default function InstallGuide() {
   return (
     <html lang="en">
       <head>
-        <script
-          async
-          src="//unpkg.com/react-scan/dist/auto.global.js"
-        />
+        <script src="//unpkg.com/react-scan/dist/auto.global.js"/>
         {/* rest of your scripts go under */}
       </head>
       <body>{children}</body>
@@ -97,7 +94,7 @@ export default function Document() {
   return (
     <Html lang="en">
       <Head>
-        <script src="//unpkg.com/react-scan/dist/auto.global.js"></script>
+        <script src="//unpkg.com/react-scan/dist/auto.global.js"/>
         {/* rest of your scripts go under */}
       </Head>
       <body>
