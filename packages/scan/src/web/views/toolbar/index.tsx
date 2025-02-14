@@ -1,5 +1,6 @@
 // @TODO: @pivanov - finish the pin functionality
-import { useCallback, useEffect } from 'preact/hooks';
+import { useSignalEffect } from '@preact/signals';
+import { useCallback } from 'preact/hooks';
 import {
   type LocalStorageOptions,
   ReactScanInternals,
@@ -12,6 +13,7 @@ import { constant } from '~web/utils/preact/constant';
 import FpsMeter from '~web/widget/fps-meter';
 
 export const Toolbar = constant(() => {
+  // const refSettingsButton = useRef<HTMLButtonElement>(null);
   // const [isPinned, setIsPinned] = useState(false);
   // const [metadata, setMetadata] = useState<FiberMetadata | null>(null);
 
@@ -66,30 +68,24 @@ export const Toolbar = constant(() => {
   //   signalIsSettingsOpen.value = !signalIsSettingsOpen.value;
   // }, []);
 
-  useEffect(() => {
-    const unSubState = Store.inspectState.subscribe((state) => {
-      if (state.kind === 'uninitialized') {
-        Store.inspectState.value = {
-          kind: 'inspect-off',
-        };
-      }
+  useSignalEffect(() => {
+    const state = Store.inspectState.value;
+    if (state.kind === 'uninitialized') {
+      Store.inspectState.value = {
+        kind: 'inspect-off',
+      };
+    }
 
-      // if (state.kind === 'focused' && state.fiber) {
-      //   const pinned = readLocalStorage<FiberMetadata>('react-scann-pinned');
-      //   setIsPinned(!!pinned);
+    // if (state.kind === 'focused' && state.fiber) {
+    //   const pinned = readLocalStorage<FiberMetadata>('react-scann-pinned');
+    //   setIsPinned(!!pinned);
 
-      //   const m = getFiberMetadata(state.fiber);
-      //   if (m !== null) {
-      //     setMetadata(m);
-      //   }
-      // }
-    });
-
-    return () => {
-      unSubState();
-      // unSubSettings();
-    };
-  }, []);
+    //   const m = getFiberMetadata(state.fiber);
+    //   if (m !== null) {
+    //     setMetadata(m);
+    //   }
+    // }
+  });
 
   // const onTogglePin = useCallback(() => {
   //   if (isPinned) {
