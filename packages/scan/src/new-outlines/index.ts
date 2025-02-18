@@ -437,7 +437,7 @@ export const initReactScanInstrumentation = (setupToolbar: () => void) => {
       return;
     }
     if (schedule) {
-      clearTimeout(schedule);
+      cancelAnimationFrame(schedule);
     }
     schedule = requestAnimationFrame(() => {
       mounted = true;
