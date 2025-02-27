@@ -5,7 +5,7 @@
 Add the script tag to your `app/layout`:
 
 ```jsx
-// app/layout.jsx
+// app/layout
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
@@ -25,6 +25,7 @@ Create a `<ReactScan>` client component:
 
 ```jsx
 // path/to/ReactScanComponent
+
 "use client";
 // react-scan must be imported before react
 import { scan } from "react-scan";
