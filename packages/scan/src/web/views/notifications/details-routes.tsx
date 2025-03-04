@@ -87,6 +87,7 @@ export const DetailsRoutes = () => {
                     ) {
                       prev.audioNotificationsOptions.audioContext?.close();
                     }
+                    localStorage.setItem('react-scan-notifications-audio', 'false');
                     return {
                       ...prev,
                       audioNotificationsOptions: {
