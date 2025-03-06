@@ -26,130 +26,7 @@ import type {
   PerformanceInteractionEntry,
 } from './types';
 import { not_globally_unique_generateId } from '~core/monitor/utils';
-
-interface PathFilters {
-  skipProviders: boolean;
-  skipHocs: boolean;
-  skipContainers: boolean;
-  skipMinified: boolean;
-  skipUtilities: boolean;
-  skipBoundaries: boolean;
-}
-
-const DEFAULT_FILTERS: PathFilters = {
-  skipProviders: true,
-  skipHocs: true,
-  skipContainers: true,
-  skipMinified: true,
-  skipUtilities: true,
-  skipBoundaries: true,
-};
-
-const FILTER_PATTERNS = {
-  providers: [/Provider$/, /^Provider$/, /^Context$/],
-  hocs: [/^with[A-Z]/, /^forward(?:Ref)?$/i, /^Forward(?:Ref)?\(/],
-  containers: [/^(?:App)?Container$/, /^Root$/, /^ReactDev/],
-  utilities: [
-    /^Fragment$/,
-    /^Suspense$/,
-    /^ErrorBoundary$/,
-    /^Portal$/,
-    /^Consumer$/,
-    /^Layout$/,
-    /^Router/,
-    /^Hydration/,
-  ],
-  boundaries: [/^Boundary$/, /Boundary$/, /^Provider$/, /Provider$/],
-};
-
-const shouldIncludeInPath = (
-  name: string,
-  filters: PathFilters = DEFAULT_FILTERS,
-): boolean => {
-  const patternsToCheck: Array<RegExp> = [];
-  if (filters.skipProviders) patternsToCheck.push(...FILTER_PATTERNS.providers);
-  if (filters.skipHocs) patternsToCheck.push(...FILTER_PATTERNS.hocs);
-  if (filters.skipContainers)
-    patternsToCheck.push(...FILTER_PATTERNS.containers);
-  if (filters.skipUtilities) patternsToCheck.push(...FILTER_PATTERNS.utilities);
-  if (filters.skipBoundaries)
-    patternsToCheck.push(...FILTER_PATTERNS.boundaries);
-  return !patternsToCheck.some((pattern) => pattern.test(name));
-};
-
-const minifiedPatterns = [
-  /^[a-z]$/, // Single lowercase letter
-  /^[a-z][0-9]$/, // Lowercase letter followed by number
-  /^_+$/, // Just underscores
-  /^[A-Za-z][_$]$/, // Letter followed by underscore or dollar
-  /^[a-z]{1,2}$/, // 1-2 lowercase letters
-];
-
-const isMinified = (name: string): boolean => {
-  if (!name || typeof name !== 'string') {
-    return true;
-  }
-
-  for (let i = 0; i < minifiedPatterns.length; i++) {
-    if (minifiedPatterns[i].test(name)) return true;
-  }
-
-  const hasNoVowels = !/[aeiou]/i.test(name);
-  const hasMostlyNumbers = (name.match(/\d/g)?.length ?? 0) > name.length / 2;
-  const isSingleWordLowerCase = /^[a-z]+$/.test(name);
-  const hasRandomLookingChars = /[$_]{2,}/.test(name);
-
-  // If more than 2 of the following are true, we consider the name minified
-  return (
-    Number(hasNoVowels) +
-      Number(hasMostlyNumbers) +
-      Number(isSingleWordLowerCase) +
-      Number(hasRandomLookingChars) >=
-    2
-  );
-};
-
-export const getInteractionPath = (
-  fiber: Fiber | null,
-  filters: PathFilters = DEFAULT_FILTERS,
-): Array<string> => {
-  if (!fiber) {
-    return [];
-  }
-
-  const stack = new Array<string>();
-  let currentFiber = fiber;
-  while (currentFiber.return) {
-    const name = getCleanComponentName(currentFiber.type);
-
-    if (name && !isMinified(name) && shouldIncludeInPath(name, filters)) {
-      stack.push(name);
-    }
-    currentFiber = currentFiber.return;
-  }
-
-  const fullPath = new Array<string>(stack.length);
-  for (let i = 0; i < stack.length; i++) {
-    fullPath[i] = stack[stack.length - i - 1];
-  }
-
-  return fullPath;
-};
-
-const getCleanComponentName = (
-  // biome-ignore lint/suspicious/noExplicitAny: /** fiber.type is any */,
-  component: any,
-): string => {
-  const name = getDisplayName(component);
-  if (!name) return '';
-
-  return name.replace(
-    /^(?:Memo|Forward(?:Ref)?|With.*?)\((?<inner>.*?)\)$/,
-    '$<inner>',
-  );
-};
-
-// For future use, normalization of paths happens on server side now using path property of interaction
+import { getInteractionPath } from '~core/monitor/performance';
 
 const getFirstNameFromAncestor = (
   fiber: Fiber,
@@ -593,6 +470,7 @@ const getTargetInteractionDetails = (target: Element) => {
   }
 
   const componentPath = getInteractionPath(associatedFiber);
+
   // const childrenTree = collectFiberSubtree(associatedFiber, 20); // this can be expensive if not limited
 
   // const firstChildSvg = Object.entries(childrenTree).find(([name, {isSvg  }]) => isSvg)

@@ -90,11 +90,7 @@ export const SlowdownHistoryItem = ({
             setNotificationState((prev) => ({
               ...prev,
               selectedEvent: event,
-              route:
-                prev.route === 'other-visualization' ||
-                prev.route === 'optimize'
-                  ? 'other-visualization'
-                  : 'render-visualization',
+              route: 'render-visualization',
               selectedFiber: null,
             }));
           }}
@@ -161,11 +157,8 @@ export const SlowdownHistoryItem = ({
             setNotificationState((prev) => ({
               ...prev,
               selectedEvent: event,
-              route:
-                prev.route === 'other-visualization' ||
-                prev.route === 'optimize'
-                  ? 'other-visualization'
-                  : 'render-visualization',
+              // explicitly force back to render-visualization since the user might get confused when they don't see the detailed view immediately when clicking the view
+              route: 'render-visualization',
               selectedFiber: null,
             }));
           }}

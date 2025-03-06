@@ -327,9 +327,11 @@ export const RenderBarChart = ({
                   width: `${(bar.totalTime / totalBarTime) * 100}%`,
                 }}
                 className={cn([
-                  'group-hover:bg-[#5b2d89]  flex items-center bg-[#412162] rounded-sm text-white text-xs relative h-[28px] transition-all',
+                  'flex items-center  rounded-sm text-white text-xs relative h-[28px] transition-all',
+                  bar.kind === 'render' &&
+                    'bg-[#412162] group-hover:bg-[#5b2d89]',
                   bar.kind === 'other-frame-drop' &&
-                    'bg-[#18181B] group-hover:bg-[#272727]',
+                    'bg-[#44444a] group-hover:bg-[#6a6a6a]',
                   bar.kind === 'other-javascript' &&
                     'bg-[#efd81a6b] group-hover:bg-[#efda1a2f]',
                   bar.kind === 'other-not-javascript' &&
@@ -342,7 +344,6 @@ export const RenderBarChart = ({
                   ])}
                 >
                   <span className={cn(['flex items-center whitespace-nowrap'])}>
-                    {/*  */}
                     {iife(() => {
                       switch (bar.kind) {
                         case 'other-frame-drop': {
