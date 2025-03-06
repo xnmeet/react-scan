@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'preact/compat';
+import { ReactNode, useEffect, useRef, useState } from 'preact/compat';
 import { playNotificationSound } from '~core/utils';
 import { cn } from '~web/utils/helpers';
 import { useNotificationsContext } from './data';
@@ -10,26 +10,6 @@ import { RenderBarChart } from './render-bar-chart';
 import { RenderExplanation } from './render-explanation';
 import { signalWidgetViews } from '~web/state';
 
-const TabLayout = ({ children }: { children: ReactNode }) => {
-  const { notificationState } = useNotificationsContext();
-  if (!notificationState.selectedEvent) {
-    // todo: dev only
-    throw new Error(
-      'Invariant: d must have selected event when viewing render explanation',
-    );
-  }
-  return (
-    <div className="w-full h-full flex flex-col gap-y-2">
-      <div className="h-[50px] w-full">
-        <NotificationTabs selectedEvent={notificationState.selectedEvent} />
-      </div>
-      <div className="h-calc(100%-50px) flex flex-col overflow-y-auto px-3">
-        {children}
-      </div>
-    </div>
-  );
-};
-
 export const DetailsRoutes = () => {
   const { notificationState, setNotificationState } = useNotificationsContext();
   const [dots, setDots] = useState('...');
@@ -39,7 +19,7 @@ export const DetailsRoutes = () => {
     const interval = setInterval(() => {
       setDots((prev) => {
         if (prev === '...') return '';
-        return `${prev}.`;
+        return prev + '.';
       });
     }, 500);
 
@@ -60,7 +40,6 @@ export const DetailsRoutes = () => {
           ])}
         >
           <button
-            type="button"
             onClick={() => {
               signalWidgetViews.value = {
                 view: 'none',
@@ -99,7 +78,6 @@ export const DetailsRoutes = () => {
               slowdown is recorded
             </p>
             <button
-              type="button"
               onClick={() => {
                 if (notificationState.audioNotificationsOptions.enabled) {
                   setNotificationState((prev) => {
@@ -109,10 +87,7 @@ export const DetailsRoutes = () => {
                     ) {
                       prev.audioNotificationsOptions.audioContext?.close();
                     }
-                    localStorage.setItem(
-                      'react-scan-notifications-audio',
-                      'false',
-                    );
+                    localStorage.setItem('react-scan-notifications-audio', 'false');
                     return {
                       ...prev,
                       audioNotificationsOptions: {
@@ -206,4 +181,28 @@ export const DetailsRoutes = () => {
       );
     }
   }
+  // exhaustive verification
+  notificationState.route satisfies never;
+};
+
+const TabLayout = ({ children }: { children: ReactNode }) => {
+  const { notificationState } = useNotificationsContext();
+  if (!notificationState.selectedEvent) {
+    // todo: dev only
+    throw new Error(
+      'Invariant: d must have selected event when viewing render explanation',
+    );
+  }
+  return (
+    <div className={cn([`w-full h-full flex flex-col gap-y-2`])}>
+      <div className={cn(['h-[50px] w-full'])}>
+        <NotificationTabs selectedEvent={notificationState.selectedEvent} />
+      </div>
+      <div
+        className={cn(['h-calc(100%-50px) flex flex-col overflow-y-auto px-3'])}
+      >
+        {children}
+      </div>
+    </div>
+  );
 };

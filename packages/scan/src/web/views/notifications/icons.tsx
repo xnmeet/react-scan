@@ -19,7 +19,6 @@ export const ChevronRight = ({
     stroke-linejoin="round"
     className={cn(['lucide lucide-chevron-right', className])}
   >
-    <title>Chevron Right</title>
     <path d="m9 18 6-6-6-6" />
   </svg>
 );
@@ -42,7 +41,6 @@ export const CopyX = ({
     strokeLinejoin="round"
     className={cn(['lucide lucide-copy-x', className])}
   >
-    <title>Copy X</title>
     <line x1="12" x2="18" y1="12" y2="18" />
     <line x1="12" x2="18" y1="18" y2="12" />
     <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
@@ -81,7 +79,6 @@ export const Notification = ({
         stroke-linejoin="round"
         className={`lucide lucide-bell ${className}`}
       >
-        <title>Bell</title>
         <path d="M10.268 21a2 2 0 0 0 3.464 0" />
         <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" />
       </svg>
@@ -125,7 +122,6 @@ export const CloseIcon = ({
     stroke-linejoin="round"
     className={className}
   >
-    <title>Close</title>
     <path d="M18 6 6 18" />
     <path d="m6 6 12 12" />
   </svg>
@@ -146,7 +142,6 @@ export const VolumeOnIcon = ({
     stroke-linejoin="round"
     className={className}
   >
-    <title>Volume On</title>
     <path d="M11 4.702a.705.705 0 0 0-1.203-.498L6.413 7.587A1.4 1.4 0 0 1 5.416 8H3a1 1 0 0 0-1 1v6a1 1 0 0 0 1 1h2.416a1.4 1.4 0 0 1 .997.413l3.383 3.384A.705.705 0 0 0 11 19.298z" />
     <path d="M16 9a5 5 0 0 1 0 6" />
     <path d="M19.364 18.364a9 9 0 0 0 0-12.728" />
@@ -169,7 +164,6 @@ export const VolumeOffIcon = ({
     stroke-linejoin="round"
     className={className}
   >
-    <title>Volume Off</title>
     <path d="M16 9a5 5 0 0 1 .95 2.293" />
     <path d="M19.364 5.636a9 9 0 0 1 1.889 9.96" />
     <path d="m2 2 20 20" />
@@ -197,7 +191,6 @@ export const ArrowLeft = ({
     stroke-linejoin="round"
     className={cn(['lucide lucide-arrow-left', className])}
   >
-    <title>Arrow Left</title>
     <path d="m12 19-7-7 7-7" />
     <path d="M19 12H5" />
   </svg>
@@ -219,7 +212,6 @@ export const PointerIcon = ({
     stroke-linejoin="round"
     className={className}
   >
-    <title>Pointer</title>
     <path d="M14 4.1 12 6" />
     <path d="m5.1 8-2.9-.8" />
     <path d="m6 12-1.9 2" />
@@ -244,7 +236,6 @@ export const KeyboardIcon = ({
     stroke-linejoin="round"
     className={className}
   >
-    <title>Keyboard</title>
     <path d="M10 8h.01" />
     <path d="M12 12h.01" />
     <path d="M14 8h.01" />
@@ -274,7 +265,6 @@ export const ClearIcon = ({
       className={className}
       style={{ transform: 'rotate(180deg)' }}
     >
-      <title>Clear</title>
       <circle cx="12" cy="12" r="10" />
       <path d="m4.9 4.9 14.2 14.2" />
     </svg>
@@ -296,7 +286,6 @@ export const TrendingDownIcon = ({
     strokeLinejoin="round"
     className={className}
   >
-    <title>Trending Down</title>
     <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
     <polyline points="16 17 22 17 22 11" />
   </svg>

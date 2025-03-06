@@ -1,5 +1,5 @@
 import { cn } from '~web/utils/helpers';
-import { type NotificationEvent, useNotificationsContext } from './data';
+import { NotificationEvent, useNotificationsContext } from './data';
 import { useLayoutEffect, useState } from 'preact/hooks';
 import { ArrowLeft, CloseIcon } from './icons';
 import { getIsProduction } from '~core/index';
@@ -39,7 +39,6 @@ export const RenderExplanation = ({
     >
       <div className={cn(['flex items-start gap-x-4 '])}>
         <button
-          type="button"
           onClick={() => {
             setRoute({
               route: 'render-visualization',
@@ -61,14 +60,14 @@ export const RenderExplanation = ({
             </div>
           </div>
           <div className={cn(['flex gap-x-2'])}>
-            {
-              !isProduction && (
-                <div className="text-xs text-gray-400">
+            {!isProduction && (
+              <>
+                <div className={cn(['text-xs text-gray-400'])}>
                   • Render time: {selectedFiber.totalTime.toFixed(0)}ms
                 </div>
-              )
-            }
-            <div className="text-xs text-gray-400 mb-4">
+              </>
+            )}
+            <div className={cn(['text-xs text-gray-400 mb-4'])}>
               • Renders: {selectedFiber.count}x
             </div>
           </div>
@@ -81,7 +80,6 @@ export const RenderExplanation = ({
           ])}
         >
           <button
-            type="button"
             onClick={() => {
               setTipIsShown(false);
 
