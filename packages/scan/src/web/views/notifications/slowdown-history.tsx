@@ -100,14 +100,18 @@ export const SlowdownHistoryItem = ({
             }));
           }}
           className={cn([
-            'pl-2 py-1.5 text-sm flex w-full items-center rounded-sm hover:bg-[#18181B] relative overflow-hidden',
+            'pl-2 py-1.5  text-sm flex w-full items-center rounded-sm hover:bg-[#18181B] relative overflow-hidden',
             event.id === notificationState.selectedEvent?.id && 'bg-[#18181B]',
             isFlashing &&
               'after:absolute after:inset-0 after:bg-purple-500/30 after:animate-[fadeOut_1s_ease-out_forwards]',
           ])}
         >
-          <div className="w-4/5 flex items-center justify-start h-full gap-x-1.5">
-            <span className="min-w-fit text-xs">
+          <div
+            className={cn([
+              'w-4/5 flex items-center justify-start h-full gap-x-1.5',
+            ])}
+          >
+            <span className={cn(['min-w-fit text-xs'])}>
               {iife(() => {
                 switch (event.type) {
                   case 'click': {
@@ -120,11 +124,13 @@ export const SlowdownHistoryItem = ({
               })}
             </span>
 
-            <span className="text-xs pr-1 truncate">
+            <span className={cn(['text-xs pr-1 truncate'])}>
               {getComponentName(event.componentPath)}
             </span>
           </div>
-          <div className="min-w-fit flex justify-end items-center ml-auto">
+          <div
+            className={cn([' min-w-fit flex justify-end items-center ml-auto'])}
+          >
             <div
               style={{
                 lineHeight: '10px',
@@ -140,7 +146,7 @@ export const SlowdownHistoryItem = ({
                 style={{
                   lineHeight: '10px',
                 }}
-                className="text-[10px] text-white flex items-end"
+                className={cn(['text-[10px] text-white flex items-end'])}
               >
                 {getTotalTime(event.timing).toFixed(0)}ms
               </div>
@@ -166,16 +172,22 @@ export const SlowdownHistoryItem = ({
             }));
           }}
           className={cn([
-            'pl-2 py-1.5 w-full text-sm flex items-center rounded-sm hover:bg-[#18181B] relative overflow-hidden',
+            'pl-2 py-1.5  w-full text-sm flex items-center rounded-sm hover:bg-[#18181B] relative overflow-hidden',
             event.id === notificationState.selectedEvent?.id && 'bg-[#18181B]',
             isFlashing &&
               'after:absolute after:inset-0 after:bg-purple-500/30 after:animate-[fadeOut_1s_ease-out_forwards]',
           ])}
         >
-          <div className="w-4/5 flex items-center justify-start h-full text-xs truncate">
+          <div
+            className={cn([
+              'w-4/5 flex items-center justify-start h-full text-xs truncate',
+            ])}
+          >
             <TrendingDownIcon size={14} className="mr-1.5" /> FPS Drop
           </div>
-          <div className="min-w-fit flex justify-end items-center ml-auto">
+          <div
+            className={cn([' min-w-fit flex justify-end items-center ml-auto'])}
+          >
             <div
               style={{
                 lineHeight: '10px',
@@ -361,7 +373,7 @@ export const SlowdownHistory = () => {
           triggerContent={
             <button
               type="button"
-              className="hover:bg-[#18181B] rounded-full p-2"
+              className={cn(['hover:bg-[#18181B] rounded-full p-2'])}
               onClick={() => {
                 toolbarEventStore.getState().actions.clear();
                 setNotificationState((prev) => ({
@@ -376,16 +388,22 @@ export const SlowdownHistory = () => {
                 setLaggedEvents([]);
               }}
             >
-              <ClearIcon size={16} />
+              <ClearIcon className={cn([''])} size={16} />
             </button>
           }
         >
-          <div className="w-full flex justify-center">Clear all events</div>
+          <div className={cn(['w-full flex justify-center'])}>
+            Clear all events
+          </div>
         </Popover>
       </div>
-      <div className="flex flex-col px-1 gap-y-1">
+      <div className={cn(['flex flex-col px-1 gap-y-1'])}>
         {collapsedEvents.length === 0 && (
-          <div className="flex items-center justify-center text-zinc-500 text-sm py-4">
+          <div
+            className={cn([
+              'flex items-center justify-center text-zinc-500 text-sm py-4',
+            ])}
+          >
             No Events
           </div>
         )}

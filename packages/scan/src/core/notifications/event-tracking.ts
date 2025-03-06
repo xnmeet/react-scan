@@ -230,7 +230,7 @@ export const toolbarEventStore = createStore<ToolbarEventStoreState>()(
           const toRemove = new Set<string>();
 
           for (const event of events) {
-            if (event.kind === 'interaction') continue;
+            if (event.kind === 'interaction') return;
             applyOverlapCheckToLongRenderEvent(event, () => {
               toRemove.add(event.id);
             });
