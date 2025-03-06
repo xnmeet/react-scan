@@ -137,18 +137,6 @@ export const getExtendedDisplayName = (fiber: Fiber): ExtendedDisplayName => {
     });
   }
 
-  if (
-    tag === ForwardRefTag ||
-    (type as { $$typeof?: symbol })?.$$typeof ===
-      Symbol.for('react.forward_ref')
-  ) {
-    wrapperTypes.push({
-      type: 'forwardRef',
-      title:
-        'Component that can forward refs to DOM elements or other components',
-    });
-  }
-
   if (tag === LazyComponentTag) {
     wrapperTypes.push({
       type: 'lazy',
