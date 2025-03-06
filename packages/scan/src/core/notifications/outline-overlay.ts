@@ -85,7 +85,7 @@ export const drawHighlights = () => {
       state satisfies never;
     });
 
-    for (const rect of current?.rects ?? []) {
+    current?.rects.forEach((rect) => {
       if (!highlightCtx) {
         // typescript cant tell this closure is synchronous/non-escaping
         return;
@@ -105,7 +105,7 @@ export const drawHighlights = () => {
       highlightCtx.beginPath();
       highlightCtx.rect(rect.left, rect.top, rect.width, rect.height);
       highlightCtx.stroke();
-    }
+    });
 
     switch (state.kind) {
       case 'move-out': {
@@ -123,7 +123,6 @@ export const drawHighlights = () => {
         drawHighlights();
         return;
       }
-      // biome-ignore lint/suspicious/noFallthroughSwitchClause: check!!!
       case 'transition': {
         if (state.current && state.current.alpha > 0) {
           state.current.alpha = Math.max(0, state.current.alpha - 0.03);

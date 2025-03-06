@@ -1,5 +1,5 @@
 import { BoundedArray } from "~core/notifications/performance-utils";
-import type { CompletedInteraction } from './performance';
+import { CompletedInteraction } from "./performance";
 
 type Subscriber<T> = (data: T) => void;
 
@@ -23,9 +23,7 @@ export class Store<T> {
 
   setState(data: T) {
     this.currentValue = data;
-    for (const subscriber of this.subscribers) {
-      subscriber(data);
-    }
+    this.subscribers.forEach((subscriber) => subscriber(data));
   }
 
   getCurrentState(): T {

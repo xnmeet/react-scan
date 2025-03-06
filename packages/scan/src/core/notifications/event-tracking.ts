@@ -2,9 +2,9 @@ import { useSyncExternalStore } from 'preact/compat';
 import { not_globally_unique_generateId } from '~core/monitor/utils';
 import { MAX_INTERACTION_BATCH, interactionStore } from './interaction-store';
 import {
-  type FiberRenders,
-  type PerformanceEntryChannelEvent,
-  type TimeoutStage,
+  FiberRenders,
+  PerformanceEntryChannelEvent,
+  TimeoutStage,
   listenForPerformanceEntryInteractions,
   listenForRenders,
   setupDetailedPointerTimingListener,
@@ -37,7 +37,7 @@ export const listenForProfile = (
   };
 };
 
-export const interactionStatus:
+export let interactionStatus:
   | { kind: 'started'; startedAt: number }
   | { kind: 'completed'; startedAt: number; endedAt: number }
   | { kind: 'no-interaction' } = {
@@ -160,9 +160,7 @@ export const toolbarEventStore = createStore<ToolbarEventStoreState>()(
 
       actions: {
         addEvent: (event: SlowdownEvent) => {
-          for (const listener of listeners) {
-            listener(event);
-          }
+          listeners.forEach((listener) => listener(event));
 
           const events = [...get().state.events, event];
           const applyOverlapCheckToLongRenderEvent = (
@@ -229,12 +227,12 @@ export const toolbarEventStore = createStore<ToolbarEventStoreState>()(
 
           const toRemove = new Set<string>();
 
-          for (const event of events) {
+          events.forEach((event) => {
             if (event.kind === 'interaction') return;
             applyOverlapCheckToLongRenderEvent(event, () => {
               toRemove.add(event.id);
             });
-          }
+          });
 
           const withRemovedEvents = events.filter(
             (event) => !toRemove.has(event.id),

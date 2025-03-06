@@ -2,13 +2,13 @@ import { forwardRef } from 'preact/compat';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { not_globally_unique_generateId } from '~core/monitor/utils';
 import { useToolbarEventLog } from '~core/notifications/event-tracking';
-import type { FiberRenders } from '~core/notifications/performance';
+import { FiberRenders } from '~core/notifications/performance';
 import { iife, invariantError } from '~core/notifications/performance-utils';
 import { playNotificationSound } from '~core/utils';
 import { cn } from '~web/utils/helpers';
 import {
   NotificationStateContext,
-  type NotificationsState,
+  NotificationsState,
   getEventSeverity,
   getTotalTime,
   useNotificationsContext,
@@ -66,10 +66,10 @@ const useGarbageCollectElements = (
 ) => {
   useEffect(() => {
     const checkElementsExistence = () => {
-      for (const event of notificationEvents) {
+      notificationEvents.forEach((event) => {
         if (!event.groupedFiberRenders) return;
 
-        for (const render of event.groupedFiberRenders) {
+        event.groupedFiberRenders.forEach((render) => {
           if (render.deletedAll) return;
 
           if (!render.elements || render.elements.length === 0) {
@@ -79,14 +79,14 @@ const useGarbageCollectElements = (
 
           const initialLength = render.elements.length;
           render.elements = render.elements.filter((element) => {
-            return element?.isConnected;
+            return element && element.isConnected;
           });
 
           if (render.elements.length === 0 && initialLength > 0) {
             render.deletedAll = true;
           }
-        };
-      };
+        });
+      });
     };
 
     const intervalId = setInterval(checkElementsExistence, 5000);
@@ -104,7 +104,7 @@ export const useAppNotifications = () => {
 
   useGarbageCollectElements(notificationEvents);
 
-  for (const event of log.state.events) {
+  log.state.events.forEach((event) => {
     const fiberRenders =
       event.kind === 'interaction'
         ? event.data.meta.detailedTiming.fiberRenders
@@ -153,7 +153,7 @@ export const useAppNotifications = () => {
             frameDraw,
           },
         });
-        break;
+        return;
       }
       case 'long-render': {
         notificationEvents.push({
@@ -169,10 +169,10 @@ export const useAppNotifications = () => {
           timestamp: event.data.startAt,
           fps: event.data.meta.fps,
         });
-        break;
+        return;
       }
     }
-  }
+  });
   return notificationEvents;
 };
 const timeout = 1000;
@@ -189,7 +189,6 @@ export const NotificationAudio = () => {
     (event) => getEventSeverity(event) === 'high',
   ).length;
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: check!!!
   useEffect(() => {
     // todo: sync with options
     const audioEnabledString = localStorage.getItem(
@@ -201,7 +200,7 @@ export const NotificationAudio = () => {
       return;
     }
 
-    const audioEnabled = audioEnabledString !== 'false';
+    const audioEnabled = audioEnabledString === 'false' ? false : true;
 
     if (audioEnabled) {
       setNotificationState((prev) => {
@@ -220,7 +219,6 @@ export const NotificationAudio = () => {
     }
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: check!!!
   useEffect(() => {
     const { audioNotificationsOptions } = notificationState;
     if (!audioNotificationsOptions.enabled) {
@@ -272,12 +270,12 @@ export const NotificationWrapper = forwardRef<HTMLDivElement>((_, ref) => {
   const [notificationState, setNotificationState] =
     useState<NotificationsState>({
       detailsExpanded: false,
-      events: events ?? [],
+      events,
       filterBy: 'latest',
       moreInfoExpanded: false,
       route: 'render-visualization',
       selectedEvent:
-        events?.toSorted((a, b) => a.timestamp - b.timestamp).at(-1) ?? null,
+        events.toSorted((a, b) => a.timestamp - b.timestamp).at(-1) ?? null,
       selectedFiber: null,
       routeMessage: null,
       audioNotificationsOptions: {
@@ -286,15 +284,7 @@ export const NotificationWrapper = forwardRef<HTMLDivElement>((_, ref) => {
       },
     });
 
-  useEffect(() => {
-    setNotificationState((prev) => ({
-      ...prev,
-      events,
-      selectedEvent:
-        events?.toSorted((a, b) => a.timestamp - b.timestamp).at(-1) ?? null,
-    }));
-  }, [events]);
-
+  notificationState.events = events;
   return (
     <NotificationStateContext.Provider
       value={{
@@ -332,6 +322,7 @@ export const NotificationWrapper = forwardRef<HTMLDivElement>((_, ref) => {
                 return newState;
               }
             }
+            route satisfies never;
           });
         },
       }}
@@ -394,7 +385,7 @@ const MoreInfo = () => {
     <div
       className={cn([
         'px-4 py-2 border-b border-[#27272A] bg-[#18181B]/50 h-[calc(100%-40px)]',
-        event.kind === 'dropped-frames' && 'h-[calc(100%-25px)]',
+        event.kind === 'dropped-frames' && `h-[calc(100%-25px)]`,
       ])}
     >
       <div className={cn(['flex flex-col gap-y-4 h-full'])}>

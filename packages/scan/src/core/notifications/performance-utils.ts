@@ -1,4 +1,4 @@
-import type { Fiber } from 'bippy';
+import { Fiber } from 'bippy';
 export const getChildrenFromFiberLL = (fiber: Fiber) => {
   const children: Array<Fiber> = [];
 
@@ -95,7 +95,7 @@ export const invariantError = (message: string | undefined) => {
 export const iife = <T>(fn: () => T): T => fn();
 
 export class BoundedArray<T> extends Array<T> {
-  constructor(private capacity = 25) {
+  constructor(private capacity: number = 25) {
     super();
   }
 
