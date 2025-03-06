@@ -47,7 +47,6 @@ declare global {
       onCommitFiberRoot: (
         rendererID: number,
         root: FiberRoot,
-        // biome-ignore lint/suspicious/noConfusingVoidType: may or may not exist
         priority: void | number,
       ) => void;
       onCommitFiberUnmount: (rendererID: number, fiber: Fiber) => void;

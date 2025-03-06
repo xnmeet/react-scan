@@ -96,7 +96,6 @@ export const isElementInViewport = (
   return isVisible && rect.width && rect.height;
 };
 
-// biome-ignore lint/suspicious/noConstEnum: Using const enum for better performance since it's inlined at compile time and removed from the JS output
 export const enum ChangeReason {
   Props = 0b001,
   FunctionalState = 0b010,

@@ -67,6 +67,7 @@ export const Popover = ({
     }
   };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: its not pure but fine
   useEffect(() => {
     updateRect();
   }, [triggerRef.current]);

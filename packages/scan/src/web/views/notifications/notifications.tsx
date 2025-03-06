@@ -189,6 +189,7 @@ export const NotificationAudio = () => {
     (event) => getEventSeverity(event) === 'high',
   ).length;
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     // todo: sync with options
     const audioEnabledString = localStorage.getItem(
@@ -219,6 +220,7 @@ export const NotificationAudio = () => {
     }
   }, []);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     const { audioNotificationsOptions } = notificationState;
     if (!audioNotificationsOptions.enabled) {

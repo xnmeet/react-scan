@@ -1,6 +1,9 @@
 /**
  * Adapted from zustand v5.0.3
+ *
  * https://github.com/pmndrs/zustand
+ *
+ * Do not modify unless you know what you are doing
  */
 type SetStateInternal<T> = {
   _(
@@ -46,6 +49,7 @@ export type StateCreator<
   store: Mutate<StoreApi<T>, Mis>,
 ) => U) & { $$storeMutators?: Mos };
 
+// biome-ignore lint/correctness/noUnusedVariables: <explanation>
 export interface StoreMutators<S, A> {}
 export type StoreMutatorIdentifier = keyof StoreMutators<unknown, unknown>;
 
@@ -95,14 +99,19 @@ const createStoreImpl: CreateStoreImpl = (createState) => {
   const subscribe: StoreApi<TState>['subscribe'] = (
     selectorOrListener:
       | ((state: TState, prevState: TState) => void)
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       | ((state: TState) => any),
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     listener?: (selectedState: any, prevSelectedState: any) => void,
   ) => {
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     let selector: ((state: TState) => any) | undefined;
+    // biome-ignore lint/suspicious/noExplicitAny: <explanation>
     let actualListener: (state: any, prevState: any) => void;
 
     if (listener) {
       // Selector subscription case
+      // biome-ignore lint/suspicious/noExplicitAny: <explanation>
       selector = selectorOrListener as (state: TState) => any;
       actualListener = listener;
     } else {
@@ -135,6 +144,7 @@ const createStoreImpl: CreateStoreImpl = (createState) => {
 
   const api = { setState, getState, getInitialState, subscribe };
   const initialState = (state = createState(setState, getState, api));
+  // biome-ignore lint/suspicious/noExplicitAny: <explanation>
   return api as any;
 };
 

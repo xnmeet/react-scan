@@ -342,6 +342,7 @@ export const useLaggedEvents = (lagMs = 150) => {
   const { notificationState } = useNotificationsContext();
   const [laggedEvents, setLaggedEvents] = useState(notificationState.events);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
   useEffect(() => {
     setTimeout(() => {
       setLaggedEvents(notificationState.events);
