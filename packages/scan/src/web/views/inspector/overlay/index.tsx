@@ -710,11 +710,11 @@ export const ScanOverlay = () => {
     <>
       <div
         ref={refEventCatcher}
-        className={cn(
-          'fixed inset-0 w-screen h-screen',
-          'z-[214748365]',
-          'pointer-events-none',
-        )}
+        className={cn('fixed inset-0 w-screen h-screen', 'z-[214748365]')}
+        // DO NOT DO NOT DO NOT REMOVE THE STYLE IT WILL CAUSE MASSIVE PERFORMANCE ISSUES https://x.com/RobKnight__/status/1897524145157439558
+        style={{
+          pointerEvents: 'none',
+        }}
       />
       <canvas
         ref={refCanvas}
