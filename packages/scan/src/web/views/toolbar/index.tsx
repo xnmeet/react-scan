@@ -19,7 +19,6 @@ export const Toolbar = constant(() => {
   const events = useAppNotifications();
   const [laggedEvents, setLaggedEvents] = useState(events);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Intentionally not exhaustive
   useEffect(() => {
     const timeout = setTimeout(() => {
       setLaggedEvents(events);
@@ -29,7 +28,7 @@ export const Toolbar = constant(() => {
     return () => {
       clearTimeout(timeout);
     };
-  }, [events.length]);
+  }, [events]);
 
   const inspectState = Store.inspectState;
   const isInspectActive = inspectState.value.kind === 'inspecting';
