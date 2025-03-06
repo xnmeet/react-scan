@@ -313,7 +313,7 @@ export function startLongPipelineTracking() {
         const fps = framesInTheLastSecond.length;
         framesDrawnInTheLastSecond = framesInTheLastSecond;
 
-        if (duration > 200 && !isTaskDirty) {
+        if (duration > 100 && !isTaskDirty) {
           const endAt = endOrigin + endNow;
           const startAt = startTime + startOrigin;
 

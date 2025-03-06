@@ -167,7 +167,7 @@ export const getEventSeverity = (event: NotificationEvent) => {
     }
     case 'dropped-frames': {
       if (totalTime < 50) return 'low';
-      if (totalTime < 200) return 'needs-improvement';
+      if (totalTime < 100) return 'needs-improvement';
       return 'high';
     }
   }

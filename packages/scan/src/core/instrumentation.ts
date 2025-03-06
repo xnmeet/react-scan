@@ -35,7 +35,6 @@ import {
   type ContextChange,
   ReactScanInternals,
   type StateChange,
-  Store,
 } from './index';
 
 let fps = 0;
@@ -485,14 +484,15 @@ export const createInstrumentation = (
       onActive: config.onActive,
       onCommitFiberRoot(_rendererID, root) {
         instrumentation.fiberRoots.add(root);
-        if (
-          ReactScanInternals.instrumentation?.isPaused.value &&
-          (Store.inspectState.value.kind === 'inspect-off' ||
-            Store.inspectState.value.kind === 'uninitialized') &&
-          !config.forceAlwaysTrackRenders
-        ) {
-          return;
-        }
+        // for now we always track everything for notifications, it may be worth it to make this configurable
+        // if (
+        //   ReactScanInternals.instrumentation?.isPaused.value &&
+        //   (Store.inspectState.value.kind === "inspect-off" ||
+        //     Store.inspectState.value.kind === "uninitialized") &&
+        //   !config.forceAlwaysTrackRenders
+        // ) {
+        //   return;
+        // }
         const allInstances = getAllInstances();
         for (const instance of allInstances) {
           instance.config.onCommitStart();
@@ -520,7 +520,6 @@ export const createInstrumentation = (
               const changesState = collectStateChanges(fiber).changes;
               const changesContext = collectContextChanges(fiber).changes;
 
-              // Convert props changes
               changes.push.apply(
                 null,
                 changesProps.map(
@@ -533,7 +532,6 @@ export const createInstrumentation = (
                 ),
               );
 
-              // Convert state changes
               for (const change of changesState) {
                 if (fiber.tag === ClassComponentTag) {
                   changes.push({
@@ -550,7 +548,6 @@ export const createInstrumentation = (
                 }
               }
 
-              // Convert context changes
               changes.push.apply(
                 null,
                 changesContext.map(
@@ -565,7 +562,6 @@ export const createInstrumentation = (
               );
             }
 
-            // Get timing information for this render
             const { selfTime: fiberSelfTime, totalTime: fiberTotalTime } =
               getTimings(fiber);
 

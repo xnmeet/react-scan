@@ -405,13 +405,14 @@ svg {
 
 .react-scan-toggle {
   @apply relative;
-  @apply inline-block;
+  @apply inline-flex;
   @apply w-10 h-6;
 
   input {
     @apply absolute inset-0;
     @apply opacity-0 z-20;
     @apply cursor-pointer;
+    @apply w-full h-full;
   }
 
   input:checked {
