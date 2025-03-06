@@ -271,23 +271,28 @@ export const useToolbarEventLog = () => {
   );
 };
 
-let isTaskDirty = false;
+let taskDirtyAt: null | number = null;
+let taskDirtyOrigin: null | number = null;
 
 // stops long tasks b/c backgrounded from being reported
 export const startDirtyTaskTracking = () => {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-      return;
-    }
-    isTaskDirty = true;
-  });
+  const onVisibilityChange = () => {
+    taskDirtyAt = performance.now();
+    taskDirtyOrigin = performance.timeOrigin;
+  };
+
+  document.addEventListener('visibilitychange', onVisibilityChange);
+
+  return () => {
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+  };
 };
 
 let framesDrawnInTheLastSecond: Array<number> = [];
 
 export function startLongPipelineTracking() {
   let rafHandle: number;
-  let timeoutHandle: NodeJS.Timeout;
+  let timeoutHandle: ReturnType<typeof setTimeout>;
 
   function measure() {
     let unSub: (() => void) | null = null;
@@ -302,18 +307,25 @@ export function startLongPipelineTracking() {
         const endNow = performance.now();
         const duration = endNow - startTime;
         const endOrigin = performance.timeOrigin;
-        framesDrawnInTheLastSecond.push(endNow);
+        framesDrawnInTheLastSecond.push(endNow + endOrigin);
 
         const framesInTheLastSecond = framesDrawnInTheLastSecond.filter(
-          (frameAt) => endNow - frameAt <= 1000,
+          (frameAt) => endNow + endOrigin - frameAt <= 1000,
         );
 
         const fps = framesInTheLastSecond.length;
         framesDrawnInTheLastSecond = framesInTheLastSecond;
 
-        if (duration > 100 && !isTaskDirty) {
+        const taskConsideredDirty =
+          taskDirtyAt !== null && taskDirtyOrigin !== null
+            ? endNow + endOrigin - (taskDirtyOrigin + taskDirtyAt) < 100
+            : null;
+
+
+        if (duration > 100 && !taskConsideredDirty) {
           const endAt = endOrigin + endNow;
           const startAt = startTime + startOrigin;
+
 
           toolbarEventStore.getState().actions.addEvent({
             kind: 'long-render',
@@ -331,25 +343,28 @@ export function startLongPipelineTracking() {
           });
         }
 
-        isTaskDirty = false;
+        taskDirtyAt = null;
+        taskDirtyOrigin = null;
 
         unSub?.();
         measure();
       }, 0);
     });
+    return unSub;
   }
 
-  measure();
+  const measureUnSub = measure();
 
   return () => {
+    measureUnSub();
     cancelAnimationFrame(rafHandle);
     clearTimeout(timeoutHandle);
   };
 }
 export const startTimingTracking = () => {
   const unSubPerformance = setupPerformancePublisher();
-  startDirtyTaskTracking();
-  startLongPipelineTracking();
+  const unSubDirtyTaskTracking = startDirtyTaskTracking();
+  const unSubLongPipelineTracking = startLongPipelineTracking();
 
   const onComplete = async (
     _: string,
@@ -406,6 +421,8 @@ export const startTimingTracking = () => {
   );
 
   return () => {
+    unSubDirtyTaskTracking();
+    unSubLongPipelineTracking();
     unSubPerformance();
     unSubDetailedPointerTiming();
     unSubInteractions();

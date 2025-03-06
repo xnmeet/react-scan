@@ -535,8 +535,16 @@ export const start = () => {
 };
 
 const initToolbar = (showToolbar: boolean) => {
-  startTimingTracking();
-  createNotificationsOutlineCanvas();
+  window.reactScanCleanupListeners?.();
+
+  const cleanupTimingTracking = startTimingTracking();
+  const cleanupOutlineCanvas = createNotificationsOutlineCanvas();
+
+  window.reactScanCleanupListeners = () => {
+    cleanupTimingTracking();
+    cleanupOutlineCanvas?.();
+  };
+
   const windowToolbarContainer = window.__REACT_SCAN_TOOLBAR_CONTAINER__;
 
   if (!showToolbar) {
@@ -552,7 +560,7 @@ const initToolbar = (showToolbar: boolean) => {
 const createNotificationsOutlineCanvas = () => {
   try {
     const highlightRoot = document.documentElement;
-    createHighlightCanvas(highlightRoot);
+    return createHighlightCanvas(highlightRoot);
   } catch (e) {
     if (ReactScanInternals.options.value._debug === 'verbose') {
       // biome-ignore lint/suspicious/noConsole: intended debug output

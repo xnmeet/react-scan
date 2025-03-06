@@ -27,6 +27,7 @@ declare global {
   var __REACT_SCAN__: {
     ReactScanInternals: ReactScanInternals;
   };
+  var reactScanCleanupListeners: (() => void) | undefined;
   var reactScan: Scan;
   var scheduler: {
     postTask: (cb: unknown, options: { priority: string }) => void;

@@ -201,6 +201,8 @@ export const createHighlightCanvas = (root: HTMLElement) => {
       drawHighlights();
     });
   });
+
+  return cleanup;
 };
 
 export function cleanup() {
