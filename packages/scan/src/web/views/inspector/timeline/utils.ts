@@ -240,10 +240,10 @@ export const collectContextChanges = (
   const prev: Record<string, unknown> = {};
   const changes: Array<ContextChange> = [];
 
-  const seenContexts = new Set<string>();
+  const seenContexts = new Set<unknown>();
   for (const [contextType, ctx] of currentContexts) {
     const name = ctx.displayName;
-    const contextKey = `${name}-${contextType?.toString()}`;
+    const contextKey = contextType;
 
     if (seenContexts.has(contextKey)) continue;
     seenContexts.add(contextKey);
@@ -387,16 +387,31 @@ interface ContextInfo {
   displayName: string;
   contextType: unknown;
 }
+// hm we potentially want to revalidate this if a fiber has new context's, i'm not sure how we can do that reactively
+// i suppose we can do one traversal on render (or during the existing traversal) that checks if any new context providers were mounted
+// and when that happens we revalidate this cache
+
+// i suppose a case this breaks is if a fiber changes ancestors through a key but doesn't remount
+// then it would have new parents... and that new parent may have new context
+// may be a fine trade off
+// the motivation is this fiber traversal on every rendering fiber is extremely expensive
+const fiberContextsCache = new WeakMap<Fiber, Map<unknown, ContextInfo>>();
 
 export const getAllFiberContexts = (
   fiber: Fiber,
 ): Map<unknown, ContextInfo> => {
-  const contexts = new Map<unknown, ContextInfo>();
-
   if (!fiber) {
-    return contexts;
+    return new Map<unknown, ContextInfo>();
   }
 
+  // todo validate this works
+
+  const cachedContexts = fiberContextsCache.get(fiber);
+  if (cachedContexts) {
+    return cachedContexts;
+  }
+
+  const contexts = new Map<unknown, ContextInfo>();
   let currentFiber: Fiber | null = fiber;
 
   while (currentFiber) {
@@ -428,6 +443,9 @@ export const getAllFiberContexts = (
 
     currentFiber = currentFiber.return;
   }
+
+  // Cache the result for this fiber
+  fiberContextsCache.set(fiber, contexts);
 
   return contexts;
 };
