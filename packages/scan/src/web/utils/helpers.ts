@@ -8,9 +8,10 @@ import {
 } from 'bippy';
 import { type ClassValue, clsx } from 'clsx';
 import { IS_CLIENT } from './constants';
+import { twMerge } from 'tailwind-merge';
 
 export const cn = (...inputs: Array<ClassValue>): string => {
-  return clsx(inputs); // no twMerge for now
+  return twMerge(clsx(inputs));
 };
 
 export const isFirefox =
