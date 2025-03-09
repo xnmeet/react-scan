@@ -137,7 +137,10 @@ export const getStateFromFiber = (
   return {};
 };
 
-const getPropsOrder = (fiber: Fiber): Array<string> => {
+/**
+ * Used to preserve the order of the fiber's props as represented in source code
+ */
+export const getPropsOrder = (fiber: Fiber): Array<string> => {
   const componentSource = fiber.type?.toString?.() || '';
   const match = componentSource.match(PROPS_ORDER_REGEX);
   if (!match?.groups?.props) return [];
@@ -183,14 +186,11 @@ export const collectPropsChanges = (
 ): CollectorResult<PropChange> => {
   const currentProps = fiber.memoizedProps || {};
   const prevProps = fiber.alternate?.memoizedProps || {};
-  const orderedProps = getPropsOrder(fiber);
 
   const current: Record<string, unknown> = {};
   const prev: Record<string, unknown> = {};
 
-  const allProps = [
-    ...new Set([...orderedProps, ...Object.keys(currentProps)]),
-  ];
+  const allProps = Object.keys(currentProps);
   for (const key of allProps) {
     if (key in currentProps) {
       current[key] = currentProps[key];
