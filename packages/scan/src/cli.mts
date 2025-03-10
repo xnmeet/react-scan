@@ -205,26 +205,6 @@ const init = async () => {
   const context = await browser.newContext(contextOptions);
   await applyStealthScripts(context);
 
-  await context.addInitScript({
-    content: `(() => {
-      const NO_OP = () => {};
-      let i = 0;
-      globalThis.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
-        checkDCE: NO_OP,
-        supportsFiber: true,
-        renderers: new Map(),
-        onScheduleFiberRoot: NO_OP,
-        onCommitFiberRoot: NO_OP,
-        onCommitFiberUnmount: NO_OP,
-        inject(renderer) {
-          const nextID = ++i;
-          this.renderers.set(nextID, renderer);
-          return nextID;
-        },
-      };
-    })();`,
-  });
-
   const scriptContent = await fs.readFile(
     path.resolve(__dirname, './auto.global.js'),
     'utf8',
@@ -277,9 +257,9 @@ const init = async () => {
     if (interval) clearInterval(interval);
     currentURL = url;
     const truncatedURL = truncateString(url, 35);
-    currentSpinner?.stop(`${truncatedURL}${count ? ` (×${count})` : ''}`);
-    currentSpinner = spinner();
-    currentSpinner.start(dim(`Scanning: ${truncatedURL}`));
+
+    // biome-ignore lint/suspicious/noConsole: <explanation>
+    console.log(dim(`Scanning: ${truncatedURL}`));
     count = 0;
 
     try {
@@ -302,7 +282,8 @@ const init = async () => {
         pollReport().catch(() => {});
       }, 1000);
     } catch {
-      currentSpinner?.stop(red(`Error: ${truncatedURL}`));
+      // biome-ignore lint/suspicious/noConsole: <explanation>
+      console.log(red(`Error: ${truncatedURL}`));
     }
   };
 
