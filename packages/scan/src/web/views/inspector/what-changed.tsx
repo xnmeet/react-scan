@@ -714,9 +714,7 @@ const ReferenceOnlyChange = ({
             className="text-yellow-500 mb-px"
             size={14}
           />
-          <span>
-            Reference changed but objects are the structurally the same
-          </span>
+          <span>Reference changed but objects are structurally the same</span>
         </div>
       )}
     </>
