@@ -466,6 +466,20 @@ export const setOptions = (userOptions: Partial<Options>) => {
 
   ReactScanInternals.options.value = newOptions;
 
+  // temp hack since defaults override stored local storage values
+  // we actually don't care about any other local storage option other than enabled, we should not be syncing those to local storage
+  try {
+    const existing = readLocalStorage<undefined | Record<string, unknown>>(
+      'react-scan-options',
+    )?.enabled;
+
+    if (typeof existing === 'boolean') {
+      newOptions.enabled = existing;
+    }
+  } catch {
+    /** */
+  }
+
   saveLocalStorage('react-scan-options', newOptions);
 
   if (shouldInitToolbar) {
