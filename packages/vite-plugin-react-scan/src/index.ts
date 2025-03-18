@@ -293,6 +293,9 @@ const reactScanPlugin = (options: ReactScanPluginOptions = {}): Plugin => {
           log.debug('Emitted react-scan as asset:', assetFileName);
         } catch (error) {
           log.error('Failed to process react-scan:', error);
+          throw new Error(
+            `Module ${REACT_SCAN_IDENTIFIER} not found. Please ensure react-scan is installed as a peer dependency.`
+          );
         }
       }
     },

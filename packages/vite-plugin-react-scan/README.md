@@ -15,6 +15,8 @@ pnpm add -D @react-scan/vite-plugin-react-scan react-scan
 yarn add -D @react-scan/vite-plugin-react-scan react-scan
 ```
 
+> **Note:** Make sure `react-scan` is installed as a peer dependency. The plugin will automatically locate it in your project's dependency tree.
+
 ## Usage
 
 Add the plugin to your `vite.config.ts`:
