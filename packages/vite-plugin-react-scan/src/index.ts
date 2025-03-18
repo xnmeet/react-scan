@@ -303,7 +303,8 @@ const reactScanPlugin = (options: ReactScanPluginOptions = {}): Plugin => {
         } catch (error) {
           log.error('Failed to process react-scan:', error);
           throw new Error(
-            `Module ${REACT_SCAN_IDENTIFIER} not found. Please ensure react-scan is installed as a peer dependency.`
+            `Unable to locate '${REACT_SCAN_IDENTIFIER}'. This module is a required peer dependency.
+Please ensure 'react-scan' is installed in your project using your preferred package manager.`,
           );
         }
       }
