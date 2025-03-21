@@ -356,6 +356,7 @@ export function startLongPipelineTracking() {
         if (
           duration > HIGH_SEVERITY_FPS_DROP_TIME &&
           !taskConsideredDirty &&
+          document.visibilityState === 'visible' &&
           !wasTaskInfluencedByToolbar
         ) {
           const endAt = endOrigin + endNow;
